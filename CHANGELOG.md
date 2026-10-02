@@ -4,6 +4,19 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.2.1-phase2-corrections] - 2026-10-02
+
+### Corregido y Mejorado
+- **Reflejo Automático de Fecha de Nacimiento en Eventos ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - Al registrar o actualizar la fecha de nacimiento de un animal, se genera o actualiza automáticamente el evento de tipo `Nacimiento` en `growth_events` con su peso correspondiente y encolado en `sync_queue`, mostrándose de inmediato en la pestaña de Evolución/Eventos.
+- **Botones de Guardar y Cancelar Fijados al Fondo de Pantalla ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - Se configuró la barra de acciones como `fixed bottom-0 inset-x-0 z-50` con fondo translúcido y bordes delimitados para que permanezca visible y accesible en todo momento durante el scroll, complementado con padding inferior (`pb-28 sm:pb-24`) en el formulario para no tapar los campos finales.
+- **Botón de Edición de Perfil en Vista Móvil Restaurado ([`DetailsTab.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/DetailsTab.jsx) y [`PerfilAnimal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/PerfilAnimal.jsx))**:
+  - Se eliminó la restricción `hidden md:flex` en [`DetailsTab.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/DetailsTab.jsx), haciendo visible el botón de edición para cualquier dispositivo móvil.
+  - Se incorporó un botón de acceso directo "Editar" con icono de lápiz en el header superior fijo de [`PerfilAnimal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/PerfilAnimal.jsx) para vista móvil.
+- **Distribución Visual en Modal de Fincas y Potreros ([`FarmModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/FarmModal.jsx))**:
+  - Se reubicó el botón de administración de potreros en una fila dedicada debajo de la información principal de cada finca, dejando libre y limpio el encabezado superior con el nombre, ubicación y acciones principales.
+
 ---
 
 ## [1.2.0-phase2-features] - 2026-10-02

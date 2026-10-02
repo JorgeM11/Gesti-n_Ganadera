@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, Suspense } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, List, TrendingUp, ShieldPlus, Share2, Loader2 } from 'lucide-react';
+import { ArrowLeft, List, TrendingUp, ShieldPlus, Share2, Loader2, Pencil } from 'lucide-react';
 import { FaVenusMars } from 'react-icons/fa6';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
@@ -122,27 +122,40 @@ function ProfileContent() {
   return (
     <main className="min-h-screen bg-[#F7F7F2] font-sans pb-24 md:pb-8 relative">
       {/* HEADER FIJO */}
-      <header className="bg-[#F7F7F2] px-4 py-4 sticky top-0 z-30 flex items-center gap-4 border-b border-neutral-100 md:border-none">
-        <Link to="/inventario" className="p-2 -ml-2 hover:bg-neutral-200 rounded-full transition-colors cursor-pointer">
-          <ArrowLeft className="w-6 h-6 text-[#1B4820]" />
-        </Link>
-        <div className="overflow-hidden">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.h1 
-              key={activeTab}
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -5 }}
-              transition={{ duration: 0.1, ease: "easeOut" }}
-              className="text-xl font-bold text-[#1B4820]"
-            >
-              {activeTab === 'details' ? 'Ficha del Animal' :
-                activeTab === 'evolution' ? 'Evolución del Animal' :
-                  activeTab === 'health' ? 'Carnet de Salud' :
-                    activeTab === 'reproduction' ? 'Registro Reproductivo' : 'Genealogía'}
-            </motion.h1>
-          </AnimatePresence>
+      <header className="bg-[#F7F7F2] px-4 py-4 sticky top-0 z-30 flex items-center justify-between border-b border-neutral-100 md:border-none">
+        <div className="flex items-center gap-4 min-w-0">
+          <Link to="/inventario" className="p-2 -ml-2 hover:bg-neutral-200 rounded-full transition-colors cursor-pointer shrink-0">
+            <ArrowLeft className="w-6 h-6 text-[#1B4820]" />
+          </Link>
+          <div className="overflow-hidden">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.h1 
+                key={activeTab}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.1, ease: "easeOut" }}
+                className="text-xl font-bold text-[#1B4820] truncate"
+              >
+                {activeTab === 'details' ? 'Ficha del Animal' :
+                  activeTab === 'evolution' ? 'Evolución del Animal' :
+                    activeTab === 'health' ? 'Carnet de Salud' :
+                      activeTab === 'reproduction' ? 'Registro Reproductivo' : 'Genealogía'}
+              </motion.h1>
+            </AnimatePresence>
+          </div>
         </div>
+
+        {/* Botón Editar Móvil en Header */}
+        <button
+          type="button"
+          onClick={() => setIsEditModalOpen(true)}
+          className="md:hidden shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-neutral-200 text-[#1B4820] font-bold text-xs shadow-xs hover:bg-neutral-50 active:scale-95 transition-all cursor-pointer"
+          title="Editar información del animal"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+          <span>Editar</span>
+        </button>
       </header>
 
       <div className="max-w-6xl mx-auto">

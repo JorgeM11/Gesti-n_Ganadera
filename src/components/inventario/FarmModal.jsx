@@ -253,32 +253,46 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
                         key={f.id}
                         className="bg-neutral-50 rounded-2xl border border-neutral-200/70 overflow-hidden transition-all shadow-2xs"
                       >
-                        <div className="p-3.5 flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center border border-neutral-200 text-[#1B4820] shrink-0">
-                              <Building2 className="w-4 h-4" />
+                        <div className="p-3.5">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center border border-neutral-200 text-[#1B4820] shrink-0">
+                                <Building2 className="w-4 h-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <h4 className="text-sm font-bold text-neutral-900 truncate">{f.name}</h4>
+                                {f.location && (
+                                  <div className="flex items-center gap-1 text-[11px] text-neutral-500">
+                                    <MapPin className="w-3 h-3 text-neutral-400 shrink-0" />
+                                    <span className="truncate">{f.location}</span>
+                                  </div>
+                                )}
+                                {f.description && (
+                                  <p className="text-[10px] text-neutral-400 truncate max-w-[240px]">{f.description}</p>
+                                )}
+                              </div>
                             </div>
-                            <div className="min-w-0">
-                              <h4 className="text-sm font-bold text-neutral-900 truncate">{f.name}</h4>
-                              {f.location && (
-                                <div className="flex items-center gap-1 text-[11px] text-neutral-500">
-                                  <MapPin className="w-3 h-3 text-neutral-400 shrink-0" />
-                                  <span className="truncate">{f.location}</span>
-                                </div>
-                              )}
-                              {f.description && (
-                                <p className="text-[10px] text-neutral-400 truncate max-w-[200px]">{f.description}</p>
-                              )}
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200/60" title={`${farmAnimalsCount} animales`}>
+                                <Users className="w-3 h-3 text-emerald-600" />
+                                {farmAnimalsCount}
+                              </span>
+
+                              {/* Botón de Editar Finca */}
+                              <button
+                                type="button"
+                                onClick={() => handleStartEdit(f)}
+                                className="p-2 rounded-xl text-[#1B4820] bg-emerald-50 border border-emerald-200/80 md:bg-white md:text-neutral-600 md:border-neutral-200/80 md:hover:bg-[#1B4820] md:hover:text-white transition-all shadow-2xs cursor-pointer"
+                                title={`Editar ${f.name}`}
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200/60" title={`${farmAnimalsCount} animales`}>
-                              <Users className="w-3 h-3 text-emerald-600" />
-                              {farmAnimalsCount}
-                            </span>
-
-                            {/* Botón Potreros */}
+                          {/* Botón de Potreros ubicado abajo de la información de la finca */}
+                          <div className="pt-2.5 mt-2.5 border-t border-neutral-200/70">
                             <button
                               type="button"
                               onClick={() => {
@@ -286,25 +300,25 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
                                 setNewPotreroName('');
                                 setEditingPotreroId(null);
                               }}
-                              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border transition-all flex items-center gap-1 cursor-pointer ${
+                              className={`w-full py-2 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-between cursor-pointer ${
                                 isExpanded
-                                  ? 'bg-[#1B4820] text-white border-[#1B4820]'
-                                  : 'bg-white text-neutral-700 border-neutral-200 hover:border-[#1B4820]'
+                                  ? 'bg-[#1B4820] text-white border-[#1B4820] shadow-2xs'
+                                  : 'bg-white text-neutral-700 border-neutral-200 hover:border-[#1B4820] hover:text-[#1B4820]'
                               }`}
                               title="Gestionar potreros de esta finca"
                             >
-                              <span>{farmPotreros.length} Potreros</span>
-                              <ChevronDown className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                            </button>
-
-                            {/* Botón de Editar Finca */}
-                            <button
-                              type="button"
-                              onClick={() => handleStartEdit(f)}
-                              className="p-1.5 rounded-lg text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/60 transition-all cursor-pointer"
-                              title={`Editar ${f.name}`}
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
+                              <div className="flex items-center gap-2">
+                                <span className="text-[11px] uppercase tracking-wider font-black">Potreros</span>
+                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
+                                  isExpanded ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-600'
+                                }`}>
+                                  {farmPotreros.length}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1 text-[11px] font-medium opacity-80">
+                                <span>{isExpanded ? 'Ocultar' : 'Ver y Administrar'}</span>
+                                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                              </div>
                             </button>
                           </div>
                         </div>

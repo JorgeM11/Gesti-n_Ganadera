@@ -76,6 +76,11 @@ flowchart TD
     - Orden estricto según especificación: 1. Arete, 2. Chip, 3. Nombre, 4. Género, 5. Fecha nacimiento, 6. Peso, 7. Color, 8. Dueño, 9. Finca, 10. Potrero (habilitado al escoger finca), 11. Madre y Padre, 12. Raza sin porcentaje (incluye "Sin raza"), 13. Activo o Inactivo, 14. Foto + Descripción.
     - Acordeones de eventos de nacimiento y destete removidos por completo.
     - Barra de porcentaje y cálculos genéticos de pureza removidos del formulario.
+  - [x] **Ajustes y Correcciones Visuales/Funcionales**:
+    - [x] **Modal de Fincas y Potreros (`FarmModal.jsx`)**: Botón de administración de potreros reubicado debajo de la información principal de la finca.
+    - [x] **Botones de Guardar y Cancelar Fijos (`AnimalForm.jsx`)**: Fijados al borde inferior de la pantalla (`fixed bottom-0 inset-x-0 z-50`) con padding de seguridad.
+    - [x] **Generación de Evento de Nacimiento (`AnimalForm.jsx`)**: Sincronización automática de fecha y peso de nacimiento a la tabla `growth_events` con tipo `'Nacimiento'`.
+    - [x] **Botón de Editar Perfil en Vista Móvil (`DetailsTab.jsx` y `PerfilAnimal.jsx`)**: Restaurado en la ficha técnica y añadido en la cabecera móvil.
   - [x] **Actualización de Ficha Técnica ([`DetailsTab.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/DetailsTab.jsx)) e Inventario ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
     - Visualización limpia de arete, chip, nombre, dueño, finca, potrero, raza sin porcentaje y estado.
 

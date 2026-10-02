@@ -141,10 +141,10 @@ export default function DetailsTab({ animal, onEdit }) {
           </div>
         </div>
 
-        {/* Botón Editar en Desktop */}
+        {/* Botón Editar Información */}
         <button 
           onClick={onEdit}
-          className="hidden md:flex w-full items-center justify-center gap-2 bg-[#1B4820] hover:bg-[#123316] text-white font-bold py-3.5 rounded-2xl shadow-sm transition-all hover:scale-[0.99] active:scale-95 cursor-pointer text-xs uppercase tracking-wider"
+          className="flex w-full items-center justify-center gap-2 bg-[#1B4820] hover:bg-[#123316] text-white font-bold py-3.5 rounded-2xl shadow-sm transition-all hover:scale-[0.99] active:scale-95 cursor-pointer text-xs uppercase tracking-wider"
         >
           <Pencil className="w-4 h-4" /> Editar Información
         </button>

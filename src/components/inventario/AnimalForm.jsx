@@ -335,13 +335,53 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         deleted_at: null
       };
 
-      await db.transaction('rw', [db.animals, db.sync_queue], async () => {
+      await db.transaction('rw', [db.animals, db.growth_events, db.sync_queue], async () => {
         if (isEditing) {
           await db.animals.put(animalData);
           await addToSyncQueue('animals', 'UPDATE', animalData);
         } else {
           await db.animals.add(animalData);
           await addToSyncQueue('animals', 'INSERT', animalData);
+        }
+
+        // Si se especificó fecha de nacimiento, reflejar o actualizar el evento 'Nacimiento' en growth_events
+        if (data.birth_date) {
+          const existingBirthEvent = await db.growth_events
+            .where('animal_id')
+            .equals(animalId)
+            .and(e => !e.deleted_at && (e.event_type || '').toLowerCase().includes('nacimiento'))
+            .first();
+
+          if (existingBirthEvent) {
+            const updatedBirthEvent = {
+              ...existingBirthEvent,
+              event_date: data.birth_date,
+              weight_kg: finalWeight !== null && finalWeight !== undefined ? finalWeight : existingBirthEvent.weight_kg,
+              updated_at: now
+            };
+            await db.growth_events.put(updatedBirthEvent);
+            await addToSyncQueue('growth_events', 'UPDATE', updatedBirthEvent);
+          } else {
+            const newBirthEvent = {
+              id: crypto.randomUUID(),
+              user_id: userId,
+              animal_id: animalId,
+              event_type: 'Nacimiento',
+              event_date: data.birth_date,
+              weight_kg: finalWeight !== null && finalWeight !== undefined ? finalWeight : null,
+              mother_weight_kg: null,
+              scrotal_circumference_cm: null,
+              navel_length: null,
+              observations: 'Registro de nacimiento',
+              photo_path: null,
+              photo_blob: null,
+              created_at: now,
+              updated_at: now,
+              deleted_at: null
+            };
+            await db.growth_events.add(newBirthEvent);
+            await addToSyncQueue('growth_events', 'INSERT', newBirthEvent);
+          }
         }
       });
 
@@ -367,7 +407,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
   };
 
   return (
-    <div className="relative pb-16">
+    <div className="relative pb-28 sm:pb-24">
       {/* Toast Notificación */}
       {toast.show && (
         <div className={`fixed z-[100] px-5 py-3.5 rounded-2xl shadow-xl transition-all top-5 left-1/2 -translate-x-1/2 font-bold text-sm flex items-center gap-3 text-white ${
@@ -851,32 +891,34 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
           </div>
         </div>
 
-        {/* BOTONES DE ACCIÓN */}
-        <div className="sticky bottom-4 z-40 bg-white/95 backdrop-blur-md p-4 rounded-3xl border border-neutral-200 shadow-xl flex items-center gap-3">
-          {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="flex-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-sm font-bold py-3.5 rounded-2xl transition-colors cursor-pointer"
-            >
-              Cancelar
-            </button>
-          )}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex-2 bg-[#1B4820] hover:bg-[#0F2912] active:scale-[0.99] text-white text-sm font-black py-3.5 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-          >
-            {isSubmitting ? (
-              <span>Guardando...</span>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                <span>{initialValues?.id ? 'Guardar Cambios' : 'Registrar Animal'}</span>
-              </>
+        {/* BOTONES DE ACCIÓN FIJADOS AL FONDO DE PANTALLA */}
+        <div className="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-md border-t border-neutral-200/90 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] py-3 px-4">
+          <div className="max-w-2xl mx-auto flex items-center gap-3">
+            {onCancel && (
+              <button
+                type="button"
+                onClick={onCancel}
+                className="flex-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-sm font-bold py-3.5 rounded-2xl transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
             )}
-          </button>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-2 bg-[#1B4820] hover:bg-[#0F2912] active:scale-[0.99] text-white text-sm font-black py-3.5 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {isSubmitting ? (
+                <span>Guardando...</span>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" />
+                  <span>{initialValues?.id ? 'Guardar Cambios' : 'Registrar Animal'}</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </form>
 
