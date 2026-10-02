@@ -61,9 +61,24 @@ flowchart TD
   - [x] **Limpieza de Rutas y Archivos Obsoletos**:
     - Eliminadas rutas `/inventario/perfil/servicio`, `/inventario/perfil/tacto` y `/inventario/tratamiento-lote` en `App.jsx`.
     - Eliminados archivos de componentes y páginas huérfanos: `MilkingTab.jsx`, `MilkingModal.jsx`, `TactosTab.jsx`, `ServiciosTab.jsx`, `TactoForm.jsx`, `ServicioForm.jsx`, `PerfilTacto.jsx`, `PerfilServicio.jsx`, `TratamientoLote.jsx`.
-- [ ] **Nuevas Características a Incorporar** *(A la espera de especificaciones del usuario)*:
-  - [ ] Nuevos módulos, vistas y/o campos en inventario y perfiles.
-  - [ ] Nuevas pantallas y flujos de negocio.
+- [x] **Nuevas Características Incorporadas**:
+  - [x] **Potreros (Segundo nivel de Finca)**:
+    - Entidad `potreros` asociada a `farm_id` en IndexedDB ([`db.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/db.js) y [`potreroUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/potreroUtils.js)).
+    - Gestión de potreros dentro de cada finca en [`FarmModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/FarmModal.jsx) (crear, editar nombre, listar, eliminar).
+    - Creación rápida de potreros desde [`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx).
+    - Filtro por potrero en [`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx) con sub-filtro condicional al seleccionar una finca.
+  - [x] **Dueños (Propietarios)**:
+    - Entidad `owners` en IndexedDB ([`db.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/db.js) y [`ownerUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/ownerUtils.js)).
+    - Modal de gestión de dueños [`OwnerModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/OwnerModal.jsx) y acceso desde el menú lateral ([`NavigationDrawer.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/NavigationDrawer.jsx)).
+    - Selector y creación rápida de dueños desde [`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx).
+    - Búsqueda y visualización por dueño en tarjetas de inventario y detalle del perfil.
+  - [x] **Reestructuración de Formulario Animal ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+    - Orden estricto según especificación: 1. Arete, 2. Chip, 3. Nombre, 4. Género, 5. Fecha nacimiento, 6. Peso, 7. Color, 8. Dueño, 9. Finca, 10. Potrero (habilitado al escoger finca), 11. Madre y Padre, 12. Raza sin porcentaje (incluye "Sin raza"), 13. Activo o Inactivo, 14. Foto + Descripción.
+    - Acordeones de eventos de nacimiento y destete removidos por completo.
+    - Barra de porcentaje y cálculos genéticos de pureza removidos del formulario.
+  - [x] **Actualización de Ficha Técnica ([`DetailsTab.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/DetailsTab.jsx)) e Inventario ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+    - Visualización limpia de arete, chip, nombre, dueño, finca, potrero, raza sin porcentaje y estado.
+
 
 ---
 
@@ -107,5 +122,6 @@ flowchart TD
 | :--- | :---: | :---: | :---: | :--- |
 | **Puesta en marcha Fase 1** | 2026-10-02 | **Completado** | Antigravity AI | Proyecto `gestion-ganadera` creado y compilando al 100% sobre la base de `App-ganadera-v2`. |
 | **Fase 2: Eliminaciones solicitadas** | 2026-10-02 | **Completado** | Antigravity AI | Retirado ordeño, tactos, servicios reproductivos, modo lotes en vacunación y botón `+` directo. Compilación verificada con éxito. |
-| **Fase 2: Incorporación de nuevas funciones** | Pendiente | *En progreso* | Antigravity AI & Usuario | A la espera de las especificaciones de nuevos módulos o características a agregar. |
+| **Fase 2: Nuevas funcionalidades frontend** | 2026-10-02 | **Completado** | Antigravity AI | Implementados Potreros por Finca, Dueños, nuevo orden en AnimalForm (arete, chip, nombre, género, nacimiento, peso, color, dueño, finca, potrero, padres, raza sin %, activo/inactivo, foto + desc) y filtros. |
+| **Pase a Fase 3: Nueva BD Supabase** | Pendiente | *Por iniciar* | Antigravity AI & Usuario | Listo para diseñar la nueva estructura de base de datos en Supabase con potreros, dueños, y nuevos campos. |
 

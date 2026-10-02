@@ -199,6 +199,16 @@ export class GanaderaDB extends Dexie {
             });
         });
 
+        // --- VERSIÓN 7: Potreros, Dueños, Chip y Nombre de Animal ---
+        this.version(7).stores({
+            animals: 'id, user_id, farm_id, potrero_id, owner_id, number, chip_number, name, status, sex, breed, last_weight_kg, last_weight_date, mother_id, father_id, updated_at, deleted_at',
+            farms: 'id, user_id, name, updated_at, deleted_at',
+            potreros: 'id, user_id, farm_id, name, updated_at, deleted_at',
+            owners: 'id, user_id, name, updated_at, deleted_at',
+            milking_records: 'id, user_id, animal_id, farm_id, milking_date, shift, updated_at, deleted_at',
+            usuarios: 'id, email, role, status, updated_at, deleted_at'
+        });
+
         /** @type {Dexie.Table<Animal, string>} */
         this.animals = this.table('animals');
         /** @type {Dexie.Table<Service, string>} */
@@ -211,6 +221,10 @@ export class GanaderaDB extends Dexie {
         this.growth_events = this.table('growth_events');
         /** @type {Dexie.Table<Farm, string>} */
         this.farms = this.table('farms');
+        /** @type {Dexie.Table<any, string>} */
+        this.potreros = this.table('potreros');
+        /** @type {Dexie.Table<any, string>} */
+        this.owners = this.table('owners');
         /** @type {Dexie.Table<MilkingRecord, string>} */
         this.milking_records = this.table('milking_records');
         /** @type {Dexie.Table<Usuario, string>} */
@@ -235,6 +249,8 @@ export async function clearLocalData() {
     db.health_records.clear(),
     db.growth_events.clear(),
     db.farms.clear(),
+    db.potreros.clear(),
+    db.owners.clear(),
     db.milking_records.clear(),
     db.usuarios.clear(),
     db.sync_queue.clear()

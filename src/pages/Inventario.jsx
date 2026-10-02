@@ -15,7 +15,9 @@ import {
   Calendar, 
   Menu, 
   SearchX, 
-  RefreshCcw 
+  RefreshCcw,
+  Cpu,
+  UserCheck
 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, clearLocalData } from '@/lib/db';
@@ -26,6 +28,7 @@ import SyncStatus from '@/components/ui/SyncStatus';
 import AnimalImage from '@/components/inventario/AnimalImage';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import FarmModal from '@/components/inventario/FarmModal';
+import OwnerModal from '@/components/inventario/OwnerModal';
 import NavigationDrawer from '@/components/inventario/NavigationDrawer';
 import AnimalCardSkeleton from '@/components/inventario/AnimalCardSkeleton';
 import Toast from '@/components/ui/Toast';
@@ -150,9 +153,11 @@ export default function InventarioPage() {
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [pendingLogoutCount, setPendingLogoutCount] = useState(0);
 
-  // --- ESTADOS PARA FINCAS ---
+  // --- ESTADOS PARA FINCAS, POTREROS Y DUEÑOS ---
   const [selectedFarmFilter, setSelectedFarmFilter] = useState('ALL');
+  const [selectedPotreroFilter, setSelectedPotreroFilter] = useState('ALL');
   const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
+  const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
 
   // --- ESTADO PARA NOTIFICACIONES DE CONFIRMACIÓN (TOAST) ---
   const [toast, setToast] = useState(null);
@@ -162,11 +167,26 @@ export default function InventarioPage() {
   };
 
   const farms = useLiveQuery(() => db.farms.filter(f => !f.deleted_at).toArray()) || [];
+  const potreros = useLiveQuery(() => db.potreros.filter(p => !p.deleted_at).toArray()) || [];
+  const owners = useLiveQuery(() => db.owners.filter(o => !o.deleted_at).toArray()) || [];
+
   const farmMap = useMemo(() => {
     const map = {};
     farms.forEach(f => { map[f.id] = f.name; });
     return map;
   }, [farms]);
+
+  const potreroMap = useMemo(() => {
+    const map = {};
+    potreros.forEach(p => { map[p.id] = p.name; });
+    return map;
+  }, [potreros]);
+
+  const ownerMap = useMemo(() => {
+    const map = {};
+    owners.forEach(o => { map[o.id] = o.name; });
+    return map;
+  }, [owners]);
 
   const executeLogout = async () => {
     try {
@@ -240,6 +260,7 @@ export default function InventarioPage() {
   const clearFilters = () => {
     setFilters({ sex: [], status: [], category: [], breed: [] });
     setSelectedFarmFilter('ALL');
+    setSelectedPotreroFilter('ALL');
   };
 
   const activeFiltersCount = 
@@ -247,7 +268,8 @@ export default function InventarioPage() {
     filters.status.length + 
     filters.category.length + 
     filters.breed.length + 
-    (selectedFarmFilter !== 'ALL' ? 1 : 0);
+    (selectedFarmFilter !== 'ALL' ? 1 : 0) +
+    (selectedPotreroFilter !== 'ALL' ? 1 : 0);
 
   // Lógica para detectar exactamente los 8 meses
   const is8MonthsOld = (animal) => {
@@ -266,14 +288,17 @@ export default function InventarioPage() {
       const term = searchTerm.toLowerCase();
       const animalName = (a.name || '').toLowerCase();
       const animalNum = (a.number || '').toLowerCase();
-      const matchesSearch = !term || animalNum.includes(term) || animalName.includes(term) || a.id.toLowerCase().includes(term);
+      const animalChip = (a.chip_number || '').toLowerCase();
+      const animalOwner = (ownerMap[a.owner_id] || '').toLowerCase();
+      const matchesSearch = !term || animalNum.includes(term) || animalName.includes(term) || animalChip.includes(term) || animalOwner.includes(term) || a.id.toLowerCase().includes(term);
       
       const matchesSex = filters.sex.length === 0 || filters.sex.includes(a.sex);
       const currentStatus = a.status || 'Activo';
       const matchesStatus = filters.status.length === 0 || filters.status.includes(currentStatus);
       const matchesFarm = selectedFarmFilter === 'ALL' || a.farm_id === selectedFarmFilter;
+      const matchesPotrero = selectedPotreroFilter === 'ALL' || a.potrero_id === selectedPotreroFilter;
       
-      const currentBreed = a.breed || 'Mestizo';
+      const currentBreed = a.breed || 'Sin raza';
       const matchesBreed = filters.breed.length === 0 || filters.breed.includes(currentBreed);
 
       let category = 'Desconocida';
@@ -287,7 +312,7 @@ export default function InventarioPage() {
       }
       const matchesCategory = filters.category.length === 0 || filters.category.includes(category);
 
-      return matchesSearch && matchesSex && matchesStatus && matchesCategory && matchesFarm && matchesBreed;
+      return matchesSearch && matchesSex && matchesStatus && matchesCategory && matchesFarm && matchesPotrero && matchesBreed;
     });
 
     // Ordenar: Los de 8 meses resaltados van de primeros
@@ -300,12 +325,12 @@ export default function InventarioPage() {
     });
 
     return [...highlighted, ...normal];
-  }, [allAnimals, searchTerm, filters, selectedFarmFilter, viewedHighlights]);
+  }, [allAnimals, searchTerm, filters, selectedFarmFilter, selectedPotreroFilter, viewedHighlights, ownerMap]);
 
   // --- REINICIAR PAGINACIÓN AL FILTRAR O BUSCAR ---
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filters, selectedFarmFilter]);
+  }, [searchTerm, filters, selectedFarmFilter, selectedPotreroFilter]);
 
   // --- PAGINACIÓN ---
   const totalPages = Math.ceil(filteredAnimals.length / ITEMS_PER_PAGE);
@@ -358,6 +383,8 @@ export default function InventarioPage() {
         onClose={() => setIsDrawerOpen(false)}
         farmsCount={farms.length}
         onOpenFarms={() => setIsFarmModalOpen(true)}
+        ownersCount={owners.length}
+        onOpenOwners={() => setIsOwnerModalOpen(true)}
         onForceResync={handleForceSync}
         isResyncing={isResyncing}
         resyncSuccess={resyncSuccess}
@@ -435,7 +462,10 @@ export default function InventarioPage() {
                       <button
                         type="button"
                         key={f.id}
-                        onClick={() => setSelectedFarmFilter(f.id)}
+                        onClick={() => {
+                          setSelectedFarmFilter(f.id);
+                          setSelectedPotreroFilter('ALL');
+                        }}
                         className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
                           selectedFarmFilter === f.id
                             ? 'bg-[#1B4820] text-white shadow-xs'
@@ -451,6 +481,53 @@ export default function InventarioPage() {
                     );
                   })}
                 </div>
+
+                {/* Sub-filtro de Potreros de la Finca Seleccionada */}
+                {selectedFarmFilter !== 'ALL' && (
+                  <div className="mt-3 pl-3 border-l-2 border-emerald-500/40 space-y-1.5 animate-in fade-in">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-black uppercase text-[#1B4820] tracking-wider">Potreros</span>
+                      {selectedPotreroFilter !== 'ALL' && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPotreroFilter('ALL')}
+                          className="text-[10px] font-bold text-neutral-400 hover:text-neutral-700 underline"
+                        >
+                          Ver todos
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPotreroFilter('ALL')}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                        selectedPotreroFilter === 'ALL'
+                          ? 'bg-[#1B4820] text-white'
+                          : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                      }`}
+                    >
+                      Todos los potreros
+                    </button>
+                    {potreros.filter(p => p.farm_id === selectedFarmFilter).map(p => {
+                      const count = allAnimals?.filter(a => a.potrero_id === p.id).length || 0;
+                      return (
+                        <button
+                          type="button"
+                          key={p.id}
+                          onClick={() => setSelectedPotreroFilter(p.id)}
+                          className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center justify-between cursor-pointer ${
+                            selectedPotreroFilter === p.id
+                              ? 'bg-[#1B4820] text-white'
+                              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                          }`}
+                        >
+                          <span className="truncate">{p.name}</span>
+                          <span className="opacity-75 ml-1 text-[10px]">({count})</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* 2. Filtro por Raza */}
@@ -661,28 +738,47 @@ export default function InventarioPage() {
                           >
                             {animalDisplayName}
                           </h2>
-                          {animal.name && (
-                            <p className="text-xs font-bold text-neutral-400 mt-0.5">#{animal.number}</p>
-                          )}
+                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                            {animal.name && (
+                              <span className="text-xs font-bold text-neutral-400">#{animal.number}</span>
+                            )}
+                            {animal.chip_number && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-black bg-blue-50 text-blue-800 px-2 py-0.5 rounded-md border border-blue-200/60">
+                                <Cpu className="w-3 h-3" />
+                                {animal.chip_number}
+                              </span>
+                            )}
+                          </div>
                         </div>
 
-                        {/* Fila 1: Raza & Genética */}
+                        {/* Fila 1: Raza (Sin porcentaje) */}
                         <div className="flex items-center gap-2 text-xs font-semibold text-neutral-700 py-0.5">
                           <Dna className="w-3.5 h-3.5 text-[#1B4820] shrink-0" />
                           <span className="truncate">
-                            {formatGeneticsLabel(animal.breed, animal.purity_percentage, animal.breed_composition)}
+                            {animal.breed || 'Sin raza'}
                           </span>
                         </div>
 
-                        {/* Fila 2: Finca asignada */}
+                        {/* Fila 2: Finca y Potrero */}
                         <div className="flex items-center gap-2 text-xs font-medium text-neutral-600 py-0.5">
                           <Building2 className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                           <span className="truncate">
-                            {animal.farm_id && farmMap[animal.farm_id] ? farmMap[animal.farm_id] : 'Sin finca asignada'}
+                            {animal.farm_id && farmMap[animal.farm_id] ? farmMap[animal.farm_id] : 'Sin finca'}
+                            {animal.potrero_id && potreroMap[animal.potrero_id] ? ` · ${potreroMap[animal.potrero_id]}` : ''}
                           </span>
                         </div>
 
-                        {/* Fila 3: Edad */}
+                        {/* Fila 3: Dueño (si tiene) */}
+                        {animal.owner_id && ownerMap[animal.owner_id] && (
+                          <div className="flex items-center gap-2 text-xs font-medium text-neutral-600 py-0.5">
+                            <UserCheck className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                            <span className="truncate">
+                              Dueño: {ownerMap[animal.owner_id]}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Fila 4: Edad */}
                         <div className="flex items-center gap-2 text-xs font-medium text-neutral-600 py-0.5">
                           <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                           <span className="truncate">
@@ -799,6 +895,18 @@ export default function InventarioPage() {
         }}
         onFarmUpdated={(farm) => {
           showToast('¡Finca actualizada con éxito!', `Los cambios en "${farm.name}" fueron guardados.`);
+        }}
+      />
+
+      {/* MODAL GESTIÓN DE DUEÑOS */}
+      <OwnerModal
+        isOpen={isOwnerModalOpen}
+        onClose={() => setIsOwnerModalOpen(false)}
+        onOwnerCreated={(owner) => {
+          showToast('¡Dueño creado con éxito!', `"${owner.name}" fue registrado correctamente.`);
+        }}
+        onOwnerUpdated={(owner) => {
+          showToast('¡Dueño actualizado con éxito!', `Los cambios en "${owner.name}" fueron guardados.`);
         }}
       />
 

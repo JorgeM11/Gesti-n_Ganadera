@@ -7,6 +7,7 @@ import {
   X, 
   Layers, 
   Building2, 
+  UserCheck,
   RefreshCcw, 
   LogOut, 
   CheckCircle2, 
@@ -20,6 +21,8 @@ export default function NavigationDrawer({
   onClose,
   farmsCount = 0,
   onOpenFarms,
+  ownersCount = 0,
+  onOpenOwners,
   onForceResync,
   isResyncing = false,
   resyncSuccess = false,
@@ -96,7 +99,7 @@ export default function NavigationDrawer({
                   <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/inventario') ? 'text-white' : 'text-neutral-400'}`} />
                 </button>
 
-                {/* 2. Fincas */}
+                {/* 2. Fincas y Potreros */}
                 <button
                   type="button"
                   onClick={() => {
@@ -106,11 +109,30 @@ export default function NavigationDrawer({
                 >
                   <div className="flex items-center gap-3">
                     <Building2 className="w-5 h-5 text-neutral-600" />
-                    <span>Fincas</span>
+                    <span>Fincas y Potreros</span>
                   </div>
                   {farmsCount > 0 && (
                     <span className="text-[10px] font-black bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-full">
                       {farmsCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* 3. Dueños */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onOpenOwners) onOpenOwners();
+                  }}
+                  className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold text-neutral-700 hover:bg-neutral-100 transition-all cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <UserCheck className="w-5 h-5 text-neutral-600" />
+                    <span>Dueños</span>
+                  </div>
+                  {ownersCount > 0 && (
+                    <span className="text-[10px] font-black bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-full">
+                      {ownersCount}
                     </span>
                   )}
                 </button>

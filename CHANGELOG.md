@@ -6,6 +6,47 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 
 ---
 
+## [1.2.0-phase2-features] - 2026-10-02
+
+### Agregado
+- **Nivel de Potreros dentro de Fincas**:
+  - Nueva entidad `potreros` asociada a cada `farm_id` en IndexedDB ([`db.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/db.js) v7) y utilidades CRUD ([`potreroUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/potreroUtils.js)).
+  - Panel expandible en cada finca dentro de [`FarmModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/FarmModal.jsx) para ver, agregar, editar y eliminar potreros.
+  - Sub-filtro reactivo de potreros en el drawer de filtros de [`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx) al seleccionar una finca.
+  - Creación rápida de potreros inline desde el formulario animal ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx)).
+- **Gestión de Dueños de Animales**:
+  - Nueva entidad `owners` en IndexedDB ([`db.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/db.js) v7) y utilidades CRUD ([`ownerUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/ownerUtils.js)).
+  - Nuevo modal [`OwnerModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/OwnerModal.jsx) para gestión de dueños (creación, edición de nombre, listado con conteo de animales y eliminación).
+  - Acceso directo a Dueños desde la barra lateral [`NavigationDrawer.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/NavigationDrawer.jsx).
+  - Creación rápida de dueños inline desde [`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx).
+  - Búsqueda en catálogo de inventario por nombre de dueño.
+
+### Modificado
+- **Reestructuración Completa de Formulario de Registro y Edición Animal ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - Nuevo orden estricto de campos:
+    1. Número de arete (obligatorio)
+    2. Número de chip
+    3. Nombre (opcional)
+    4. Género (Hembra / Macho)
+    5. Fecha de nacimiento
+    6. Peso (opcional)
+    7. Color (opcional)
+    8. Dueño (con selector y creación rápida)
+    9. Finca (con selector y gestión de fincas)
+    10. Potrero (habilitado y dependiente de la finca seleccionada, con creación rápida)
+    11. Madre y Padre (Genealogía)
+    12. Raza sin porcentaje (eliminada barra de pureza; añadida la opción explícita "Sin raza")
+    13. Estado (Activo / Inactivo con motivo de baja)
+    14. Foto + Descripción (opcional)
+  - Removidos completamente los acordeones de eventos de nacimiento y destete (ahora centralizados únicamente en el módulo de eventos).
+- **Catálogo de Animales ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - Tarjetas de animales actualizadas para mostrar chip electrónico, dueño, finca con potrero asociado y raza limpia sin porcentaje.
+  - Búsqueda global extendida para coincidir con número de arete, nombre, número de chip y nombre del dueño.
+- **Ficha Técnica del Perfil ([`DetailsTab.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/DetailsTab.jsx))**:
+  - Presentación clara de arete, chip, nombre, dueño, finca, potrero, raza limpia y observaciones.
+
+---
+
 ## [1.1.0-phase2-cleanup] - 2026-10-02
 
 ### Eliminado

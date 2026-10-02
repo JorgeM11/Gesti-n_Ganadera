@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   IdCard, Network, FileText, Pencil, CircleAlert, Building2, 
-  Dna, Scale, Calendar, ArrowUpRight, Palette
+  Dna, Scale, Calendar, ArrowUpRight, Palette, Cpu, UserCheck, Tag
 } from 'lucide-react';
 import { FaMars, FaVenus } from 'react-icons/fa6';
 import AnimalImage from '@/components/inventario/AnimalImage';
@@ -11,68 +11,13 @@ import { db } from '@/lib/db';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
-/**
- * Componente que muestra la pureza genética respetando:
- * - Si es raza pura/específica: muestra el porcentaje individual (ej. 100% o 85%).
- * - Si es Mestizo: muestra el desglose porcentual de cada raza SIN mostrar un porcentaje global.
- */
-function GeneticsPurityDisplay({ breed, purity, composition }) {
-  const isMestizo = !breed || breed.toLowerCase() === 'mestizo';
-
-  if (!isMestizo) {
-    const pct = purity !== undefined && purity !== null ? Math.round(Number(purity)) : 100;
-    return (
-      <div className="flex items-center gap-2 mt-0.5">
-        <span className="font-black text-neutral-900 text-sm">{pct}%</span>
-        {pct >= 90 && (
-          <span className="inline-flex items-center text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
-            Puro
-          </span>
-        )}
-      </div>
-    );
-  }
-
-  // Es Mestizo: Mostrar desglose de cada raza SIN porcentaje global
-  let entries = [];
-  if (composition && typeof composition === 'object') {
-    entries = Object.entries(composition)
-      .filter(([raza, pct]) => Number(pct) > 0)
-      .sort((a, b) => Number(b[1]) - Number(a[1]));
-  }
-
-  if (entries.length > 0) {
-    return (
-      <div className="flex flex-wrap gap-1.5 mt-1">
-        {entries.map(([raza, pct]) => (
-          <span
-            key={raza}
-            className="inline-flex items-center gap-1 bg-amber-50 text-amber-900 border border-amber-200/80 px-2.5 py-1 rounded-xl text-xs font-bold shadow-2xs"
-          >
-            <span>{raza}:</span>
-            <span className="font-black text-amber-700">{Math.round(Number(pct))}%</span>
-          </span>
-        ))}
-      </div>
-    );
-  }
-
+function InfoTile({ label, icon: Icon, children, className = '' }) {
   return (
-    <div className="mt-0.5">
-      <span className="text-xs font-semibold text-neutral-500 italic">
-        Cruce mestizo (sin desglose específico)
+    <div className={`p-3.5 bg-neutral-50/80 rounded-2xl border border-neutral-100 flex flex-col justify-between ${className}`}>
+      <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-400 flex items-center gap-1.5 mb-1">
+        {Icon && <Icon className="w-3.5 h-3.5 text-[#1B4820]" />}
+        {label}
       </span>
-    </div>
-  );
-}
-
-function InfoTile({ label, icon: Icon, children, className = "" }) {
-  return (
-    <div className={`bg-neutral-50/70 border border-neutral-100 rounded-2xl p-3.5 flex flex-col justify-between ${className}`}>
-      <div className="flex items-center gap-1.5 text-neutral-400 mb-1">
-        {Icon && <Icon className="w-3.5 h-3.5 text-neutral-400 shrink-0" />}
-        <span className="text-[10px] uppercase font-bold tracking-widest text-neutral-400 truncate">{label}</span>
-      </div>
       <div>{children}</div>
     </div>
   );
@@ -92,6 +37,16 @@ export default function DetailsTab({ animal, onEdit }) {
   const farm = useLiveQuery(
     () => animal?.farm_id ? db.farms.get(animal.farm_id) : null,
     [animal?.farm_id]
+  );
+
+  const potrero = useLiveQuery(
+    () => animal?.potrero_id ? db.potreros.get(animal.potrero_id) : null,
+    [animal?.potrero_id]
+  );
+
+  const owner = useLiveQuery(
+    () => animal?.owner_id ? db.owners.get(animal.owner_id) : null,
+    [animal?.owner_id]
   );
 
   if (!animal) return null;
@@ -118,23 +73,48 @@ export default function DetailsTab({ animal, onEdit }) {
             <span className={`w-2 h-2 rounded-full ${animal.status === 'Inactivo' ? 'bg-red-400' : 'bg-emerald-400 animate-pulse'}`} />
             <span>{animal.status || 'Activo'}</span>
           </div>
+
+          {/* Badge Sexo */}
+          <div className="absolute top-3.5 right-3.5">
+            <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-sm ${
+              isFemale ? 'bg-pink-600/90 backdrop-blur-xs' : 'bg-blue-700/90 backdrop-blur-xs'
+            }`}>
+              {animal.sex || 'Bovino'}
+            </span>
+          </div>
         </div>
 
         {/* Identificador Principal */}
         <div className="flex items-center justify-between px-1">
           <div>
-            <span className="text-3xl sm:text-4xl font-black text-[#1B4820] tracking-tight block">
-              #{animal.number}
-            </span>
-            {animal.color && (
-              <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mt-0.5">
-                {animal.color}
-              </p>
-            )}
+            <div className="flex items-center gap-2">
+              <span className="text-3xl sm:text-4xl font-black text-[#1B4820] tracking-tight block">
+                #{animal.number}
+              </span>
+              {animal.name && (
+                <span className="text-lg sm:text-xl font-bold text-neutral-800 self-end mb-1">
+                  ({animal.name})
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {animal.chip_number && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-blue-50 text-blue-800 px-2.5 py-0.5 rounded-full border border-blue-200">
+                  <Cpu className="w-3 h-3" />
+                  Chip: {animal.chip_number}
+                </span>
+              )}
+              {animal.color && (
+                <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
+                  Color: {animal.color}
+                </span>
+              )}
+            </div>
           </div>
           <div className="text-right">
-            <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400 block">Raza Principal</span>
-            <span className="text-base font-black text-neutral-800">{animal.breed || 'Mestizo'}</span>
+            <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400 block">Raza</span>
+            <span className="text-base font-black text-neutral-800">{animal.breed || 'Sin raza'}</span>
           </div>
         </div>
 
@@ -180,19 +160,43 @@ export default function DetailsTab({ animal, onEdit }) {
               <IdCard className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-[#1B4820]">Identificación Detallada</h3>
-              <p className="text-[11px] text-neutral-400 font-medium">Parámetros biológicos y registro en hacienda</p>
+              <h3 className="text-base sm:text-lg font-bold text-[#1B4820]">Identificación y Ubicación</h3>
+              <p className="text-[11px] text-neutral-400 font-medium">Datos del animal, propiedad y finca</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <InfoTile label="Número / ID" icon={IdCard}>
+            <InfoTile label="Número de Arete" icon={IdCard}>
               <span className="font-black text-base text-neutral-900">#{animal.number}</span>
+            </InfoTile>
+
+            <InfoTile label="Número de Chip" icon={Cpu}>
+              <span className="font-bold text-sm text-neutral-800">
+                {animal.chip_number || 'Sin chip asignado'}
+              </span>
+            </InfoTile>
+
+            <InfoTile label="Nombre" icon={Tag}>
+              <span className="font-bold text-sm text-neutral-800">
+                {animal.name || 'Sin nombre asignado'}
+              </span>
+            </InfoTile>
+
+            <InfoTile label="Dueño / Propietario" icon={UserCheck}>
+              <span className="font-bold text-sm text-neutral-800">
+                {owner?.name || 'Sin dueño asignado'}
+              </span>
             </InfoTile>
 
             <InfoTile label="Finca" icon={Building2}>
               <span className="font-bold text-sm text-neutral-800 truncate block">
                 {farm?.name ? `${farm.name}${farm.location ? ` (${farm.location})` : ''}` : 'Sin finca asignada'}
+              </span>
+            </InfoTile>
+
+            <InfoTile label="Potrero" icon={Building2}>
+              <span className="font-bold text-sm text-neutral-800 truncate block">
+                {potrero?.name || 'Sin potrero asignado'}
               </span>
             </InfoTile>
 
@@ -214,23 +218,10 @@ export default function DetailsTab({ animal, onEdit }) {
               </span>
             </InfoTile>
 
-            <InfoTile label="Raza Principal" icon={Dna}>
+            <InfoTile label="Raza" icon={Dna}>
               <span className="font-bold text-sm text-neutral-800">
-                {animal.breed || 'Mestizo'}
+                {animal.breed || 'Sin raza'}
               </span>
-            </InfoTile>
-
-            {/* Pureza Genética: Si es raza pura muestra el %, si es mestizo muestra desglose SIN porcentaje global */}
-            <InfoTile 
-              label="Pureza Genética" 
-              icon={Dna} 
-              className={(!animal.breed || animal.breed === 'Mestizo') ? 'sm:col-span-2' : ''}
-            >
-              <GeneticsPurityDisplay 
-                breed={animal.breed} 
-                purity={animal.purity_percentage} 
-                composition={animal.breed_composition} 
-              />
             </InfoTile>
 
             <InfoTile label="Estado en Inventario">
@@ -240,6 +231,14 @@ export default function DetailsTab({ animal, onEdit }) {
                 {animal.status || 'Activo'}
               </span>
             </InfoTile>
+
+            {animal.status === 'Inactivo' && animal.inactivity_reason && (
+              <InfoTile label="Motivo de Baja" className="sm:col-span-2">
+                <span className="font-bold text-xs text-red-600 block">
+                  {animal.inactivity_reason}
+                </span>
+              </InfoTile>
+            )}
           </div>
         </section>
 
@@ -250,137 +249,66 @@ export default function DetailsTab({ animal, onEdit }) {
               <Network className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-[#1B4820]">Genealogía Directa</h3>
-              <p className="text-[11px] text-neutral-400 font-medium">Linaje parental directo</p>
+              <h3 className="text-base sm:text-lg font-bold text-[#1B4820]">Genealogía Registrada</h3>
+              <p className="text-[11px] text-neutral-400 font-medium">Madre y Padre del animal</p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Padre */}
-            {animal.father_id ? (
-              <Link 
-                to={`/inventario/perfil?id=${animal.father_id}&tab=details`} 
-                className="group bg-neutral-50/80 hover:bg-emerald-50/50 border border-neutral-200/80 hover:border-[#1B4820]/40 rounded-2xl p-4 transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 shadow-2xs"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center">
-                      <FaMars className="w-3.5 h-3.5" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-neutral-500">Padre (Toro)</span>
-                  </div>
-                  <ArrowUpRight className="w-4 h-4 text-[#1B4820] md:text-neutral-400 md:group-hover:text-[#1B4820] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                </div>
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-lg font-black text-neutral-900 group-hover:text-[#1B4820] transition-colors">
-                    {parents?.father?.number ? `#${parents.father.number}` : `#${animal.father_id.split('-')[0]}`}
-                  </span>
-                  {parents?.father?.breed && (
-                    <span className="text-[10px] font-bold text-neutral-500 bg-white px-2 py-0.5 rounded-md border border-neutral-200/60">
-                      {parents.father.breed}
-                    </span>
-                  )}
-                </div>
-              </Link>
-            ) : (
-              <div className="bg-neutral-50/60 border border-neutral-100 rounded-2xl p-4 flex items-center gap-3 text-neutral-400">
-                <div className="w-7 h-7 rounded-xl bg-neutral-200/60 text-neutral-400 flex items-center justify-center">
-                  <FaMars className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">Padre</span>
-                  <span className="text-xs font-semibold text-neutral-500">No registrado</span>
-                </div>
-              </div>
-            )}
+            <div className="p-4 bg-neutral-50/80 rounded-2xl border border-neutral-100">
+              <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400 block mb-1">
+                Padre (Toro)
+              </span>
+              {parents?.father ? (
+                <Link 
+                  to={`/inventario/perfil?id=${parents.father.id}`}
+                  className="inline-flex items-center gap-1 font-bold text-sm text-[#1B4820] hover:underline"
+                >
+                  #{parents.father.number} {parents.father.name ? `(${parents.father.name})` : ''}
+                  <ArrowUpRight className="w-3.5 h-3.5 opacity-60" />
+                </Link>
+              ) : (
+                <span className="text-sm font-semibold text-neutral-400">
+                  {animal.father_id || 'No registrado / Desconocido'}
+                </span>
+              )}
+            </div>
 
-            {/* Madre */}
-            {animal.mother_id ? (
-              <Link 
-                to={`/inventario/perfil?id=${animal.mother_id}&tab=details`} 
-                className="group bg-neutral-50/80 hover:bg-emerald-50/50 border border-neutral-200/80 hover:border-[#1B4820]/40 rounded-2xl p-4 transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 shadow-2xs"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-xl bg-pink-100 text-pink-800 flex items-center justify-center">
-                      <FaVenus className="w-3.5 h-3.5" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-wider text-neutral-500">Madre (Vaca)</span>
-                  </div>
-                  <ArrowUpRight className="w-4 h-4 text-[#1B4820] md:text-neutral-400 md:group-hover:text-[#1B4820] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-                </div>
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-lg font-black text-neutral-900 group-hover:text-[#1B4820] transition-colors">
-                    {parents?.mother?.number ? `#${parents.mother.number}` : `#${animal.mother_id.split('-')[0]}`}
-                  </span>
-                  {parents?.mother?.breed && (
-                    <span className="text-[10px] font-bold text-neutral-500 bg-white px-2 py-0.5 rounded-md border border-neutral-200/60">
-                      {parents.mother.breed}
-                    </span>
-                  )}
-                </div>
-              </Link>
-            ) : (
-              <div className="bg-neutral-50/60 border border-neutral-100 rounded-2xl p-4 flex items-center gap-3 text-neutral-400">
-                <div className="w-7 h-7 rounded-xl bg-neutral-200/60 text-neutral-400 flex items-center justify-center">
-                  <FaVenus className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block">Madre</span>
-                  <span className="text-xs font-semibold text-neutral-500">No registrada</span>
-                </div>
-              </div>
-            )}
+            <div className="p-4 bg-neutral-50/80 rounded-2xl border border-neutral-100">
+              <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400 block mb-1">
+                Madre (Vaca)
+              </span>
+              {parents?.mother ? (
+                <Link 
+                  to={`/inventario/perfil?id=${parents.mother.id}`}
+                  className="inline-flex items-center gap-1 font-bold text-sm text-[#1B4820] hover:underline"
+                >
+                  #{parents.mother.number} {parents.mother.name ? `(${parents.mother.name})` : ''}
+                  <ArrowUpRight className="w-3.5 h-3.5 opacity-60" />
+                </Link>
+              ) : (
+                <span className="text-sm font-semibold text-neutral-400">
+                  {animal.mother_id || 'No registrada / Desconocida'}
+                </span>
+              )}
+            </div>
           </div>
         </section>
 
-        {/* Observaciones */}
+        {/* Observaciones Generales */}
         {animal.observations && (
-          <section className="bg-[#F4F5F0] p-5 rounded-3xl border border-neutral-200/60 space-y-2">
+          <section className="bg-white p-5 sm:p-6 rounded-3xl shadow-sm border border-neutral-100/90 space-y-3">
             <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-[#1B4820]" />
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#1B4820]">Observaciones del Ganadero</h3>
+              <FileText className="w-4 h-4 text-neutral-400" />
+              <h3 className="text-sm font-bold text-neutral-900 uppercase tracking-wider">Observaciones Generales</h3>
             </div>
-            <p className="text-sm text-neutral-700 leading-relaxed font-medium">
+            <p className="text-xs text-neutral-600 leading-relaxed whitespace-pre-wrap bg-neutral-50/80 p-4 rounded-2xl border border-neutral-100">
               {animal.observations}
             </p>
           </section>
         )}
-
-        {/* Razón de Inactividad (Solo si aplica) */}
-        {animal.status === 'Inactivo' && (
-          <section className="bg-red-50/80 p-5 rounded-3xl border border-red-200 animate-in fade-in slide-in-from-top-2 duration-300 space-y-1.5">
-            <div className="flex items-center gap-2 text-red-700">
-              <CircleAlert className="w-4 h-4" />
-              <h3 className="text-xs font-bold uppercase tracking-wider">Razón de Inactividad</h3>
-            </div>
-            <p className="text-sm text-red-600 leading-relaxed font-bold">
-              {animal.inactivity_reason || 'No se especificó una razón para la baja del animal.'}
-            </p>
-          </section>
-        )}
-
-        {/* Botón Flotante Editar para MÓVIL (FAB) */}
-        <motion.button 
-          initial={{ opacity: 0, scale: 0.88, y: 10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.88, y: 8 }}
-          transition={{ 
-            type: "spring", 
-            stiffness: 450, 
-            damping: 30, 
-            mass: 0.6 
-          }}
-          whileTap={{ scale: 0.92 }}
-          onClick={onEdit}
-          className="fixed bottom-20 right-4 z-30 md:hidden flex items-center gap-2 bg-[#1B4820] hover:bg-[#123316] text-white font-bold px-4 py-3 rounded-full shadow-[0_8px_25px_rgba(27,72,32,0.4)] border border-emerald-600/30 cursor-pointer text-xs uppercase tracking-wider backdrop-blur-xs"
-          title="Editar Animal"
-          aria-label="Editar Animal"
-        >
-          <Pencil className="w-4 h-4" />
-          <span>Editar</span>
-        </motion.button>
       </div>
+
     </div>
   );
 }
