@@ -44,6 +44,7 @@ flowchart TD
 - [x] Configuración de variables de entorno `.env.local` con credenciales de Supabase actual para asegurar continuidad durante el desarrollo.
 - [x] Verificación de compilación exitosa (`npm run build` ejecutado en 861ms generando Service Worker PWA).
 - [x] Creación de `planificacion.md` y `CHANGELOG.md` para control formal del ciclo de vida.
+- [x] Vinculación y sincronización con el repositorio remoto de GitHub (`https://github.com/JorgeM11/Gesti-n_Ganadera.git`) en rama `main`.
 
 ---
 
