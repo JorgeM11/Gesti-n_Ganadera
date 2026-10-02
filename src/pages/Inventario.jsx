@@ -6,14 +6,11 @@ import {
   Scale, 
   Plus, 
   X, 
-  Syringe, 
-  ClipboardPlus, 
   CheckCircle2, 
   XCircle, 
   Check, 
   AlertCircle, 
   Building2, 
-  Milk, 
   Dna, 
   Calendar, 
   Menu, 
@@ -29,18 +26,12 @@ import SyncStatus from '@/components/ui/SyncStatus';
 import AnimalImage from '@/components/inventario/AnimalImage';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import FarmModal from '@/components/inventario/FarmModal';
-import MilkingModal from '@/components/inventario/MilkingModal';
 import NavigationDrawer from '@/components/inventario/NavigationDrawer';
 import AnimalCardSkeleton from '@/components/inventario/AnimalCardSkeleton';
 import Toast from '@/components/ui/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForceResync } from '@/hooks/useForceResync';
 import { runFullSync } from '@/lib/syncUtils';
-
-const actionOptions = [
-  { label: 'Vacunación por Lotes', icon: Syringe, type: 'batch' },
-  { label: 'Nuevo Registro', icon: ClipboardPlus, href: '/inventario/nuevo' },
-];
 
 const ITEMS_PER_PAGE = 48;
 
@@ -96,7 +87,6 @@ const SearchInput = ({ isMobile = false, searchTerm, setSearchTerm, onOpenFilter
 export default function InventarioPage() {
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isFabOpen, setIsFabOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -150,10 +140,6 @@ export default function InventarioPage() {
     if (document.body) document.body.scrollTop = 0;
   }, [currentPage]);
 
-  // --- ESTADOS PARA BATCH MODE ---
-  const [isBatchMode, setIsBatchMode] = useState(false);
-  const [selectedAnimalIds, setSelectedAnimalIds] = useState(new Set());
-
   // --- ESTADO PARA RESALTAR 8 MESES ---
   const [viewedHighlights, setViewedHighlights] = useState(() => {
     try { return JSON.parse(localStorage.getItem('viewed8Months') || '[]'); }
@@ -164,11 +150,9 @@ export default function InventarioPage() {
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [pendingLogoutCount, setPendingLogoutCount] = useState(0);
 
-  // --- ESTADOS PARA FINCAS Y ORDEÑO ---
+  // --- ESTADOS PARA FINCAS ---
   const [selectedFarmFilter, setSelectedFarmFilter] = useState('ALL');
   const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
-  const [isQuickMilkingOpen, setIsQuickMilkingOpen] = useState(false);
-  const [milkingAnimal, setMilkingAnimal] = useState(null);
 
   // --- ESTADO PARA NOTIFICACIONES DE CONFIRMACIÓN (TOAST) ---
   const [toast, setToast] = useState(null);
@@ -352,47 +336,18 @@ export default function InventarioPage() {
     }).length;
   };
 
-  const toggleAnimalSelection = (id) => {
-    const newSelection = new Set(selectedAnimalIds);
-    if (newSelection.has(id)) {
-      newSelection.delete(id);
-    } else {
-      newSelection.add(id);
-    }
-    setSelectedAnimalIds(newSelection);
-  };
-
-  const toggleSelectAll = () => {
-    if (selectedAnimalIds.size === filteredAnimals.length) {
-      setSelectedAnimalIds(new Set());
-    } else {
-      setSelectedAnimalIds(new Set(filteredAnimals.map(a => a.id)));
-    }
-  };
-
-  const handleContinueBatch = () => {
-    if (selectedAnimalIds.size === 0) return;
-    sessionStorage.setItem('batchAnimalIds', JSON.stringify(Array.from(selectedAnimalIds)));
-    navigate('/inventario/tratamiento-lote');
-  };
-
-  const cancelBatchMode = () => {
-    setIsBatchMode(false);
-    setSelectedAnimalIds(new Set());
-  };
-
   return (
     <main className="min-h-screen bg-[#F0F2EB] font-sans pb-32 relative">
 
-      {/* OVERLAY FONDO OSCURO PARA FAB O FILTROS */}
+      {/* OVERLAY FONDO OSCURO PARA FILTROS */}
       <AnimatePresence>
-        {(isFabOpen || isFilterOpen) && (
+        {isFilterOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className={`fixed inset-0 bg-black/60 cursor-pointer ${isFilterOpen ? 'z-[55]' : 'z-40'}`}
-            onClick={() => { setIsFabOpen(false); setIsFilterOpen(false); }}
+            className="fixed inset-0 bg-black/60 cursor-pointer z-[55]"
+            onClick={() => setIsFilterOpen(false)}
           />
         )}
       </AnimatePresence>
@@ -403,7 +358,6 @@ export default function InventarioPage() {
         onClose={() => setIsDrawerOpen(false)}
         farmsCount={farms.length}
         onOpenFarms={() => setIsFarmModalOpen(true)}
-        onOpenMilking={() => setIsQuickMilkingOpen(true)}
         onForceResync={handleForceSync}
         isResyncing={isResyncing}
         resyncSuccess={resyncSuccess}
@@ -628,25 +582,6 @@ export default function InventarioPage() {
           </div>
         )}
 
-        {/* Banner de Modo Batch */}
-        {isBatchMode && (
-          <div className="mb-6 flex items-center justify-between bg-[#1B4820] text-white px-6 py-4 rounded-[2rem] shadow-lg shadow-[#1B4820]/20 animate-in fade-in slide-in-from-top-4 duration-300">
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 p-2 rounded-xl">
-                <Syringe className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-sm font-black uppercase tracking-widest">Vacunación por Lotes</span>
-            </div>
-            <button
-              type="button"
-              onClick={toggleSelectAll}
-              className="text-xs font-black uppercase tracking-widest bg-white/10 px-4 py-2 rounded-xl hover:bg-white/20 transition-colors cursor-pointer"
-            >
-              {selectedAnimalIds.size === filteredAnimals.length ? 'Deseleccionar todo' : 'Seleccionar todo'}
-            </button>
-          </div>
-        )}
-
         {/* ESTADO DE CARGA: SKELETON */}
         {allAnimals === undefined ? (
           <AnimalCardSkeleton count={8} />
@@ -658,7 +593,6 @@ export default function InventarioPage() {
               className="grid grid-cols-1 min-[460px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
             >
               {paginatedAnimals.map((animal) => {
-                const isSelected = selectedAnimalIds.has(animal.id);
                 const isHighlight = is8MonthsOld(animal);
                 const animalDisplayName = animal.name ? animal.name : `#${animal.number}`;
 
@@ -666,15 +600,13 @@ export default function InventarioPage() {
                   <motion.article 
                     whileHover={{ y: -4, transition: { duration: 0.2 } }}
                     className={`relative bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full cursor-pointer group border-2 ${
-                      isSelected 
-                        ? 'border-[#1B4820] ring-2 ring-[#1B4820]/20' 
-                        : isHighlight 
-                          ? 'border-amber-400 shadow-amber-400/20 shadow-lg' 
-                          : 'border-neutral-200/80 hover:border-neutral-300'
+                      isHighlight 
+                        ? 'border-amber-400 shadow-amber-400/20 shadow-lg' 
+                        : 'border-neutral-200/80 hover:border-neutral-300'
                     }`}
                   >
                     {/* Alerta Visual de 8 Meses */}
-                    {isHighlight && !isBatchMode && (
+                    {isHighlight && (
                       <div className="w-full bg-amber-400 text-amber-950 text-[10px] font-black uppercase tracking-widest text-center py-1.5 z-20 flex items-center justify-center gap-1.5 shadow-xs">
                         <AlertCircle className="w-3.5 h-3.5" />
                         <span>8 Meses Cumplidos</span>
@@ -687,30 +619,17 @@ export default function InventarioPage() {
                         photoPath={animal.photo_path}
                         photoBlob={animal.photo_blob}
                         alt={animalDisplayName}
-                        className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ${
-                          isSelected ? 'opacity-70 grayscale-[0.2]' : ''
-                        }`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
 
-                      {/* Checkbox de selección en modo lote */}
-                      {isBatchMode && (
-                        <div className={`absolute top-3 left-3 w-8 h-8 rounded-xl border-2 flex items-center justify-center transition-all z-10 ${
-                          isSelected ? 'bg-[#1B4820] border-[#1B4820] shadow-md' : 'bg-white/90 border-neutral-300 shadow-sm'
+                      {/* Badge de Sexo */}
+                      <div className="absolute top-3 left-3">
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-sm ${
+                          animal.sex === 'Hembra' ? 'bg-pink-600/90 backdrop-blur-xs' : 'bg-blue-700/90 backdrop-blur-xs'
                         }`}>
-                          {isSelected && <Check className="w-4 h-4 text-white stroke-[3]" />}
-                        </div>
-                      )}
-
-                      {/* Badge de Sexo (si no está en modo lote) */}
-                      {!isBatchMode && (
-                        <div className="absolute top-3 left-3">
-                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-sm ${
-                            animal.sex === 'Hembra' ? 'bg-pink-600/90 backdrop-blur-xs' : 'bg-blue-700/90 backdrop-blur-xs'
-                          }`}>
-                            {animal.sex || 'Bovino'}
-                          </span>
-                        </div>
-                      )}
+                          {animal.sex || 'Bovino'}
+                        </span>
+                      </div>
 
                       {/* Badge de Status (Activo / Inactivo) */}
                       <div className="absolute top-3 right-3">
@@ -772,28 +691,12 @@ export default function InventarioPage() {
                         </div>
                       </div>
 
-                      {/* Fila Inferior: Peso y Acción Rápida de Ordeño */}
+                      {/* Fila Inferior: Peso */}
                       <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
                         <div className="flex items-center text-neutral-800 bg-neutral-100/90 border border-neutral-200/70 px-2.5 py-1.5 rounded-xl">
                           <Scale className="w-3.5 h-3.5 mr-1.5 text-[#1B4820]" strokeWidth={2.5} />
                           <span className="text-xs font-black tracking-tight">{formatWeight(animal.last_weight_kg)}</span>
                         </div>
-
-                        {animal.sex === 'Hembra' && !isBatchMode && (
-                          <button
-                            type="button"
-                            title="Registrar Ordeño"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setMilkingAnimal(animal);
-                            }}
-                            className="py-1.5 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl border border-blue-200/70 transition-colors flex items-center gap-1.5 text-xs font-bold cursor-pointer"
-                          >
-                            <Milk className="w-3.5 h-3.5" />
-                            <span>Ordeño</span>
-                          </button>
-                        )}
                       </div>
                     </div>
                   </motion.article>
@@ -806,24 +709,16 @@ export default function InventarioPage() {
                     animate={{ opacity: 1, y: 0 }}
                     key={animal.id}
                     onClick={() => {
-                      if (isBatchMode) {
-                        toggleAnimalSelection(animal.id);
-                      } else if (isHighlight) {
+                      if (isHighlight) {
                         const updated = [...viewedHighlights, animal.id];
                         setViewedHighlights(updated);
                         localStorage.setItem('viewed8Months', JSON.stringify(updated));
                       }
                     }}
                   >
-                    {isBatchMode ? (
-                      <div className="block h-full">
-                        {CardContent}
-                      </div>
-                    ) : (
-                      <Link to={`/inventario/perfil?id=${animal.id}`} className="block h-full cursor-pointer">
-                        {CardContent}
-                      </Link>
-                    )}
+                    <Link to={`/inventario/perfil?id=${animal.id}`} className="block h-full cursor-pointer">
+                      {CardContent}
+                    </Link>
                   </motion.div>
                 );
               })}
@@ -871,97 +766,14 @@ export default function InventarioPage() {
         )}
       </div>
 
-      {/* BARRA INFERIOR DE MODO POR LOTES */}
-      <AnimatePresence>
-        {isBatchMode && (
-          <motion.div
-            initial={{ y: 100 }}
-            animate={{ y: 0 }}
-            exit={{ y: 100 }}
-            className="fixed bottom-0 left-0 w-full bg-white border-t border-neutral-200 z-[60] px-5 sm:px-6 py-4 sm:py-5 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] rounded-t-[2.5rem]"
-          >
-            <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-              <div className="flex flex-col text-left items-start pl-4 sm:pl-0">
-                <span className="text-2xl font-black text-black leading-none">{selectedAnimalIds.size}</span>
-                <span className="text-[10px] uppercase font-bold text-neutral-400 tracking-widest mt-1">Animales Seleccionados</span>
-              </div>
-
-              <div className="flex items-center gap-3 w-full sm:w-auto">
-                <button
-                  type="button"
-                  onClick={cancelBatchMode}
-                  className="flex-1 sm:flex-initial px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl bg-neutral-100 text-neutral-600 font-black text-xs uppercase tracking-widest hover:bg-neutral-200 transition-colors cursor-pointer"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={handleContinueBatch}
-                  disabled={selectedAnimalIds.size === 0}
-                  className="flex-1 sm:flex-initial px-8 sm:px-10 py-3.5 sm:py-4 rounded-2xl bg-[#1B4820] text-white font-black text-xs uppercase tracking-widest hover:bg-emerald-950 transition-all shadow-lg shadow-[#1B4820]/20 disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed group flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  Continuar
-                  <Syringe className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* BOTÓN FLOTANTE (FAB) STREAMLINED (NUEVO REGISTRO Y MODO BATCH) */}
-      {!isBatchMode && (
-        <div className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-50 flex flex-col items-end gap-3">
-          <AnimatePresence>
-            {isFabOpen && (
-              <motion.div
-                initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 20, scale: 0.8 }}
-                className="flex flex-col items-end gap-3 mb-2"
-              >
-                {actionOptions.map((option, index) => {
-                  const Icon = option.icon;
-                  const content = (
-                    <div
-                      key={index}
-                      onClick={() => {
-                        setIsFabOpen(false);
-                        if (option.type === 'batch') {
-                          setIsBatchMode(true);
-                        }
-                      }}
-                      className="flex items-center gap-3 bg-white rounded-full py-3 px-5 shadow-xl border border-neutral-200/80 hover:bg-[#1B4820] group transition-all cursor-pointer"
-                    >
-                      <span className="text-xs font-black uppercase tracking-wider text-neutral-800 group-hover:text-white transition-colors">
-                        {option.label}
-                      </span>
-                      <div className="p-2 rounded-full bg-[#1B4820] text-white group-hover:bg-white group-hover:text-[#1B4820] transition-colors">
-                        <Icon className="w-4 h-4" />
-                      </div>
-                    </div>
-                  );
-
-                  return option.href ? (
-                    <Link key={index} to={option.href} className="cursor-pointer">
-                      {content}
-                    </Link>
-                  ) : content;
-                })}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <button
-            type="button"
-            onClick={() => setIsFabOpen(!isFabOpen)}
-            className={`bg-[#1B4820] p-4 rounded-full text-white shadow-2xl transform transition-transform duration-300 cursor-pointer hover:scale-105 active:scale-95 ${isFabOpen ? 'rotate-180 bg-black' : ''}`}
-            title="Acciones rápidas"
-          >
-            {isFabOpen ? <X className="w-7 h-7" strokeWidth={2.5} /> : <Plus className="w-7 h-7" strokeWidth={2.5} />}
-          </button>
-        </div>
-      )}
+      {/* BOTÓN FLOTANTE DIRECTO A NUEVO REGISTRO */}
+      <Link
+        to="/inventario/nuevo"
+        className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-50 bg-[#1B4820] p-4 rounded-full text-white shadow-2xl transform transition-transform duration-300 hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer"
+        title="Registrar nuevo animal"
+      >
+        <Plus className="w-7 h-7" strokeWidth={2.5} />
+      </Link>
 
       {/* MODAL DE CONFIRMACIÓN PARA CIERRE DE SESIÓN */}
       <ConfirmDialog
@@ -987,23 +799,6 @@ export default function InventarioPage() {
         }}
         onFarmUpdated={(farm) => {
           showToast('¡Finca actualizada con éxito!', `Los cambios en "${farm.name}" fueron guardados.`);
-        }}
-      />
-
-      {/* MODAL REGISTRO DE ORDEÑO (RÁPIDO DESDE SIDEBAR O DIRECTO DESDE CARD) */}
-      <MilkingModal
-        isOpen={isQuickMilkingOpen || !!milkingAnimal}
-        animal={milkingAnimal}
-        onClose={() => {
-          setMilkingAnimal(null);
-          setIsQuickMilkingOpen(false);
-        }}
-        onRecordCreated={(record, cow) => {
-          const cowLabel = cow?.number ? `#${cow.number}` : (milkingAnimal?.number ? `#${milkingAnimal.number}` : 'la vaca');
-          showToast(
-            '¡Ordeño registrado con éxito!',
-            `Se registraron ${record.liters} Lts de leche para ${cowLabel} (${record.shift || 'Turno'}).`
-          );
         }}
       />
 

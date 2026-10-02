@@ -92,7 +92,7 @@ const ImageUploader = ({ preview, onCapture, onRemove, label, id }) => {
 
 export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, onOpenModal, isModal = false }) {
   const navigate = useNavigate();
-  const [activeAccordions, setActiveAccordions] = useState({ birth: false, weaning: false, service: false });
+  const [activeAccordions, setActiveAccordions] = useState({ birth: false, weaning: false });
   const [eventIds, setEventIds] = useState({ birth: null, weaning: null });
 
   const initialMainPreview = useMemo(() => {
@@ -118,10 +118,6 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
     birth: { blob: null, path: null },
     weaning: { blob: null, path: null }
   });
-
-  const [showQuickService, setShowQuickService] = useState(false);
-  const [isSavingQuickService, setIsSavingQuickService] = useState(false);
-  const [quickServiceData, setQuickServiceData] = useState({ date: '', type: 'Monta Natural' });
 
   // --- FINCAS & GENÉTICA ---
   const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
@@ -170,11 +166,9 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
   const navelLength = watch('navel_length');
   const weaningDate = watch('weaning_date');
   const weaningWeight = watch('weaning_weight_kg');
-  const originServiceId = watch('origin_service_id');
 
   const hasBirthData = Boolean(birthDate || birthWeight || navelLength || images.birth.preview);
   const hasWeaningData = Boolean(weaningDate || weaningWeight || images.weaning.preview);
-  const hasServiceData = Boolean(originServiceId);
 
   // Cálculo genético automático al cambiar de padres
   useEffect(() => {
@@ -331,56 +325,9 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
     };
   }, [initialValues, setValue]);
 
-  const motherServices = useLiveQuery(
-    async () => {
-      if (!motherId) return [];
-      const services = await db.services.where('mother_id').equals(motherId).toArray();
-      const validServices = services.filter(s => !s.deleted_at);
-
-      const fatherIds = validServices.map(s => s.father_id).filter(Boolean);
-      const fathers = fatherIds.length > 0 ? await db.animals.where('id').anyOf(fatherIds).toArray() : [];
-
-      const fatherMap = {};
-      fathers.forEach(f => { fatherMap[f.id] = f.number; });
-
-      return validServices.map(service => ({
-        ...service,
-        father_number: service.father_id ? (fatherMap[service.father_id] || null) : null
-      }));
-    },
-    [motherId]
-  );
-
   const toggleAccordion = (section) => {
     setActiveAccordions(prev => ({ ...prev, [section]: !prev[section] }));
   };
-
-  const motherServicesOptions = useMemo(() => {
-    if (!motherServices) return [];
-    return motherServices.map(s => {
-      let toroInfo = '';
-      if (s.father_number) {
-        toroInfo = ` (Toro: #${s.father_number})`;
-      } else if (s.father_id) {
-        if (s.father_id.includes('-') && s.father_id.length > 20) {
-          toroInfo = ` (Toro: Desconocido/Eliminado)`;
-        } else {
-          toroInfo = ` (Toro: ${s.father_id})`;
-        }
-      } else {
-        toroInfo = ` (Sin Toro)`;
-      }
-      return {
-        value: s.id,
-        label: `${formatShortDateLocal(s.service_date)} - ${s.type_conception}${toroInfo}`
-      };
-    });
-  }, [motherServices]);
-
-  const serviceTypeOptions = [
-    { value: 'Monta Natural', label: 'Monta Natural' },
-    { value: 'Inseminación Artificial', label: 'Inseminación Artificial' },
-  ];
 
   const handleImageCapture = async (e, type) => {
     const file = e.target.files[0];
@@ -405,54 +352,6 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
   // --- LÓGICA LOCAL-FIRST (Fase 2) ---
   const getLocalUserId = () => {
     return localStorage.getItem("ganadera_user_id");
-  };
-
-  const handleQuickServiceCreate = async () => {
-    if (!quickServiceData.date) return alert('Selecciona una fecha para el servicio');
-    if (isSavingQuickService) return;
-
-    setIsSavingQuickService(true);
-
-    try {
-      const userId = getLocalUserId();
-
-      if (!userId) {
-        setToast({ show: true, type: 'error', message: 'Sesión expirada. Conéctate a internet.' });
-        navigate('/login');
-        return;
-      }
-
-      const newService = {
-        id: crypto.randomUUID(),
-        user_id: userId,
-        mother_id: motherId,
-        father_id: fatherId || null,
-        type_conception: quickServiceData.type,
-        service_date: quickServiceData.date,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-
-      await db.transaction('rw', [db.services, db.sync_queue], async () => {
-        await db.services.add(newService);
-        await addToSyncQueue('services', 'INSERT', newService);
-      });
-
-      setToast({ show: true, type: 'success', message: 'Servicio registrado correctamente' });
-
-      setTimeout(() => {
-        setToast({ show: false, type: 'success', message: '' });
-        setValue('origin_service_id', newService.id);
-        setShowQuickService(false);
-      }, 500);
-
-    } catch (err) {
-      console.error('Error creando servicio rápido', err);
-      setToast({ show: true, type: 'error', message: 'Fallo al registrar servicio' });
-      setTimeout(() => setToast(p => ({ ...p, show: false })), 3000);
-    } finally {
-      setIsSavingQuickService(false);
-    }
   };
 
   const handleSave = async (data) => {
@@ -519,7 +418,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
           birth_date: data.birth_date || null,
           mother_id: data.mother_id || null,
           father_id: data.father_id || null,
-          origin_service_id: data.origin_service_id || null,
+          origin_service_id: initialValues?.origin_service_id || null,
           observations: data.observations || null,
           photo_path: photoPathToSave,
           photo_blob: photoBlobToSave,
@@ -700,106 +599,6 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
           <GenealogySelector label="Madre (Vaca)" sex="Hembra" value={motherId} onChange={(id) => setValue('mother_id', id)} onCreateNew={(sex) => onOpenModal && onOpenModal(sex, (id) => setValue('mother_id', id))} />
         </div>
       </section>
-
-      {/* ACORDEÓN: SERVICIO DE ORIGEN */}
-      {motherId && (
-        <div className="bg-neutral-50 rounded-3xl p-5 mb-4 border border-neutral-200/70 shadow-2xs">
-          <div 
-            className="flex items-center justify-between cursor-pointer select-none" 
-            onClick={() => toggleAccordion('service')}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-1.5 h-6 rounded-full bg-blue-500"></div>
-              <div>
-                <h3 className="text-base sm:text-lg font-bold text-[#1B4820]">Servicio de Origen</h3>
-                <p className="text-[11px] text-neutral-400 font-medium">Inseminación o monta de la madre</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2.5">
-              <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${
-                hasServiceData 
-                  ? 'bg-blue-100 text-blue-800 font-black' 
-                  : 'bg-neutral-200/70 text-neutral-500'
-              }`}>
-                {hasServiceData ? 'Asignado' : 'Opcional'}
-              </span>
-              <ChevronDown className={`w-5 h-5 text-neutral-400 transition-transform duration-200 ${activeAccordions.service ? 'rotate-180 text-[#1B4820]' : ''}`} />
-            </div>
-          </div>
-
-          <AnimatePresence>
-            {activeAccordions.service && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.24, ease: 'easeInOut' }}
-                className="overflow-hidden"
-              >
-                <div className="pt-5 space-y-4">
-                  {motherServices === undefined ? (
-                    <p className="text-sm text-neutral-500">Cargando servicios...</p>
-                  ) : showQuickService ? (
-                    <div className="bg-white p-4 rounded-2xl border border-neutral-200 shadow-sm space-y-4">
-                      <h4 className="text-[10px] font-black uppercase text-[#1B4820] tracking-widest border-b border-neutral-100 pb-2">Nuevo Servicio Rápido</h4>
-
-                      <div>
-                        <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block ml-1">Fecha del Servicio</label>
-                        <DateInput value={quickServiceData.date} onChange={e => setQuickServiceData(d => ({ ...d, date: e.target.value }))} className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all" />
-                      </div>
-
-                      <div>
-                        <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block ml-1">Tipo de Concepción</label>
-                        <CustomSelect
-                          value={quickServiceData.type}
-                          onChange={val => setQuickServiceData(d => ({ ...d, type: val }))}
-                          options={serviceTypeOptions}
-                          bgClass="bg-neutral-50"
-                        />
-                      </div>
-
-                      <div className="flex gap-3 pt-2">
-                        <button type="button" disabled={isSavingQuickService} onClick={() => setShowQuickService(false)} className="flex-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-600 text-xs font-bold py-3.5 rounded-xl transition-colors cursor-pointer disabled:cursor-not-allowed">Cancelar</button>
-                        <button type="button" disabled={isSavingQuickService} onClick={handleQuickServiceCreate} className="flex-1 bg-[#1B4820] hover:bg-[#0F2912] text-white text-xs font-bold py-3.5 rounded-xl disabled:opacity-50 transition-all shadow-sm cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                          {isSavingQuickService ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                              GUARDANDO...
-                            </>
-                          ) : 'Guardar y Usar'}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {motherServices.length === 0 ? (
-                        <div className="text-center bg-white border border-neutral-100 p-4 rounded-2xl">
-                          <p className="text-xs text-neutral-500 mb-2 font-medium">Esta madre no tiene servicios registrados.</p>
-                        </div>
-                      ) : (
-                        <div>
-                          <label className="text-[10px] font-bold text-neutral-400 uppercase mb-1 block ml-1">Seleccionar Servicio</label>
-                          <CustomSelect
-                            value={originServiceId}
-                            onChange={val => setValue('origin_service_id', val)}
-                            options={motherServicesOptions}
-                            placeholder="Selecciona el servicio origen..."
-                          />
-                        </div>
-                      )}
-
-                      <button type="button" onClick={() => setShowQuickService(true)} className="w-full flex items-center justify-center gap-2 bg-white border border-dashed border-neutral-300 hover:border-[#1B4820] hover:text-[#1B4820] hover:bg-emerald-50 text-neutral-700 font-bold py-3.5 rounded-xl transition-all text-xs cursor-pointer shadow-2xs">
-                        <Plus className="w-4 h-4 text-[#1B4820]" />
-                        REGISTRAR NUEVO SERVICIO
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
 
       {/* 3. RAZA Y CARACTERÍSTICAS GENÉTICAS (DEBAJO DE GENEALOGÍA) */}
       <section className="bg-amber-50/40 rounded-3xl p-5 mb-4 border border-amber-200/60 shadow-2xs space-y-4">

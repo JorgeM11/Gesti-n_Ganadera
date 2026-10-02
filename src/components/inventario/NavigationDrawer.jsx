@@ -7,7 +7,6 @@ import {
   X, 
   Layers, 
   Building2, 
-  Milk, 
   RefreshCcw, 
   LogOut, 
   CheckCircle2, 
@@ -21,7 +20,6 @@ export default function NavigationDrawer({
   onClose,
   farmsCount = 0,
   onOpenFarms,
-  onOpenMilking,
   onForceResync,
   isResyncing = false,
   resyncSuccess = false,
@@ -115,23 +113,6 @@ export default function NavigationDrawer({
                       {farmsCount}
                     </span>
                   )}
-                </button>
-
-                {/* 3. Ordeño */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onOpenMilking) onOpenMilking();
-                  }}
-                  className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold text-neutral-700 hover:bg-neutral-100 transition-all cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <Milk className="w-5 h-5 text-blue-600" />
-                    <span>Ordeño</span>
-                  </div>
-                  <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-lg border border-blue-200/50">
-                    Registro
-                  </span>
                 </button>
 
                 {/* Separador sutil */}

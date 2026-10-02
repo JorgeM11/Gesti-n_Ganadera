@@ -8,10 +8,7 @@ import Inventario from './pages/Inventario';
 import NuevoAnimal from './pages/NuevoAnimal';
 import PerfilAnimal from './pages/PerfilAnimal';
 import PerfilEvento from './pages/PerfilEvento';
-import PerfilServicio from './pages/PerfilServicio';
-import PerfilTacto from './pages/PerfilTacto';
 import PerfilTratamiento from './pages/PerfilTratamiento';
-import TratamientoLote from './pages/TratamientoLote';
 
 function ProtectedRoute({ children }) {
   const userId = localStorage.getItem('ganadera_user_id');
@@ -42,10 +39,7 @@ export default function App() {
         <Route path="/inventario/nuevo" element={<ProtectedRoute><NuevoAnimal /></ProtectedRoute>} />
         <Route path="/inventario/perfil" element={<ProtectedRoute><PerfilAnimal /></ProtectedRoute>} />
         <Route path="/inventario/perfil/evento" element={<ProtectedRoute><PerfilEvento /></ProtectedRoute>} />
-        <Route path="/inventario/perfil/servicio" element={<ProtectedRoute><PerfilServicio /></ProtectedRoute>} />
-        <Route path="/inventario/perfil/tacto" element={<ProtectedRoute><PerfilTacto /></ProtectedRoute>} />
         <Route path="/inventario/perfil/tratamiento" element={<ProtectedRoute><PerfilTratamiento /></ProtectedRoute>} />
-        <Route path="/inventario/tratamiento-lote" element={<ProtectedRoute><TratamientoLote /></ProtectedRoute>} />
 
         {/* Ruta 404: Por seguridad, redirigimos al login */}
         <Route path="*" element={<Navigate to="/login" replace />} />

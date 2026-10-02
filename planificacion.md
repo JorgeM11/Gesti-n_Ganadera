@@ -48,17 +48,22 @@ flowchart TD
 
 ---
 
-### ⏳ Fase 2: Adaptación Funcional y Rediseño Frontend
+### 🔄 Fase 2: Adaptación Funcional y Rediseño Frontend
 > **Objetivo**: Modificar los flujos, formularios, vistas y componentes para remover las características innecesarias y añadir las nuevas funciones requeridas por el usuario.
 
-- [ ] Definición del inventario de cambios:
-  - Listado de módulos/campos a **eliminar**.
-  - Listado de nuevos módulos/campos a **incorporar**.
-- [ ] Ajustes en navegación global, rutas en `src/App.jsx` y menú lateral `NavigationDrawer.jsx`.
-- [ ] Modificación de componentes y pantallas de catálogo (`Inventario.jsx`).
-- [ ] Actualización de formularios maestros (`AnimalForm.jsx`, `EventForm.jsx`, etc.).
-- [ ] Adaptación de vistas de detalle y fichas (`PerfilAnimal.jsx` y sus pestañas).
-- [ ] Ajuste de esquemas de validación Zod y hooks de estado.
+- [x] **Eliminaciones y Simplificaciones Solicitadas**:
+  - [x] **Reproducción**: Removidos los sub-módulos de Tactos (Palpación) y Servicios reproductivos. La pestaña `ReproductionTab.jsx` se simplificó para mostrar exclusivamente Partos/Crías (`PartosTab.jsx`).
+  - [x] **Ordeño**: Removido por completo de todo el sistema en interfaz (pestaña en perfil de animal, botones de registro rápido en tarjetas, acceso en drawer de navegación lateral, rutas y modales).
+  - [x] **Vacunación por Lotes y Botón Flotante (`+`)**: Removido el modo por lotes y su menú contextual. El botón `+` en `Inventario.jsx` ahora navega directamente a `/inventario/nuevo`.
+  - [x] **Formulario Animal (`AnimalForm.jsx`)**: Removido el acordeón de servicio de origen y la consulta de servicios de la madre.
+  - [x] **Detalle del Animal (`DetailsTab.jsx`)**: Removida la tarjeta de servicio de origen.
+  - [x] **Formulario de Salud (`HealthForm.jsx`)**: Simplificado para registrar tratamientos sanitarios individuales sin lógica de lotes.
+  - [x] **Limpieza de Rutas y Archivos Obsoletos**:
+    - Eliminadas rutas `/inventario/perfil/servicio`, `/inventario/perfil/tacto` y `/inventario/tratamiento-lote` en `App.jsx`.
+    - Eliminados archivos de componentes y páginas huérfanos: `MilkingTab.jsx`, `MilkingModal.jsx`, `TactosTab.jsx`, `ServiciosTab.jsx`, `TactoForm.jsx`, `ServicioForm.jsx`, `PerfilTacto.jsx`, `PerfilServicio.jsx`, `TratamientoLote.jsx`.
+- [ ] **Nuevas Características a Incorporar** *(A la espera de especificaciones del usuario)*:
+  - [ ] Nuevos módulos, vistas y/o campos en inventario y perfiles.
+  - [ ] Nuevas pantallas y flujos de negocio.
 
 ---
 
@@ -101,4 +106,6 @@ flowchart TD
 | Hito | Fecha | Estado | Responsable | Observaciones |
 | :--- | :---: | :---: | :---: | :--- |
 | **Puesta en marcha Fase 1** | 2026-10-02 | **Completado** | Antigravity AI | Proyecto `gestion-ganadera` creado y compilando al 100% sobre la base de `App-ganadera-v2`. |
-| **Inicio de Fase 2** | Pendiente | *Por iniciar* | Antigravity AI & Usuario | A la espera de las especificaciones de características a agregar y eliminar. |
+| **Fase 2: Eliminaciones solicitadas** | 2026-10-02 | **Completado** | Antigravity AI | Retirado ordeño, tactos, servicios reproductivos, modo lotes en vacunación y botón `+` directo. Compilación verificada con éxito. |
+| **Fase 2: Incorporación de nuevas funciones** | Pendiente | *En progreso* | Antigravity AI & Usuario | A la espera de las especificaciones de nuevos módulos o características a agregar. |
+

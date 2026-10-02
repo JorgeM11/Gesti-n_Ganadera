@@ -1,7 +1,7 @@
 import React from 'react';
 import { 
   IdCard, Network, FileText, Pencil, CircleAlert, Building2, 
-  Dna, Scale, Calendar, ArrowUpRight, HeartHandshake, Palette
+  Dna, Scale, Calendar, ArrowUpRight, Palette
 } from 'lucide-react';
 import { FaMars, FaVenus } from 'react-icons/fa6';
 import AnimalImage from '@/components/inventario/AnimalImage';
@@ -86,13 +86,6 @@ export default function DetailsTab({ animal, onEdit }) {
       const mother = animal.mother_id ? await db.animals.get(animal.mother_id) : null;
       return { father, mother };
     },
-    [animal]
-  );
-
-  const originService = useLiveQuery(
-    () => animal?.origin_service_id
-      ? db.services.get(animal.origin_service_id)
-      : null,
     [animal]
   );
 
@@ -239,14 +232,6 @@ export default function DetailsTab({ animal, onEdit }) {
                 composition={animal.breed_composition} 
               />
             </InfoTile>
-
-            {originService && (
-              <InfoTile label="Servicio de Origen" icon={HeartHandshake} className="sm:col-span-2">
-                <span className="font-bold text-sm text-neutral-800 block">
-                  {originService.type_conception || 'Servicio registrado'} {originService.service_date ? `· ${formatDateLocal(originService.service_date)}` : ''}
-                </span>
-              </InfoTile>
-            )}
 
             <InfoTile label="Estado en Inventario">
               <span className={`inline-flex items-center gap-1 text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
