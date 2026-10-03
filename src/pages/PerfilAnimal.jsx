@@ -236,6 +236,7 @@ function ProfileContent() {
         title="Editar Animal"
         description={`Actualiza la información de #${animal.number}`}
         maxWidth="max-w-4xl lg:max-w-5xl"
+        style={{ zIndex: 60 }}
         noPaddingBottom
       >
         <AnimalForm 
@@ -256,7 +257,7 @@ function ProfileContent() {
             onClose={handleCloseModal}
             title={`Registrar ${modal.sex === 'Macho' ? 'Padre' : 'Madre'}`}
             description="Completa los datos mínimos para identificar al progenitor."
-            style={{ zIndex: 60 + index * 10 }}
+            style={{ zIndex: 70 + index * 10 }}
             noPaddingBottom
             maxWidth="max-w-4xl lg:max-w-5xl"
           >

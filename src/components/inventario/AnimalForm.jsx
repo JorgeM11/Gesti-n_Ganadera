@@ -1,5 +1,5 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -194,7 +194,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
     };
   }, [initialValues]);
 
-  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, setValue, watch, control, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(animalSchema),
     defaultValues: defaultValuesMapped
   });
@@ -420,8 +420,10 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         </div>
       )}
 
-      <form onSubmit={handleSubmit(handleSave)} className="space-y-6 max-w-4xl mx-auto">
-        
+      <form onSubmit={handleSubmit(handleSave)} className="space-y-6 max-w-4xl mx-auto" autoComplete="off" data-form-type="other">
+        {/* Input señuelo oculto para absorber autocompletados no deseados de navegadores */}
+        <input type="text" name="prevent_autofill" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" readOnly />
+
         {/* ========================================================================= */}
         {/* 1. NÚMERO DE ARETE & 2. NÚMERO DE CHIP & 3. NOMBRE (OPCIONAL)            */}
         {/* ========================================================================= */}
@@ -442,14 +444,32 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               <label className="text-[11px] font-black text-[#1B4820] uppercase tracking-wider mb-1.5 block">
                 1. Número de Arete *
               </label>
-              <input
-                type="text"
-                autoComplete="off"
-                {...register('number')}
-                placeholder="Ej. 104, AR-001"
-                className={`w-full bg-neutral-50 border rounded-2xl px-4 py-3 text-sm font-bold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all ${
-                  errors.number ? 'border-red-400' : 'border-neutral-200'
-                }`}
+              <Controller
+                name="number"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    type="text"
+                    ref={field.ref}
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    id="animal_tag_code"
+                    name="animal_tag_code"
+                    autoComplete="one-time-code"
+                    data-form-type="other"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-bwignore="true"
+                    spellCheck={false}
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    placeholder="Ej. 104, AR-001"
+                    className={`w-full bg-neutral-50 border rounded-2xl px-4 py-3 text-sm font-bold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all ${
+                      errors.number ? 'border-red-400' : 'border-neutral-200'
+                    }`}
+                  />
+                )}
               />
               {errors.number && <p className="text-[11px] text-red-500 font-semibold mt-1 ml-1">{errors.number.message}</p>}
             </div>
@@ -460,12 +480,30 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                 <Cpu className="w-3.5 h-3.5 text-neutral-400" />
                 2. Número de Chip
               </label>
-              <input
-                type="text"
-                autoComplete="off"
-                {...register('chip_number')}
-                placeholder="Ej. 982000345678901"
-                className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all"
+              <Controller
+                name="chip_number"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    type="text"
+                    ref={field.ref}
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    id="animal_rfid_identifier"
+                    name="animal_rfid_identifier"
+                    autoComplete="one-time-code"
+                    data-form-type="other"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-bwignore="true"
+                    spellCheck={false}
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    placeholder="Ej. 982000345678901"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all"
+                  />
+                )}
               />
             </div>
 
@@ -475,12 +513,30 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                 <Tag className="w-3.5 h-3.5 text-neutral-400" />
                 3. Nombre (Opcional)
               </label>
-              <input
-                type="text"
-                autoComplete="off"
-                {...register('name')}
-                placeholder="Ej. Mariposa, Lucero"
-                className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all"
+              <Controller
+                name="name"
+                control={control}
+                render={({ field }) => (
+                  <input
+                    type="text"
+                    ref={field.ref}
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    id="animal_alias_text"
+                    name="animal_alias_text"
+                    autoComplete="one-time-code"
+                    data-form-type="other"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-bwignore="true"
+                    spellCheck={false}
+                    autoCorrect="off"
+                    autoCapitalize="words"
+                    placeholder="Ej. Mariposa, Lucero"
+                    className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all"
+                  />
+                )}
               />
             </div>
           </div>
@@ -888,8 +944,8 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         <div
           className={`${
             isModal
-              ? 'sticky bottom-0 -mx-6 px-6 py-3.5 mt-6 bg-white/95 backdrop-blur-md border-t border-neutral-200/90 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] z-50'
-              : 'fixed bottom-0 inset-x-0 py-3.5 px-4 bg-white/95 backdrop-blur-md border-t border-neutral-200/90 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] z-50'
+              ? 'sticky bottom-0 -mx-6 px-6 py-3.5 mt-6 bg-white/95 backdrop-blur-md border-t border-neutral-200/90 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] z-30'
+              : 'fixed bottom-0 inset-x-0 py-3.5 px-4 bg-white/95 backdrop-blur-md border-t border-neutral-200/90 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] z-30'
           }`}
         >
           <div className="max-w-4xl mx-auto flex items-center gap-3">

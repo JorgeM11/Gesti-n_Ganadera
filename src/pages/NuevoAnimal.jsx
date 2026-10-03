@@ -86,7 +86,7 @@ function NuevoAnimalContent() {
             onClose={handleCloseModal}
             title={`Registrar ${modal.sex === 'Macho' ? 'Padre' : 'Madre'}`}
             description="Completa los datos mínimos para identificar al progenitor."
-            style={{ zIndex: 50 + index * 10 }} // Incrementar Z-Index para modales anidados
+            style={{ zIndex: 70 + index * 10 }} // Incrementar Z-Index para modales anidados
             noPaddingBottom
             maxWidth="max-w-4xl lg:max-w-5xl"
           >

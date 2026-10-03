@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
@@ -55,11 +56,11 @@ export default function BottomSheet({
     exit: { opacity: 0, scale: 0.92, y: '-46%', x: '-50%' }
   };
 
-  const baseZIndex = (style && typeof style.zIndex === 'number') ? style.zIndex : 50;
+  const baseZIndex = (style && typeof style.zIndex === 'number') ? style.zIndex : 70;
   const backdropZIndex = baseZIndex - 1;
   const containerStyle = { ...style, zIndex: baseZIndex };
 
-  return (
+  const modalContent = (
     <AnimatePresence>
       {isOpen && (
         <>
@@ -132,4 +133,6 @@ export default function BottomSheet({
       )}
     </AnimatePresence>
   );
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
 }

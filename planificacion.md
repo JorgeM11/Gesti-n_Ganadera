@@ -78,7 +78,10 @@ flowchart TD
     - Acordeones de eventos de nacimiento y destete removidos por completo.
     - Barra de porcentaje y cálculos genéticos de pureza removidos del formulario.
   - [x] **Ajustes y Correcciones Visuales/Funcionales**:
-    - [x] **Modal de Fincas y Potreros (`FarmModal.jsx`)**: Botón de administración de potreros reubicado debajo de la información principal de la finca.
+    - [x] **Modal de Fincas Exclusivo (`FarmModal.jsx`)**: Removida la sección de potreros de las tarjetas de fincas; el modal ahora es 100% exclusivo para gestionar fincas.
+    - [x] **Selector Estilizado en Potreros (`PotreroModal.jsx`)**: Sustituido el selector nativo por el componente reutilizable `CustomSelect` con dropdown flotante y buscador integrado.
+    - [x] **Corrección de Difuminado de Botones en Modales Recursivos (`AnimalForm.jsx`, `BottomSheet.jsx`, `NuevoAnimal.jsx`, `PerfilAnimal.jsx`)**: Ajustado el Z-Index de los botones de acción a `z-30` y elevado el telón del modal a `z-70+` con portal al `document.body`, logrando que al registrar padre o madre el fondo y los botones queden totalmente difuminados.
+    - [x] **Eliminación Definitiva de Autocompletado de Pago/Tarjetas (`AnimalForm.jsx`)**: Neutralizada la heurística de Google Chrome que detectaba número de arete, chip y nombre como tarjetas bancarias, mediante `Controller`, `autoComplete="one-time-code"` y atributos de formulario especializados.
     - [x] **Botones de Guardar y Cancelar Fijos y Simétricos (`AnimalForm.jsx`, `BottomSheet.jsx`)**: Fijados al borde inferior sin márgenes sobrantes y con tamaño equilibrado 50%/50% (`flex-1`).
     - [x] **Generación de Evento de Nacimiento (`AnimalForm.jsx`)**: Sincronización automática de fecha y peso de nacimiento a la tabla `growth_events` con tipo `'Nacimiento'`.
     - [x] **Botón de Editar Perfil en Vista Móvil (`DetailsTab.jsx`)**: Botón flotante animado (FAB) en la esquina inferior derecha idéntico a `EvolutionTab` y `HealthTab`.

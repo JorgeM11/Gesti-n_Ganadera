@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MapPin, Building2, Plus, Users, Pencil, ChevronDown, Check } from 'lucide-react';
+import { X, MapPin, Building2, Plus, Users, Pencil } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { createFarm, updateFarm } from '@/lib/farmUtils';
-import { createPotrero, updatePotrero } from '@/lib/potreroUtils';
 
 export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdated, initialView = 'list' }) {
   const [activeView, setActiveView] = useState(initialView); // 'list' | 'create' | 'edit'
@@ -16,12 +15,6 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // Estados para Potreros por Finca
-  const [expandedFarmId, setExpandedFarmId] = useState(null);
-  const [newPotreroName, setNewPotreroName] = useState('');
-  const [editingPotreroId, setEditingPotreroId] = useState(null);
-  const [editingPotreroName, setEditingPotreroName] = useState('');
-
   useEffect(() => {
     if (isOpen) {
       setActiveView(initialView);
@@ -30,15 +23,11 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
       setName('');
       setLocation('');
       setDescription('');
-      setExpandedFarmId(null);
-      setNewPotreroName('');
-      setEditingPotreroId(null);
     }
   }, [isOpen, initialView]);
 
   const farms = useLiveQuery(() => db.farms.filter(f => !f.deleted_at).toArray()) || [];
   const animals = useLiveQuery(() => db.animals.filter(a => !a.deleted_at).toArray()) || [];
-  const potreros = useLiveQuery(() => db.potreros.filter(p => !p.deleted_at).toArray()) || [];
 
   const handleStartCreate = () => {
     setEditingFarm(null);
@@ -65,27 +54,6 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
     setDescription('');
     setError('');
     setActiveView('list');
-  };
-
-  const handleAddPotrero = async (farmId) => {
-    if (!newPotreroName.trim()) return;
-    try {
-      await createPotrero({ farm_id: farmId, name: newPotreroName.trim() });
-      setNewPotreroName('');
-    } catch (err) {
-      alert(err.message || 'Error al agregar potrero');
-    }
-  };
-
-  const handleSaveEditPotrero = async (potreroId) => {
-    if (!editingPotreroName.trim()) return;
-    try {
-      await updatePotrero(potreroId, { name: editingPotreroName.trim() });
-      setEditingPotreroId(null);
-      setEditingPotreroName('');
-    } catch (err) {
-      alert(err.message || 'Error al actualizar potrero');
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -232,8 +200,6 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
                 ) : (
                   farms.map((f) => {
                     const farmAnimalsCount = animals.filter(a => a.farm_id === f.id).length;
-                    const farmPotreros = potreros.filter(p => p.farm_id === f.id);
-                    const isExpanded = expandedFarmId === f.id;
 
                     return (
                       <div
@@ -278,162 +244,7 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
                             </div>
                           </div>
 
-                          {/* Botón de Potreros ubicado abajo de la información de la finca */}
-                          <div className="pt-2.5 mt-2.5 border-t border-neutral-200/70">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setExpandedFarmId(isExpanded ? null : f.id);
-                                setNewPotreroName('');
-                                setEditingPotreroId(null);
-                              }}
-                              className={`w-full py-2 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-between cursor-pointer ${
-                                isExpanded
-                                  ? 'bg-[#1B4820] text-white border-[#1B4820] shadow-2xs'
-                                  : 'bg-white text-neutral-700 border-neutral-200 hover:border-[#1B4820] hover:text-[#1B4820]'
-                              }`}
-                              title="Gestionar potreros de esta finca"
-                            >
-                              <div className="flex items-center gap-2">
-                                <span className="text-[11px] uppercase tracking-wider font-black">Potreros</span>
-                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
-                                  isExpanded ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-600'
-                                }`}>
-                                  {farmPotreros.length}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1 text-[11px] font-medium opacity-80">
-                                <span>{isExpanded ? 'Ocultar' : 'Ver y Administrar'}</span>
-                                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                              </div>
-                            </button>
-                          </div>
                         </div>
-
-                        {/* Panel Expandible de Potreros de la Finca */}
-                        <AnimatePresence>
-                          {isExpanded && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="bg-white border-t border-neutral-200/80 p-3.5 space-y-3"
-                            >
-                              <div className="flex items-center justify-between">
-                                <h5 className="text-[11px] font-black uppercase text-[#1B4820] tracking-wider">
-                                  Potreros en {f.name}
-                                </h5>
-                                <span className="text-[10px] text-neutral-400 font-bold">
-                                  {farmPotreros.length} registrado(s)
-                                </span>
-                              </div>
-
-                              {/* Formulario rápido para añadir potrero */}
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="text"
-                                  placeholder="Nombre del nuevo potrero..."
-                                  value={newPotreroName}
-                                  onChange={(e) => setNewPotreroName(e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      e.preventDefault();
-                                      handleAddPotrero(f.id);
-                                    }
-                                  }}
-                                  className="flex-1 bg-neutral-50 border border-neutral-200 rounded-xl px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[#1B4820]/20 font-medium"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => handleAddPotrero(f.id)}
-                                  className="bg-[#1B4820] hover:bg-[#0F2912] text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer shrink-0"
-                                >
-                                  <Plus className="w-3 h-3" />
-                                  <span>Agregar</span>
-                                </button>
-                              </div>
-
-                              {/* Lista de Potreros de esta finca */}
-                              <div className="space-y-1.5 max-h-40 overflow-y-auto pr-0.5">
-                                {farmPotreros.length === 0 ? (
-                                  <p className="text-[11px] text-neutral-400 italic py-2 text-center">
-                                    No hay potreros en esta finca aún.
-                                  </p>
-                                ) : (
-                                  farmPotreros.map(pot => {
-                                    const potAnimalsCount = animals.filter(a => a.potrero_id === pot.id).length;
-                                    const isEditingThis = editingPotreroId === pot.id;
-
-                                    if (isEditingThis) {
-                                      return (
-                                        <div key={pot.id} className="flex items-center gap-2 p-1 bg-neutral-50 rounded-xl border border-neutral-200">
-                                          <input
-                                            type="text"
-                                            value={editingPotreroName}
-                                            onChange={(e) => setEditingPotreroName(e.target.value)}
-                                            onKeyDown={(e) => {
-                                              if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                handleSaveEditPotrero(pot.id);
-                                              }
-                                            }}
-                                            className="flex-1 bg-white border border-neutral-200 rounded-lg px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-[#1B4820]"
-                                            autoFocus
-                                          />
-                                          <button
-                                            type="button"
-                                            onClick={() => handleSaveEditPotrero(pot.id)}
-                                            className="p-1 rounded bg-[#1B4820] text-white hover:bg-emerald-950 cursor-pointer"
-                                            title="Guardar"
-                                          >
-                                            <Check className="w-3 h-3" />
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => setEditingPotreroId(null)}
-                                            className="p-1 rounded text-neutral-400 hover:text-neutral-700 cursor-pointer"
-                                            title="Cancelar"
-                                          >
-                                            <X className="w-3 h-3" />
-                                          </button>
-                                        </div>
-                                      );
-                                    }
-
-                                    return (
-                                      <div
-                                        key={pot.id}
-                                        className="flex items-center justify-between p-2 rounded-xl bg-white hover:bg-neutral-100 border border-neutral-200/50 transition-all text-xs"
-                                      >
-                                        <div className="flex items-center gap-2 min-w-0">
-                                          <span className="font-bold text-neutral-800 truncate">{pot.name}</span>
-                                          <span className="text-[10px] text-neutral-400 font-semibold shrink-0">
-                                            ({potAnimalsCount} animales)
-                                          </span>
-                                        </div>
-
-                                          <div className="flex items-center gap-1 shrink-0">
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                setEditingPotreroId(pot.id);
-                                                setEditingPotreroName(pot.name);
-                                              }}
-                                              className="p-1 text-neutral-400 hover:text-neutral-700 cursor-pointer"
-                                              title="Editar nombre"
-                                            >
-                                              <Pencil className="w-3 h-3" />
-                                            </button>
-                                          </div>
-                                      </div>
-                                    );
-                                  })
-                                )}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
                       </div>
                     );
                   })
@@ -486,7 +297,7 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Notas sobre potreros, capacidad o características..."
+                    placeholder="Notas sobre ubicación, capacidad o características..."
                     rows={2}
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#1B4820]/20 resize-none"
                   />

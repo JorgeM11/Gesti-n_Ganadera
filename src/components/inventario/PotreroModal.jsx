@@ -5,6 +5,7 @@ import { X, Plus, Users, Pencil, Fence, Building2, Search, AlertCircle } from 'l
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { createPotrero, updatePotrero } from '@/lib/potreroUtils';
+import CustomSelect from '@/components/ui/CustomSelect';
 
 export default function PotreroModal({ 
   isOpen, 
@@ -326,22 +327,17 @@ export default function PotreroModal({
                       <span>No hay fincas registradas aún. Debes registrar una finca primero.</span>
                     </div>
                   ) : (
-                    <div className="relative">
-                      <select
-                        required
-                        value={farmId}
-                        onChange={(e) => setFarmId(e.target.value)}
-                        className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all appearance-none cursor-pointer"
-                      >
-                        <option value="" disabled>Selecciona la finca...</option>
-                        {farms.map((f) => (
-                          <option key={f.id} value={f.id}>
-                            {f.name} {f.location ? `(${f.location})` : ''}
-                          </option>
-                        ))}
-                      </select>
-                      <Building2 className="w-4 h-4 text-neutral-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    </div>
+                    <CustomSelect
+                      value={farmId}
+                      onChange={(val) => setFarmId(val)}
+                      options={farms.map((f) => ({
+                        value: f.id,
+                        label: `${f.name}${f.location ? ` (${f.location})` : ''}`
+                      }))}
+                      placeholder="Selecciona la finca..."
+                      bgClass="bg-neutral-50"
+                      searchable={farms.length > 5}
+                    />
                   )}
                   <p className="text-[11px] text-neutral-400 mt-1 ml-1">
                     El potrero debe pertenecer obligatoriamente a una finca.

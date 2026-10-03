@@ -4,6 +4,24 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.2.4-phase2-modals-and-autofill-fix] - 2026-10-03
+
+### Corregido y Perfeccionado
+- **Limpieza de Modal de Fincas ([`FarmModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/FarmModal.jsx))**:
+  - Retirada la sección expandible de ver y crear potreros de las tarjetas de fincas.
+  - El modal de fincas ahora está exclusivamente dedicado a la administración de fincas (nombre, ubicación y descripción general).
+- **Selector Estilizado de Finca en Modal de Potrero ([`PotreroModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/PotreroModal.jsx))**:
+  - Sustituido el `<select>` HTML nativo genérico por el componente [`CustomSelect.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/ui/CustomSelect.jsx), garantizando coherencia visual, soporte de búsqueda y dropdown flotante.
+- **Corrección de Difuminado de Botones en Modales Recursivos ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx), [`BottomSheet.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/ui/BottomSheet.jsx), [`NuevoAnimal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/NuevoAnimal.jsx) y [`PerfilAnimal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/PerfilAnimal.jsx))**:
+  - Se redujo el Z-Index de la barra de botones fija del formulario a `z-30`.
+  - Se elevó el Z-Index base y el fondo/backdrop de [`BottomSheet.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/ui/BottomSheet.jsx) a `z-70+` (backdrop en `z-69+`), y se montó en portal directamente al `document.body` mediante `createPortal`.
+  - Al abrirse el modal para registrar padre o madre, el telón oscuro difumina completamente toda la pantalla subyacente, incluyendo los botones fijos de acción que antes quedaban indebidamente resaltados.
+- **Prevención Definitiva de Autocompletado de Pago/Tarjetas ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - Los campos de número de arete, número de chip y nombre de animal eran falsamente clasificados por las heurísticas de Chromium/Google Chrome como números y titulares de tarjetas bancarias.
+  - Se integraron con `Controller` de React Hook Form dotando a los inputs en el DOM de atributos anti-autofill (`autoComplete="one-time-code"`, `data-form-type="other"`, `data-lpignore="true"`, `data-1p-ignore="true"`, `data-bwignore="true"` y nombres semánticos de identificación animal), neutralizando por completo el cuadro de diálogo de sugerencia de pagos.
+
+---
+
 ## [1.2.3-phase2-potreros-and-ux] - 2026-10-03
 
 ### Añadido y Mejorado
