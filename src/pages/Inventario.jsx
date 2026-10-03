@@ -489,7 +489,7 @@ export default function InventarioPage() {
                     </button>
                   )}
                 </div>
-                <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                <div className="space-y-1.5">
                   <button
                     type="button"
                     onClick={() => {
@@ -553,7 +553,7 @@ export default function InventarioPage() {
                     ℹ️ Selecciona una finca arriba para habilitar el filtro por potrero.
                   </div>
                 ) : (
-                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                  <div className="space-y-1.5">
                     <button
                       type="button"
                       onClick={() => setSelectedPotreroFilter('ALL')}
@@ -605,7 +605,7 @@ export default function InventarioPage() {
                     </button>
                   )}
                 </div>
-                <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                <div className="space-y-1.5">
                   <button
                     type="button"
                     onClick={() => setSelectedOwnerFilter('ALL')}
@@ -662,7 +662,7 @@ export default function InventarioPage() {
               {/* 2. Filtro por Raza */}
               <div>
                 <h4 className="text-sm font-black text-neutral-900 mb-2 uppercase tracking-wider">Raza</h4>
-                <div className="space-y-0.5 max-h-48 overflow-y-auto pr-1">
+                <div className="space-y-0.5">
                   {availableBreeds.length === 0 ? (
                     <p className="text-xs text-neutral-400 italic">No hay razas registradas</p>
                   ) : (

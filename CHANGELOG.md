@@ -25,6 +25,8 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
   - La barra de búsqueda filtra de forma robusta por número de chip electrónico (limpiando espacios y guiones), complementando la búsqueda por arete, nombre o dueño con botón de borrado rápido.
 - **Banner Interactivo de Filtros Activos ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
   - Se despliegan chips individuales interactivos para remover selectivamente filtros de finca, potrero, dueño, sexo, raza o categoría.
+- **Scroll Unificado en Panel de Filtros ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - Se removieron los scrolls internos (`max-h-* overflow-y-auto`) de las listas de Fincas, Potreros, Dueños y Razas, permitiendo un desplazamiento vertical natural y unificado a través de un único scroll normal para todo el panel.
 
 ---
 
