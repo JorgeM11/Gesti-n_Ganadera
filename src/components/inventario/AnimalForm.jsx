@@ -23,8 +23,6 @@ import PotreroModal from './PotreroModal';
 import OwnerModal from './OwnerModal';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { DateInput } from '@/components/ui/DateInput';
-import { createOwner } from '@/lib/ownerUtils';
-import { createPotrero } from '@/lib/potreroUtils';
 
 // Lista de razas populares con "Sin raza" al inicio
 const POPULAR_BREEDS_LIST = [
@@ -121,15 +119,6 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
   const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
   const [isPotreroModalOpen, setIsPotreroModalOpen] = useState(false);
   const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
-
-  // Estados rápidos para creación inline de Dueño y Potrero
-  const [quickOwnerName, setQuickOwnerName] = useState('');
-  const [showQuickOwnerInput, setShowQuickOwnerInput] = useState(false);
-  const [isSavingQuickOwner, setIsSavingQuickOwner] = useState(false);
-
-  const [quickPotreroName, setQuickPotreroName] = useState('');
-  const [showQuickPotreroInput, setShowQuickPotreroInput] = useState(false);
-  const [isSavingQuickPotrero, setIsSavingQuickPotrero] = useState(false);
 
   // Estado de imagen principal
   const initialMainPreview = useMemo(() => {
@@ -244,41 +233,6 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
     setImage({ blob: null, preview: null, isModified: true });
   };
 
-  // Creación rápida de dueño
-  const handleQuickCreateOwner = async () => {
-    if (!quickOwnerName.trim()) return;
-    setIsSavingQuickOwner(true);
-    try {
-      const newOwner = await createOwner({ name: quickOwnerName.trim() });
-      setValue('owner_id', newOwner.id);
-      setQuickOwnerName('');
-      setShowQuickOwnerInput(false);
-    } catch (err) {
-      alert(err.message || 'Error al crear dueño');
-    } finally {
-      setIsSavingQuickOwner(false);
-    }
-  };
-
-  // Creación rápida de potrero
-  const handleQuickCreatePotrero = async () => {
-    if (!selectedFarmId) {
-      alert('Debes seleccionar una finca primero.');
-      return;
-    }
-    if (!quickPotreroName.trim()) return;
-    setIsSavingQuickPotrero(true);
-    try {
-      const newPotrero = await createPotrero({ farm_id: selectedFarmId, name: quickPotreroName.trim() });
-      setValue('potrero_id', newPotrero.id);
-      setQuickPotreroName('');
-      setShowQuickPotreroInput(false);
-    } catch (err) {
-      alert(err.message || 'Error al crear potrero');
-    } finally {
-      setIsSavingQuickPotrero(false);
-    }
-  };
 
   // Guardado de animal (Local-First puro)
   const handleSave = async (data) => {
@@ -659,33 +613,13 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                 </label>
                 <button
                   type="button"
-                  onClick={() => setShowQuickOwnerInput(prev => !prev)}
+                  onClick={() => setIsOwnerModalOpen(true)}
                   className="text-[11px] font-bold text-[#1B4820] hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   <Plus className="w-3 h-3" />
-                  <span>{showQuickOwnerInput ? 'Cancelar' : 'Nuevo'}</span>
+                  <span>Nuevo</span>
                 </button>
               </div>
-
-              {showQuickOwnerInput && (
-                <div className="mb-3 p-3 bg-neutral-50 rounded-2xl border border-neutral-200 flex items-center gap-2 animate-in fade-in">
-                  <input
-                    type="text"
-                    placeholder="Nombre del dueño..."
-                    value={quickOwnerName}
-                    onChange={(e) => setQuickOwnerName(e.target.value)}
-                    className="flex-1 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:ring-1 focus:ring-[#1B4820]"
-                  />
-                  <button
-                    type="button"
-                    disabled={isSavingQuickOwner}
-                    onClick={handleQuickCreateOwner}
-                    className="bg-[#1B4820] hover:bg-[#0F2912] text-white text-xs font-bold px-3 py-2 rounded-xl transition-all cursor-pointer disabled:opacity-50"
-                  >
-                    {isSavingQuickOwner ? '...' : 'Crear'}
-                  </button>
-                </div>
-              )}
 
               <CustomSelect
                 value={selectedOwnerId}
@@ -747,37 +681,15 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               </div>
 
               {selectedFarmId ? (
-                <>
-                  {showQuickPotreroInput && (
-                    <div className="mb-3 p-3 bg-neutral-50 rounded-2xl border border-neutral-200 flex items-center gap-2 animate-in fade-in">
-                      <input
-                        type="text"
-                        placeholder="Nombre potrero..."
-                        value={quickPotreroName}
-                        onChange={(e) => setQuickPotreroName(e.target.value)}
-                        className="flex-1 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:ring-1 focus:ring-[#1B4820]"
-                      />
-                      <button
-                        type="button"
-                        disabled={isSavingQuickPotrero}
-                        onClick={handleQuickCreatePotrero}
-                        className="bg-[#1B4820] hover:bg-[#0F2912] text-white text-xs font-bold px-3 py-2 rounded-xl transition-all cursor-pointer disabled:opacity-50"
-                      >
-                        {isSavingQuickPotrero ? '...' : 'Crear'}
-                      </button>
-                    </div>
-                  )}
-
-                  <CustomSelect
-                    value={selectedPotreroId}
-                    onChange={(val) => setValue('potrero_id', val)}
-                    options={[
-                      { value: '', label: 'Sin potrero asignado' },
-                      ...potreros.map(p => ({ value: p.id, label: p.name }))
-                    ]}
-                    placeholder={potreros.length === 0 ? "Sin potreros (crea uno)" : "Selecciona potrero..."}
-                  />
-                </>
+                <CustomSelect
+                  value={selectedPotreroId}
+                  onChange={(val) => setValue('potrero_id', val)}
+                  options={[
+                    { value: '', label: 'Sin potrero asignado' },
+                    ...potreros.map(p => ({ value: p.id, label: p.name }))
+                  ]}
+                  placeholder={potreros.length === 0 ? "Sin potreros (crea uno)" : "Selecciona potrero..."}
+                />
               ) : (
                 <div className="p-3 bg-neutral-50 rounded-2xl border border-neutral-200/70 text-xs text-neutral-400 font-medium italic">
                   Selecciona una finca primero para asignar un potrero.
@@ -977,10 +889,15 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         </div>
       </form>
 
-      {/* Modal de Fincas y Potreros */}
+      {/* Modal de Fincas */}
       <FarmModal
         isOpen={isFarmModalOpen}
         onClose={() => setIsFarmModalOpen(false)}
+        onFarmCreated={(newFarm) => {
+          if (newFarm?.id) {
+            setValue('farm_id', newFarm.id);
+          }
+        }}
       />
 
       {/* Modal de Potreros */}
@@ -989,7 +906,9 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         onClose={() => setIsPotreroModalOpen(false)}
         defaultFarmId={selectedFarmId}
         onPotreroCreated={(newPot) => {
-          setValue('potrero_id', newPot.id);
+          if (newPot?.id) {
+            setValue('potrero_id', newPot.id);
+          }
         }}
       />
 
@@ -997,6 +916,11 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
       <OwnerModal
         isOpen={isOwnerModalOpen}
         onClose={() => setIsOwnerModalOpen(false)}
+        onOwnerCreated={(newOwner) => {
+          if (newOwner?.id) {
+            setValue('owner_id', newOwner.id);
+          }
+        }}
       />
     </div>
   );

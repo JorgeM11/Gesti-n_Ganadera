@@ -76,6 +76,7 @@ export default function OwnerModal({ isOpen, onClose, onOwnerCreated, onOwnerUpd
         if (onOwnerCreated) onOwnerCreated(newOwner);
       }
       handleBackToList();
+      if (onClose) onClose();
     } catch (err) {
       setError(err.message || 'Error al guardar el dueño');
     } finally {

@@ -114,6 +114,7 @@ export default function PotreroModal({
         if (onPotreroCreated) onPotreroCreated(newPotrero);
       }
       handleBackToList();
+      if (onClose) onClose();
     } catch (err) {
       setError(err.message || 'Error al guardar el potrero');
     } finally {

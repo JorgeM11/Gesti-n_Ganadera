@@ -70,7 +70,7 @@ flowchart TD
   - [x] **Dueños (Propietarios)**:
     - Entidad `owners` en IndexedDB ([`db.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/db.js) y [`ownerUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/ownerUtils.js)).
     - Modal de gestión de dueños [`OwnerModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/OwnerModal.jsx) y acceso desde el menú lateral ([`NavigationDrawer.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/NavigationDrawer.jsx)).
-    - Selector y creación rápida de dueños desde [`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx).
+    - Modal de gestión y creación de dueños [`OwnerModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/OwnerModal.jsx) integrado y accesible directamente desde [`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx) con autoselección al guardar, homologado a Finca y Potrero.
     - Búsqueda y visualización por dueño en tarjetas de inventario y detalle del perfil.
   - [x] **Reestructuración de Formulario Animal ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
     - Orden estricto según especificación: 1. Arete, 2. Chip, 3. Nombre, 4. Género, 5. Fecha nacimiento, 6. Peso, 7. Color, 8. Dueño, 9. Finca, 10. Potrero (habilitado al escoger finca), 11. Madre y Padre, 12. Raza sin porcentaje (incluye "Sin raza"), 13. Activo o Inactivo, 14. Foto + Descripción.
@@ -78,6 +78,7 @@ flowchart TD
     - Acordeones de eventos de nacimiento y destete removidos por completo.
     - Barra de porcentaje y cálculos genéticos de pureza removidos del formulario.
   - [x] **Ajustes y Correcciones Visuales/Funcionales**:
+    - [x] **Apertura de Modal Completo para Dueños (`AnimalForm.jsx`, `OwnerModal.jsx`)**: El botón "Nuevo" abre el modal autónomo de dueños en lugar del input inline, autoseleccionando el dueño creado y cerrando el modal.
     - [x] **Modal de Fincas Exclusivo (`FarmModal.jsx`)**: Removida la sección de potreros de las tarjetas de fincas; el modal ahora es 100% exclusivo para gestionar fincas.
     - [x] **Selector Estilizado en Potreros (`PotreroModal.jsx`)**: Sustituido el selector nativo por el componente reutilizable `CustomSelect` con dropdown flotante y buscador integrado.
     - [x] **Corrección de Difuminado de Botones en Modales Recursivos (`AnimalForm.jsx`, `BottomSheet.jsx`, `NuevoAnimal.jsx`, `PerfilAnimal.jsx`)**: Ajustado el Z-Index de los botones de acción a `z-30` y elevado el telón del modal a `z-70+` con portal al `document.body`, logrando que al registrar padre o madre el fondo y los botones queden totalmente difuminados.
