@@ -4,6 +4,17 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.2.5-phase2-barcode-scanner] - 2026-10-03
+
+### Añadido y Perfeccionado (Cierre de Fase 2)
+- **Escáner Óptico de Código de Barras para Microchips RFID ([`BarcodeScannerModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/BarcodeScannerModal.jsx) y [`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - Implementado sistema de escaneo de código de barras en tiempo real mediante cámara del dispositivo, optimizado para etiquetas físicas y jeringas de microchips ganaderos (Code 128, Code 39, EAN, UPC, ITF, DataMatrix, QR).
+  - Integrado botón de acceso rápido "Escanear" en la cabecera del campo "2. Número de Chip" y botón con icono dentro del mismo input.
+  - Al detectar el código de barras, se emite un pitido nítido de confirmación sonora (Web Audio API) y vibración háptica en dispositivos móviles, asignando el número automáticamente en el campo de chip y cerrando el escáner.
+  - Incluye visor rectangular apaisado con animación láser, soporte para linterna/flash en mangas o corrales oscuros, cambio entre cámaras (trasera/frontal) y manejo amigable de permisos.
+
+---
+
 ## [1.2.4-phase2-modals-and-autofill-fix] - 2026-10-03
 
 ### Corregido y Perfeccionado

@@ -7,7 +7,7 @@ import {
   Camera, Save, X, Trash2, Plus, 
   CheckCircle, Building2, Dna, 
   Scale, Calendar, IdCard, Cpu, Tag, 
-  Palette, UserCheck, ShieldAlert
+  Palette, UserCheck, ShieldAlert, ScanBarcode
 } from 'lucide-react';
 import { GiCow } from 'react-icons/gi';
 import { FaMars, FaVenus } from 'react-icons/fa6';
@@ -21,6 +21,7 @@ import GenealogySelector from './GenealogySelector';
 import FarmModal from './FarmModal';
 import PotreroModal from './PotreroModal';
 import OwnerModal from './OwnerModal';
+import BarcodeScannerModal from './BarcodeScannerModal';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { DateInput } from '@/components/ui/DateInput';
 
@@ -119,6 +120,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
   const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
   const [isPotreroModalOpen, setIsPotreroModalOpen] = useState(false);
   const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
+  const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
 
   // Estado de imagen principal
   const initialMainPreview = useMemo(() => {
@@ -428,37 +430,59 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               {errors.number && <p className="text-[11px] text-red-500 font-semibold mt-1 ml-1">{errors.number.message}</p>}
             </div>
 
-            {/* 2. Número de chip */}
+            {/* 2. Número de chip con escaneo de código de barras */}
             <div>
-              <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5 text-neutral-400" />
-                2. Número de Chip
-              </label>
-              <Controller
-                name="chip_number"
-                control={control}
-                render={({ field }) => (
-                  <input
-                    type="text"
-                    ref={field.ref}
-                    value={field.value ?? ''}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    id="animal_rfid_identifier"
-                    name="animal_rfid_identifier"
-                    autoComplete="one-time-code"
-                    data-form-type="other"
-                    data-lpignore="true"
-                    data-1p-ignore="true"
-                    data-bwignore="true"
-                    spellCheck={false}
-                    autoCorrect="off"
-                    autoCapitalize="none"
-                    placeholder="Ej. 982000345678901"
-                    className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all"
-                  />
-                )}
-              />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Cpu className="w-3.5 h-3.5 text-neutral-400" />
+                  2. Número de Chip
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsBarcodeScannerOpen(true)}
+                  className="text-[11px] font-bold text-[#1B4820] hover:text-[#0F2912] flex items-center gap-1 cursor-pointer bg-emerald-50 hover:bg-emerald-100/80 px-2 py-0.5 rounded-lg border border-emerald-200/80 transition-all shadow-2xs"
+                  title="Escanear código de barras con la cámara"
+                >
+                  <ScanBarcode className="w-3.5 h-3.5 text-[#1B4820]" />
+                  <span>Escanear</span>
+                </button>
+              </div>
+
+              <div className="relative">
+                <Controller
+                  name="chip_number"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      type="text"
+                      ref={field.ref}
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      id="animal_rfid_identifier"
+                      name="animal_rfid_identifier"
+                      autoComplete="one-time-code"
+                      data-form-type="other"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-bwignore="true"
+                      spellCheck={false}
+                      autoCorrect="off"
+                      autoCapitalize="none"
+                      placeholder="Ej. 982000345678901"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl pl-4 pr-11 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all"
+                    />
+                  )}
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsBarcodeScannerOpen(true)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl text-[#1B4820] hover:bg-emerald-100/70 transition-colors cursor-pointer"
+                  title="Escanear código de barras con la cámara"
+                >
+                  <ScanBarcode className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* 3. Nombre (opcional) */}
@@ -920,6 +944,15 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
           if (newOwner?.id) {
             setValue('owner_id', newOwner.id);
           }
+        }}
+      />
+
+      {/* Modal de Escáner de Código de Barras (Chip RFID) */}
+      <BarcodeScannerModal
+        isOpen={isBarcodeScannerOpen}
+        onClose={() => setIsBarcodeScannerOpen(false)}
+        onScanSuccess={(scannedCode) => {
+          setValue('chip_number', scannedCode, { shouldValidate: true, shouldDirty: true });
         }}
       />
     </div>

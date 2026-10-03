@@ -78,6 +78,7 @@ flowchart TD
     - Acordeones de eventos de nacimiento y destete removidos por completo.
     - Barra de porcentaje y cálculos genéticos de pureza removidos del formulario.
   - [x] **Ajustes y Correcciones Visuales/Funcionales**:
+    - [x] **Escáner Óptico de Código de Barras para Microchip RFID (`BarcodeScannerModal.jsx`, `AnimalForm.jsx`)**: Lector en tiempo real con cámara que autocompleta el número de chip en formularios de registro y edición, con pitido sonoro (Web Audio API), vibración háptica, linterna y selector de cámara.
     - [x] **Apertura de Modal Completo para Dueños (`AnimalForm.jsx`, `OwnerModal.jsx`)**: El botón "Nuevo" abre el modal autónomo de dueños en lugar del input inline, autoseleccionando el dueño creado y cerrando el modal.
     - [x] **Modal de Fincas Exclusivo (`FarmModal.jsx`)**: Removida la sección de potreros de las tarjetas de fincas; el modal ahora es 100% exclusivo para gestionar fincas.
     - [x] **Selector Estilizado en Potreros (`PotreroModal.jsx`)**: Sustituido el selector nativo por el componente reutilizable `CustomSelect` con dropdown flotante y buscador integrado.
