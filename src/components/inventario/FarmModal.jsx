@@ -237,9 +237,10 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
                     <button
                       type="button"
                       onClick={handleStartCreate}
-                      className="mt-3 text-xs font-bold text-[#1B4820] underline cursor-pointer"
+                      className="mt-4 inline-flex items-center justify-center gap-2 bg-[#1B4820] hover:bg-[#0F2912] active:scale-[0.98] text-white text-xs font-bold px-5 py-3 rounded-2xl shadow-md shadow-[#1B4820]/15 transition-all cursor-pointer"
                     >
-                      Registrar la primera finca
+                      <Plus className="w-4 h-4" />
+                      <span>Registrar Primera Finca</span>
                     </button>
                   </div>
                 ) : (
