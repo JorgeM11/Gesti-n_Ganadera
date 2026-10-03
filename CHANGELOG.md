@@ -4,6 +4,21 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.2.6-phase2-refinements] - 2026-10-03
+
+### Corregido y Perfeccionado
+- **Limpieza Visual del Escáner de Código de Barras ([`BarcodeScannerModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/BarcodeScannerModal.jsx))**:
+  - Retirado el marco verde superpuesto y la animación láser para mantener exclusivamente el visor nativo con esquinas blancas de la librería `html5-qrcode`.
+  - Reubicado el texto de instrucción ("Apunta la barra al centro del recuadro") en la parte inferior del recuadro del visor con fondo oscuro translúcido para no obstaculizar la visión del código.
+- **Reorganización de Campos en Registro y Edición ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - Reubicada la sección **8. Raza** inmediatamente después de las **Características Biológicas** (género, nacimiento, peso y color), unificando los atributos biológicos del animal.
+  - Renumeradas coherentemente las secciones subsiguientes: **9. Dueño**, **10. Finca**, **11. Potrero**, **12. Madre y Padre**, **13. Estado**, **14. Foto y Descripción**.
+- **Escáner de Código de Barras en Barra de Búsqueda ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - Integrado botón de escáner óptico directamente en la barra de búsqueda (tanto en vista móvil como en escritorio).
+  - Al escanear el código de barras o chip, el valor detectado se coloca instantáneamente en el buscador, filtrando los animales en tiempo real y desplegando un toast de confirmación.
+
+---
+
 ## [1.2.5-phase2-barcode-scanner] - 2026-10-03
 
 ### Añadido y Perfeccionado (Cierre de Fase 2)

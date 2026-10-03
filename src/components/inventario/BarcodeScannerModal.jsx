@@ -322,33 +322,10 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
                 className="w-full h-full [&_video]:object-cover [&_video]:w-full [&_video]:h-full"
               />
 
-              {/* Animación de escaneo / Visor superpuesto */}
+              {/* Texto de instrucción posicionado más abajo */}
               {!cameraError && !isInitializing && !lastScannedCode && (
-                <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6">
-                  {/* Marco delimitador para código de barras (rectangular apaisado) */}
-                  <div className="w-full max-w-[290px] h-[130px] sm:h-[150px] relative border-2 border-emerald-500/60 rounded-2xl shadow-[0_0_25px_rgba(16,185,129,0.25)] flex items-center justify-center overflow-hidden">
-                    {/* Esquinas destacadas */}
-                    <div className="absolute top-0 left-0 w-4 h-4 border-t-4 border-l-4 border-emerald-400 rounded-tl-lg" />
-                    <div className="absolute top-0 right-0 w-4 h-4 border-t-4 border-r-4 border-emerald-400 rounded-tr-lg" />
-                    <div className="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-emerald-400 rounded-bl-lg" />
-                    <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-emerald-400 rounded-br-lg" />
-
-                    {/* Línea de escaneo láser animada */}
-                    <motion.div
-                      animate={{
-                        y: [-50, 50, -50],
-                        opacity: [0.6, 1, 0.6]
-                      }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 1.8,
-                        ease: 'easeInOut'
-                      }}
-                      className="w-full h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_12px_#34d399]"
-                    />
-                  </div>
-
-                  <p className="text-[11px] font-bold text-neutral-300 mt-3 bg-black/60 backdrop-blur-xs px-3 py-1 rounded-full border border-neutral-800">
+                <div className="absolute bottom-3 inset-x-0 flex justify-center pointer-events-none z-10 px-4">
+                  <p className="text-[11px] font-medium text-neutral-200 bg-black/75 backdrop-blur-sm px-3.5 py-1.5 rounded-full border border-neutral-700/60 shadow-lg text-center">
                     Apunta la barra al centro del recuadro
                   </p>
                 </div>

@@ -614,7 +614,34 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         </div>
 
         {/* ========================================================================= */}
-        {/* 8. DUEÑO & 9. FINCA & 10. POTRERO                                         */}
+        {/* 8. RAZA SIN PORCENTAJE (CON OPCIÓN 'SIN RAZA')                            */}
+        {/* ========================================================================= */}
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200/80 shadow-sm space-y-4">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-neutral-100">
+            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+              <Dna className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-neutral-900">8. Raza</h3>
+              <p className="text-[11px] text-neutral-400 font-medium">Clasificación racial (con opción 'Sin raza')</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-2 block">
+              Seleccionar Raza
+            </label>
+            <CustomSelect
+              value={selectedBreed}
+              onChange={(val) => setValue('breed', val)}
+              options={POPULAR_BREEDS_LIST.map(b => ({ value: b, label: b }))}
+              placeholder="Selecciona la raza..."
+            />
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* 9. DUEÑO & 10. FINCA & 11. POTRERO                                        */}
         {/* ========================================================================= */}
         <div className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200/80 shadow-sm space-y-4">
           <div className="flex items-center gap-2.5 pb-2 border-b border-neutral-100">
@@ -628,12 +655,12 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* 8. Dueño */}
+            {/* 9. Dueño */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
                   <UserCheck className="w-3.5 h-3.5 text-neutral-400" />
-                  8. Dueño
+                  9. Dueño
                 </label>
                 <button
                   type="button"
@@ -656,12 +683,12 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               />
             </div>
 
-            {/* 9. Finca */}
+            {/* 10. Finca */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
                   <Building2 className="w-3.5 h-3.5 text-neutral-400" />
-                  9. Finca
+                  10. Finca
                 </label>
                 <button
                   type="button"
@@ -684,13 +711,13 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               />
             </div>
 
-            {/* 10. Potrero (si se escoge finca se puede seleccionar potrero) */}
+            {/* 11. Potrero (si se escoge finca se puede seleccionar potrero) */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className={`text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
                   selectedFarmId ? 'text-neutral-700' : 'text-neutral-400'
                 }`}>
-                  10. Potrero
+                  11. Potrero
                 </label>
                 {selectedFarmId && (
                   <button
@@ -724,7 +751,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         </div>
 
         {/* ========================================================================= */}
-        {/* 11. MADRE Y PADRE                                                         */}
+        {/* 12. MADRE Y PADRE                                                         */}
         {/* ========================================================================= */}
         <div className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200/80 shadow-sm space-y-4">
           <div className="flex items-center gap-2.5 pb-2 border-b border-neutral-100">
@@ -732,7 +759,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               <GiCow className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-black text-neutral-900">11. Madre y Padre (Genealogía)</h3>
+              <h3 className="text-base font-black text-neutral-900">12. Madre y Padre (Genealogía)</h3>
               <p className="text-[11px] text-neutral-400 font-medium">Línea ascendente directa</p>
             </div>
           </div>
@@ -757,33 +784,6 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                 onCreateNew={(sex) => onOpenModal && onOpenModal(sex, (id) => setValue('mother_id', id))} 
               />
             </div>
-          </div>
-        </div>
-
-        {/* ========================================================================= */}
-        {/* 12. RAZA SIN PORCENTAJE (CON OPCIÓN 'SIN RAZA')                           */}
-        {/* ========================================================================= */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200/80 shadow-sm space-y-4">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-neutral-100">
-            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-              <Dna className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-base font-black text-neutral-900">12. Raza</h3>
-              <p className="text-[11px] text-neutral-400 font-medium">Clasificación racial (con opción 'Sin raza')</p>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-2 block">
-              Seleccionar Raza
-            </label>
-            <CustomSelect
-              value={selectedBreed}
-              onChange={(val) => setValue('breed', val)}
-              options={POPULAR_BREEDS_LIST.map(b => ({ value: b, label: b }))}
-              placeholder="Selecciona la raza..."
-            />
           </div>
         </div>
 

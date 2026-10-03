@@ -18,7 +18,8 @@ import {
   RefreshCcw,
   Cpu,
   UserCheck,
-  Info
+  Info,
+  ScanBarcode
 } from 'lucide-react';
 import { FaMars, FaVenus } from 'react-icons/fa6';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -32,6 +33,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import FarmModal from '@/components/inventario/FarmModal';
 import PotreroModal from '@/components/inventario/PotreroModal';
 import OwnerModal from '@/components/inventario/OwnerModal';
+import BarcodeScannerModal from '@/components/inventario/BarcodeScannerModal';
 import NavigationDrawer from '@/components/inventario/NavigationDrawer';
 import AnimalCardSkeleton from '@/components/inventario/AnimalCardSkeleton';
 import Toast from '@/components/ui/Toast';
@@ -60,7 +62,7 @@ const FilterCheckbox = ({ label, count, checked, onChange }) => (
   </label>
 );
 
-const SearchInput = ({ isMobile = false, searchTerm, setSearchTerm, onOpenFilters, activeFiltersCount }) => (
+const SearchInput = ({ isMobile = false, searchTerm, setSearchTerm, onOpenFilters, activeFiltersCount, onScanBarcode }) => (
   <div className={`relative flex items-center ${isMobile
     ? 'md:hidden bg-white mt-3 w-full border-neutral-300 shadow-xs'
     : 'hidden md:flex bg-white md:w-full md:max-w-md border-neutral-200 shadow-sm'
@@ -84,6 +86,14 @@ const SearchInput = ({ isMobile = false, searchTerm, setSearchTerm, onOpenFilter
         <X className="w-3.5 h-3.5" />
       </button>
     )}
+    <button
+      type="button"
+      onClick={onScanBarcode}
+      className="p-1.5 text-[#1B4820] hover:text-[#0F2912] hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer mr-1 shrink-0"
+      title="Escanear código de barras (chip o arete)"
+    >
+      <ScanBarcode className="w-4 h-4" />
+    </button>
     <div className="border-l pl-3 ml-1 border-neutral-200 shrink-0 relative">
       <button 
         type="button"
@@ -104,6 +114,7 @@ export default function InventarioPage() {
   const navigate = useNavigate();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   
   // Detección reactiva de Desktop (breakpoint lg: 1024px)
@@ -760,6 +771,7 @@ export default function InventarioPage() {
               setSearchTerm={setSearchTerm} 
               onOpenFilters={() => setIsFilterOpen(true)} 
               activeFiltersCount={activeFiltersCount} 
+              onScanBarcode={() => setIsBarcodeScannerOpen(true)}
             />
           </div>
 
@@ -773,6 +785,7 @@ export default function InventarioPage() {
             setSearchTerm={setSearchTerm} 
             onOpenFilters={() => setIsFilterOpen(true)} 
             activeFiltersCount={activeFiltersCount} 
+            onScanBarcode={() => setIsBarcodeScannerOpen(true)}
           />
         </div>
       </header>
@@ -1104,6 +1117,16 @@ export default function InventarioPage() {
         }}
         onOwnerUpdated={(owner) => {
           showToast('¡Dueño actualizado con éxito!', `Los cambios en "${owner.name}" fueron guardados.`);
+        }}
+      />
+
+      {/* MODAL ESCÁNER DE CÓDIGO DE BARRAS PARA BÚSQUEDA */}
+      <BarcodeScannerModal
+        isOpen={isBarcodeScannerOpen}
+        onClose={() => setIsBarcodeScannerOpen(false)}
+        onScanSuccess={(scannedCode) => {
+          setSearchTerm(scannedCode);
+          showToast('Código escaneado', `Buscando animal con código: ${scannedCode}`);
         }}
       />
 
