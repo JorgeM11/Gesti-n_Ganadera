@@ -258,6 +258,7 @@ function ProfileContent() {
             description="Completa los datos mínimos para identificar al progenitor."
             style={{ zIndex: 60 + index * 10 }}
             noPaddingBottom
+            maxWidth="max-w-4xl lg:max-w-5xl"
           >
             <AnimalForm 
               isModal

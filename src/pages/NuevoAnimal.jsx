@@ -88,6 +88,7 @@ function NuevoAnimalContent() {
             description="Completa los datos mínimos para identificar al progenitor."
             style={{ zIndex: 50 + index * 10 }} // Incrementar Z-Index para modales anidados
             noPaddingBottom
+            maxWidth="max-w-4xl lg:max-w-5xl"
           >
             <AnimalForm 
               isModal

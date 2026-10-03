@@ -4,6 +4,22 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.2.3-phase2-potreros-and-ux] - 2026-10-03
+
+### Añadido y Mejorado
+- **Modal Independiente para Potreros ([`PotreroModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/PotreroModal.jsx))**:
+  - Implementado modal dedicado para la administración de potreros idéntico a los de Fincas y Dueños.
+  - Al registrar o editar un potrero, se exige obligatoriamente tanto el **Nombre del Potrero** como la **Finca Asociada**.
+  - Integrado acceso directo a "Potreros" con su contador y opción en la barra lateral ([`NavigationDrawer.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/NavigationDrawer.jsx)), en [`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx) y en [`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx).
+- **Ampliación de Modales de Progenitores en Laptop ([`NuevoAnimal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/NuevoAnimal.jsx) y [`PerfilAnimal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/PerfilAnimal.jsx))**:
+  - Configurado `maxWidth="max-w-4xl lg:max-w-5xl"` en los modales recursivos de creación de Padre y Madre, ofreciendo el mismo espacio visual cómodo y organizado que el modal principal de edición.
+- **Desactivación de Autocompletado en Formulario Animal ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - Se desactivó el autocompletado del navegador (`autoComplete="off"`) en los tres primeros campos: **Número de arete**, **Número de chip** y **Nombre**.
+- **Sustitución de Emoji por Icono SVG en Filtros ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - Se reemplazó el emoji `ℹ️` por el icono SVG `Info` de Lucide en el mensaje orientativo del filtro por potrero.
+
+---
+
 ## [1.2.2-phase2-ux-polish] - 2026-10-02
 
 ### Mejorado y Corregido

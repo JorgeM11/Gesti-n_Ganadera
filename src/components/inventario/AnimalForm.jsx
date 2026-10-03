@@ -19,6 +19,7 @@ import { addToSyncQueue } from '@/lib/syncUtils';
 import { compressImage } from '@/lib/imageUtils';
 import GenealogySelector from './GenealogySelector';
 import FarmModal from './FarmModal';
+import PotreroModal from './PotreroModal';
 import OwnerModal from './OwnerModal';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { DateInput } from '@/components/ui/DateInput';
@@ -118,6 +119,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
 
   // Estados de modales
   const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
+  const [isPotreroModalOpen, setIsPotreroModalOpen] = useState(false);
   const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
 
   // Estados rápidos para creación inline de Dueño y Potrero
@@ -442,6 +444,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               </label>
               <input
                 type="text"
+                autoComplete="off"
                 {...register('number')}
                 placeholder="Ej. 104, AR-001"
                 className={`w-full bg-neutral-50 border rounded-2xl px-4 py-3 text-sm font-bold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all ${
@@ -459,6 +462,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               </label>
               <input
                 type="text"
+                autoComplete="off"
                 {...register('chip_number')}
                 placeholder="Ej. 982000345678901"
                 className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all"
@@ -473,6 +477,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               </label>
               <input
                 type="text"
+                autoComplete="off"
                 {...register('name')}
                 placeholder="Ej. Mariposa, Lucero"
                 className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all"
@@ -676,11 +681,11 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                 {selectedFarmId && (
                   <button
                     type="button"
-                    onClick={() => setShowQuickPotreroInput(prev => !prev)}
+                    onClick={() => setIsPotreroModalOpen(true)}
                     className="text-[11px] font-bold text-[#1B4820] hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <Plus className="w-3 h-3" />
-                    <span>{showQuickPotreroInput ? 'Cancelar' : 'Nuevo'}</span>
+                    <span>Nuevo</span>
                   </button>
                 )}
               </div>
@@ -920,6 +925,16 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
       <FarmModal
         isOpen={isFarmModalOpen}
         onClose={() => setIsFarmModalOpen(false)}
+      />
+
+      {/* Modal de Potreros */}
+      <PotreroModal
+        isOpen={isPotreroModalOpen}
+        onClose={() => setIsPotreroModalOpen(false)}
+        defaultFarmId={selectedFarmId}
+        onPotreroCreated={(newPot) => {
+          setValue('potrero_id', newPot.id);
+        }}
       />
 
       {/* Modal de Dueños */}

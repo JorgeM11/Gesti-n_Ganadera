@@ -17,7 +17,8 @@ import {
   SearchX, 
   RefreshCcw,
   Cpu,
-  UserCheck
+  UserCheck,
+  Info
 } from 'lucide-react';
 import { FaMars, FaVenus } from 'react-icons/fa6';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -29,6 +30,7 @@ import SyncStatus from '@/components/ui/SyncStatus';
 import AnimalImage from '@/components/inventario/AnimalImage';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import FarmModal from '@/components/inventario/FarmModal';
+import PotreroModal from '@/components/inventario/PotreroModal';
 import OwnerModal from '@/components/inventario/OwnerModal';
 import NavigationDrawer from '@/components/inventario/NavigationDrawer';
 import AnimalCardSkeleton from '@/components/inventario/AnimalCardSkeleton';
@@ -169,6 +171,7 @@ export default function InventarioPage() {
   const [selectedPotreroFilter, setSelectedPotreroFilter] = useState('ALL');
   const [selectedOwnerFilter, setSelectedOwnerFilter] = useState('ALL');
   const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
+  const [isPotreroModalOpen, setIsPotreroModalOpen] = useState(false);
   const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
 
   // --- ESTADO PARA NOTIFICACIONES DE CONFIRMACIÓN (TOAST) ---
@@ -414,6 +417,8 @@ export default function InventarioPage() {
         onClose={() => setIsDrawerOpen(false)}
         farmsCount={farms.length}
         onOpenFarms={() => setIsFarmModalOpen(true)}
+        potrerosCount={potreros.length}
+        onOpenPotreros={() => setIsPotreroModalOpen(true)}
         ownersCount={owners.length}
         onOpenOwners={() => setIsOwnerModalOpen(true)}
         onForceResync={handleForceSync}
@@ -549,8 +554,9 @@ export default function InventarioPage() {
                 </div>
 
                 {selectedFarmFilter === 'ALL' ? (
-                  <div className="p-3 bg-neutral-50 rounded-2xl border border-neutral-200/80 text-xs text-neutral-500 font-medium">
-                    ℹ️ Selecciona una finca arriba para habilitar el filtro por potrero.
+                  <div className="p-3 bg-neutral-50 rounded-2xl border border-neutral-200/80 text-xs text-neutral-500 font-medium flex items-center gap-2">
+                    <Info className="w-4 h-4 text-neutral-400 shrink-0" />
+                    <span>Selecciona una finca arriba para habilitar el filtro por potrero.</span>
                   </div>
                 ) : (
                   <div className="space-y-1.5">
@@ -1073,6 +1079,19 @@ export default function InventarioPage() {
         }}
         onFarmUpdated={(farm) => {
           showToast('¡Finca actualizada con éxito!', `Los cambios en "${farm.name}" fueron guardados.`);
+        }}
+      />
+
+      {/* MODAL GESTIÓN DE POTREROS */}
+      <PotreroModal
+        isOpen={isPotreroModalOpen}
+        onClose={() => setIsPotreroModalOpen(false)}
+        defaultFarmId={selectedFarmFilter !== 'ALL' ? selectedFarmFilter : ''}
+        onPotreroCreated={(pot) => {
+          showToast('¡Potrero creado con éxito!', `El potrero "${pot.name}" fue registrado correctamente.`);
+        }}
+        onPotreroUpdated={(pot) => {
+          showToast('¡Potrero actualizado con éxito!', `Los cambios en "${pot.name}" fueron guardados.`);
         }}
       />
 

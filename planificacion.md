@@ -64,8 +64,8 @@ flowchart TD
 - [x] **Nuevas Características Incorporadas**:
   - [x] **Potreros (Segundo nivel de Finca)**:
     - Entidad `potreros` asociada a `farm_id` en IndexedDB ([`db.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/db.js) y [`potreroUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/potreroUtils.js)).
-    - Gestión de potreros dentro de cada finca en [`FarmModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/FarmModal.jsx) (crear, editar nombre, listar, eliminar).
-    - Creación rápida de potreros desde [`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx).
+    - **Modal Independiente de Potreros ([`PotreroModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/PotreroModal.jsx))**: Gestión autónoma idéntica a Fincas y Dueños, con validación estricta y obligatoria de **Nombre del Potrero** y **Finca Asociada**.
+    - Integración de acceso a Potreros en la barra lateral ([`NavigationDrawer.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/NavigationDrawer.jsx)), [`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx) y [`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx).
     - Filtro por potrero en [`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx) con sub-filtro condicional al seleccionar una finca.
   - [x] **Dueños (Propietarios)**:
     - Entidad `owners` en IndexedDB ([`db.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/db.js) y [`ownerUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/ownerUtils.js)).
@@ -74,19 +74,21 @@ flowchart TD
     - Búsqueda y visualización por dueño en tarjetas de inventario y detalle del perfil.
   - [x] **Reestructuración de Formulario Animal ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
     - Orden estricto según especificación: 1. Arete, 2. Chip, 3. Nombre, 4. Género, 5. Fecha nacimiento, 6. Peso, 7. Color, 8. Dueño, 9. Finca, 10. Potrero (habilitado al escoger finca), 11. Madre y Padre, 12. Raza sin porcentaje (incluye "Sin raza"), 13. Activo o Inactivo, 14. Foto + Descripción.
+    - Desactivación de autocompletado del navegador (`autoComplete="off"`) en los 3 primeros inputs (arete, chip y nombre).
     - Acordeones de eventos de nacimiento y destete removidos por completo.
     - Barra de porcentaje y cálculos genéticos de pureza removidos del formulario.
   - [x] **Ajustes y Correcciones Visuales/Funcionales**:
     - [x] **Modal de Fincas y Potreros (`FarmModal.jsx`)**: Botón de administración de potreros reubicado debajo de la información principal de la finca.
-    - [x] **Botones de Guardar y Cancelar Fijos (`AnimalForm.jsx`)**: Fijados al borde inferior de la pantalla (`fixed bottom-0 inset-x-0 z-50`) con padding de seguridad.
+    - [x] **Botones de Guardar y Cancelar Fijos y Simétricos (`AnimalForm.jsx`, `BottomSheet.jsx`)**: Fijados al borde inferior sin márgenes sobrantes y con tamaño equilibrado 50%/50% (`flex-1`).
     - [x] **Generación de Evento de Nacimiento (`AnimalForm.jsx`)**: Sincronización automática de fecha y peso de nacimiento a la tabla `growth_events` con tipo `'Nacimiento'`.
     - [x] **Botón de Editar Perfil en Vista Móvil (`DetailsTab.jsx`)**: Botón flotante animado (FAB) en la esquina inferior derecha idéntico a `EvolutionTab` y `HealthTab`.
-    - [x] **Modal de Edición de Animal Más Ancho en Laptop (`BottomSheet.jsx`, `AnimalForm.jsx`)**: Ancho expandido a `max-w-4xl lg:max-w-5xl` con distribución en 3 columnas sin campos apiñados.
+    - [x] **Modales Más Anchos en Laptop (`BottomSheet.jsx`, `NuevoAnimal.jsx`, `PerfilAnimal.jsx`)**: Ancho expandido a `max-w-4xl lg:max-w-5xl` tanto para edición principal como para modales recursivos de Padre y Madre.
     - [x] **Llamado de Atención en Sincronización (`SyncStatus.jsx`)**: Animación de pulso/respiración (crece y se disminuye) cuando hay pendientes de sincronizar.
-    - [x] **Eliminación de Registro de Raza Nueva (`AnimalForm.jsx`)**: Removido campo de texto libre para raza personalizada, manteniendo selector predefinido.
+    - [x] **Icono de Vaca en Menú Lateral (`NavigationDrawer.jsx`)**: Sustituido el escudo por la silueta de vaca (`GiCow`).
+    - [x] **Eliminación Restringida**: Eliminada la opción de borrado para Dueños, Potreros y Fincas.
     - [x] **Cards de Animales en 2 Columnas para Móvil (`Inventario.jsx`)**: Cuadrícula `grid-cols-2` fija en teléfonos móviles con diseño y tipografía optimizados.
   - [x] **Filtros Avanzados y Búsqueda en Inventario ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
-    - [x] **Filtro Contextual por Potrero**: En el drawer de filtros, la sección de potreros se activa dinámicamente tras seleccionar una finca, mostrando el conteo de animales por potrero. Si no hay finca elegida, guía al usuario a seleccionar una primero.
+    - [x] **Filtro Contextual por Potrero**: En el drawer de filtros, la sección de potreros se activa dinámicamente tras seleccionar una finca, mostrando el conteo de animales por potrero. Si no hay finca elegida, guía al usuario a seleccionar una con un icono SVG `Info` (sin emojis).
     - [x] **Filtro por Dueño**: Sección dedicada en el drawer de filtros que permite filtrar animales por propietario específico, sin dueño asignado o todos.
     - [x] **Búsqueda por Chip Electrónico**: Barra de búsqueda optimizada para consultar por chip (`chip_number`), arete (`number`), nombre (`name`) y dueño (`owner`), normalizando caracteres y espacios.
     - [x] **Banner Interactivo de Filtros Activos**: Tags removibles visibles arriba de la lista para remover filtros individuales (Finca, Potrero, Dueño, Sexo, Estado, etc.) o limpiar todos con un clic.

@@ -12,7 +12,8 @@ import {
   LogOut, 
   CheckCircle2, 
   ChevronRight,
-  ExternalLink
+  ExternalLink,
+  Fence
 } from 'lucide-react';
 import { GiCow } from 'react-icons/gi';
 
@@ -21,6 +22,8 @@ export default function NavigationDrawer({
   onClose,
   farmsCount = 0,
   onOpenFarms,
+  potrerosCount = 0,
+  onOpenPotreros,
   ownersCount = 0,
   onOpenOwners,
   onForceResync,
@@ -99,7 +102,7 @@ export default function NavigationDrawer({
                   <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/inventario') ? 'text-white' : 'text-neutral-400'}`} />
                 </button>
 
-                {/* 2. Fincas y Potreros */}
+                {/* 2. Fincas */}
                 <button
                   type="button"
                   onClick={() => {
@@ -109,7 +112,7 @@ export default function NavigationDrawer({
                 >
                   <div className="flex items-center gap-3">
                     <Building2 className="w-5 h-5 text-neutral-600" />
-                    <span>Fincas y Potreros</span>
+                    <span>Fincas</span>
                   </div>
                   {farmsCount > 0 && (
                     <span className="text-[10px] font-black bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-full">
@@ -118,7 +121,26 @@ export default function NavigationDrawer({
                   )}
                 </button>
 
-                {/* 3. Dueños */}
+                {/* 3. Potreros */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onOpenPotreros) onOpenPotreros();
+                  }}
+                  className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold text-neutral-700 hover:bg-neutral-100 transition-all cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <Fence className="w-5 h-5 text-neutral-600" />
+                    <span>Potreros</span>
+                  </div>
+                  {potrerosCount > 0 && (
+                    <span className="text-[10px] font-black bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-full">
+                      {potrerosCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* 4. Dueños */}
                 <button
                   type="button"
                   onClick={() => {
