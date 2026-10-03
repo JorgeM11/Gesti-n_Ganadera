@@ -80,7 +80,11 @@ flowchart TD
     - [x] **Modal de Fincas y Potreros (`FarmModal.jsx`)**: Botón de administración de potreros reubicado debajo de la información principal de la finca.
     - [x] **Botones de Guardar y Cancelar Fijos (`AnimalForm.jsx`)**: Fijados al borde inferior de la pantalla (`fixed bottom-0 inset-x-0 z-50`) con padding de seguridad.
     - [x] **Generación de Evento de Nacimiento (`AnimalForm.jsx`)**: Sincronización automática de fecha y peso de nacimiento a la tabla `growth_events` con tipo `'Nacimiento'`.
-    - [x] **Botón de Editar Perfil en Vista Móvil (`DetailsTab.jsx` y `PerfilAnimal.jsx`)**: Restaurado en la ficha técnica y añadido en la cabecera móvil.
+    - [x] **Botón de Editar Perfil en Vista Móvil (`DetailsTab.jsx`)**: Botón flotante animado (FAB) en la esquina inferior derecha idéntico a `EvolutionTab` y `HealthTab`.
+    - [x] **Modal de Edición de Animal Más Ancho en Laptop (`BottomSheet.jsx`, `AnimalForm.jsx`)**: Ancho expandido a `max-w-4xl lg:max-w-5xl` con distribución en 3 columnas sin campos apiñados.
+    - [x] **Llamado de Atención en Sincronización (`SyncStatus.jsx`)**: Animación de pulso/respiración (crece y se disminuye) cuando hay pendientes de sincronizar.
+    - [x] **Eliminación de Registro de Raza Nueva (`AnimalForm.jsx`)**: Removido campo de texto libre para raza personalizada, manteniendo selector predefinido.
+    - [x] **Cards de Animales en 2 Columnas para Móvil (`Inventario.jsx`)**: Cuadrícula `grid-cols-2` fija en teléfonos móviles con diseño y tipografía optimizados.
   - [x] **Actualización de Ficha Técnica ([`DetailsTab.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/DetailsTab.jsx)) e Inventario ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
     - Visualización limpia de arete, chip, nombre, dueño, finca, potrero, raza sin porcentaje y estado.
 

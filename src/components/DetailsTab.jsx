@@ -141,10 +141,10 @@ export default function DetailsTab({ animal, onEdit }) {
           </div>
         </div>
 
-        {/* Botón Editar Información */}
+        {/* Botón Editar Información (Desktop) */}
         <button 
           onClick={onEdit}
-          className="flex w-full items-center justify-center gap-2 bg-[#1B4820] hover:bg-[#123316] text-white font-bold py-3.5 rounded-2xl shadow-sm transition-all hover:scale-[0.99] active:scale-95 cursor-pointer text-xs uppercase tracking-wider"
+          className="hidden md:flex w-full items-center justify-center gap-2 bg-[#1B4820] hover:bg-[#123316] text-white font-bold py-3.5 rounded-2xl shadow-sm transition-all hover:scale-[0.99] active:scale-95 cursor-pointer text-xs uppercase tracking-wider"
         >
           <Pencil className="w-4 h-4" /> Editar Información
         </button>
@@ -308,6 +308,27 @@ export default function DetailsTab({ animal, onEdit }) {
           </section>
         )}
       </div>
+
+      {/* Botón Flotante para MÓVIL (FAB) idéntico a los otros apartados */}
+      <motion.button 
+        initial={{ opacity: 0, scale: 0.88, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.88, y: 8 }}
+        transition={{ 
+          type: "spring", 
+          stiffness: 450, 
+          damping: 30, 
+          mass: 0.6 
+        }}
+        whileTap={{ scale: 0.92 }}
+        onClick={onEdit}
+        className="fixed bottom-20 right-4 z-30 md:hidden flex items-center gap-2 bg-[#1B4820] hover:bg-[#123316] text-white font-bold px-4 py-3 rounded-full shadow-[0_8px_25px_rgba(27,72,32,0.4)] border border-emerald-600/30 cursor-pointer text-xs uppercase tracking-wider backdrop-blur-xs"
+        title="Editar Perfil"
+        aria-label="Editar Perfil"
+      >
+        <Pencil className="w-4 h-4" />
+        <span>Editar</span>
+      </motion.button>
 
     </div>
   );

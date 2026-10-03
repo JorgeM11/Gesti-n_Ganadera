@@ -69,17 +69,24 @@ export default function SyncStatus() {
     bgColor = 'bg-emerald-50';
   }
 
+  const isPending = pendingItemsCount > 0 && syncStatus !== 'SYNCING';
+
   return (
     <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+      animate={isPending ? { scale: [1, 1.09, 1] } : { scale: 1 }}
+      transition={isPending ? { repeat: Infinity, duration: 1.4, ease: "easeInOut" } : { duration: 0.2 }}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
       onClick={handleSyncClick}
-      className={`flex items-center gap-2 px-1 sm:px-3 py-1.5 rounded-full border border-transparent transition-all shadow-sm cursor-pointer ${bgColor}`}
+      className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-full border transition-all shadow-sm cursor-pointer ${bgColor} ${
+        isPending ? 'border-amber-300 ring-2 ring-amber-400/60 shadow-amber-400/20 shadow-md' : 'border-transparent'
+      }`}
+      title={isPending ? 'Hay cambios pendientes por sincronizar. Haz clic para sincronizar.' : undefined}
     >
       <div className={isRotating ? 'animate-spin' : ''}>
-        <StatusIcon className={`w-3 h-3 sm:w-4 sm:h-4 ${statusColor}`} />
+        <StatusIcon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${statusColor}`} />
       </div>
-      <span className={`text-[8px] sm:text-[10px] font-bold uppercase tracking-wider ${statusColor}`}>
+      <span className={`text-[9px] sm:text-[10px] font-bold uppercase tracking-wider ${statusColor}`}>
         {statusText}
       </span>
 

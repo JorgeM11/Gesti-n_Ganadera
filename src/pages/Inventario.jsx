@@ -664,10 +664,10 @@ export default function InventarioPage() {
           <AnimalCardSkeleton count={8} />
         ) : paginatedAnimals.length > 0 ? (
           <>
-            {/* GRID DE CARDS ORDENADAS Y PROPORCIONADAS */}
+            {/* GRID DE CARDS ORDENADAS Y PROPORCIONADAS (2 COLUMNAS EN MÓVIL) */}
             <motion.div
               layout
-              className="grid grid-cols-1 min-[460px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6"
             >
               {paginatedAnimals.map((animal) => {
                 const isHighlight = is8MonthsOld(animal);
@@ -676,7 +676,7 @@ export default function InventarioPage() {
                 const CardContent = (
                   <motion.article 
                     whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                    className={`relative bg-white rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full cursor-pointer group border-2 ${
+                    className={`relative bg-white rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full cursor-pointer group border-2 ${
                       isHighlight 
                         ? 'border-amber-400 shadow-amber-400/20 shadow-lg' 
                         : 'border-neutral-200/80 hover:border-neutral-300'
@@ -684,8 +684,8 @@ export default function InventarioPage() {
                   >
                     {/* Alerta Visual de 8 Meses */}
                     {isHighlight && (
-                      <div className="w-full bg-amber-400 text-amber-950 text-[10px] font-black uppercase tracking-widest text-center py-1.5 z-20 flex items-center justify-center gap-1.5 shadow-xs">
-                        <AlertCircle className="w-3.5 h-3.5" />
+                      <div className="w-full bg-amber-400 text-amber-950 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-center py-1 sm:py-1.5 z-20 flex items-center justify-center gap-1 sm:gap-1.5 shadow-xs">
+                        <AlertCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                         <span>8 Meses Cumplidos</span>
                       </div>
                     )}
@@ -700,8 +700,8 @@ export default function InventarioPage() {
                       />
 
                       {/* Badge de Sexo */}
-                      <div className="absolute top-3 left-3">
-                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-white shadow-sm ${
+                      <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
+                        <span className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm ${
                           animal.sex === 'Hembra' ? 'bg-pink-600/90 backdrop-blur-xs' : 'bg-blue-700/90 backdrop-blur-xs'
                         }`}>
                           {animal.sex || 'Bovino'}
@@ -709,18 +709,18 @@ export default function InventarioPage() {
                       </div>
 
                       {/* Badge de Status (Activo / Inactivo) */}
-                      <div className="absolute top-3 right-3">
-                        <div className={`px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm backdrop-blur-xs ${
+                      <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
+                        <div className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1 sm:gap-1.5 shadow-sm backdrop-blur-xs ${
                           animal.status === 'Inactivo' 
                             ? 'bg-neutral-800/85 text-white' 
                             : 'bg-emerald-600/90 text-white'
                         }`}>
                           {animal.status === 'Inactivo' ? (
-                            <XCircle className="w-3 h-3 text-red-300" />
+                            <XCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-300" />
                           ) : (
-                            <CheckCircle2 className="w-3 h-3 text-emerald-200" />
+                            <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-200" />
                           )}
-                          <span className="text-[10px] font-black uppercase tracking-wider">
+                          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider">
                             {animal.status || 'Activo'}
                           </span>
                         </div>
@@ -728,40 +728,40 @@ export default function InventarioPage() {
                     </div>
 
                     {/* SECCIÓN DE INFORMACIÓN ORDENADA (SIN SOLAPAMIENTOS) */}
-                    <div className="p-4 sm:p-5 flex flex-col justify-between flex-1 gap-3">
+                    <div className="p-3 sm:p-5 flex flex-col justify-between flex-1 gap-2 sm:gap-3">
                       <div>
                         {/* Nombre / Código del Animal */}
-                        <div className="mb-2">
+                        <div className="mb-1.5 sm:mb-2">
                           <h2 
-                            className="text-lg font-black text-neutral-900 leading-tight truncate group-hover:text-[#1B4820] transition-colors" 
+                            className="text-sm sm:text-lg font-black text-neutral-900 leading-tight truncate group-hover:text-[#1B4820] transition-colors" 
                             title={animalDisplayName}
                           >
                             {animalDisplayName}
                           </h2>
-                          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <div className="flex items-center gap-1 sm:gap-2 mt-0.5 flex-wrap">
                             {animal.name && (
-                              <span className="text-xs font-bold text-neutral-400">#{animal.number}</span>
+                              <span className="text-[10px] sm:text-xs font-bold text-neutral-400">#{animal.number}</span>
                             )}
                             {animal.chip_number && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-black bg-blue-50 text-blue-800 px-2 py-0.5 rounded-md border border-blue-200/60">
-                                <Cpu className="w-3 h-3" />
-                                {animal.chip_number}
+                              <span className="inline-flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-[10px] font-black bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded-md border border-blue-200/60 truncate max-w-full">
+                                <Cpu className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+                                <span className="truncate">{animal.chip_number}</span>
                               </span>
                             )}
                           </div>
                         </div>
 
                         {/* Fila 1: Raza (Sin porcentaje) */}
-                        <div className="flex items-center gap-2 text-xs font-semibold text-neutral-700 py-0.5">
-                          <Dna className="w-3.5 h-3.5 text-[#1B4820] shrink-0" />
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-semibold text-neutral-700 py-0.5">
+                          <Dna className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#1B4820] shrink-0" />
                           <span className="truncate">
                             {animal.breed || 'Sin raza'}
                           </span>
                         </div>
 
                         {/* Fila 2: Finca y Potrero */}
-                        <div className="flex items-center gap-2 text-xs font-medium text-neutral-600 py-0.5">
-                          <Building2 className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-neutral-600 py-0.5">
+                          <Building2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-neutral-400 shrink-0" />
                           <span className="truncate">
                             {animal.farm_id && farmMap[animal.farm_id] ? farmMap[animal.farm_id] : 'Sin finca'}
                             {animal.potrero_id && potreroMap[animal.potrero_id] ? ` · ${potreroMap[animal.potrero_id]}` : ''}
@@ -770,8 +770,8 @@ export default function InventarioPage() {
 
                         {/* Fila 3: Dueño (si tiene) */}
                         {animal.owner_id && ownerMap[animal.owner_id] && (
-                          <div className="flex items-center gap-2 text-xs font-medium text-neutral-600 py-0.5">
-                            <UserCheck className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                          <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-neutral-600 py-0.5">
+                            <UserCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-neutral-400 shrink-0" />
                             <span className="truncate">
                               Dueño: {ownerMap[animal.owner_id]}
                             </span>
@@ -779,8 +779,8 @@ export default function InventarioPage() {
                         )}
 
                         {/* Fila 4: Edad */}
-                        <div className="flex items-center gap-2 text-xs font-medium text-neutral-600 py-0.5">
-                          <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-neutral-600 py-0.5">
+                          <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-neutral-400 shrink-0" />
                           <span className="truncate">
                             {calculateAge(animal.birth_date)}
                           </span>
@@ -788,10 +788,10 @@ export default function InventarioPage() {
                       </div>
 
                       {/* Fila Inferior: Peso */}
-                      <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
-                        <div className="flex items-center text-neutral-800 bg-neutral-100/90 border border-neutral-200/70 px-2.5 py-1.5 rounded-xl">
-                          <Scale className="w-3.5 h-3.5 mr-1.5 text-[#1B4820]" strokeWidth={2.5} />
-                          <span className="text-xs font-black tracking-tight">{formatWeight(animal.last_weight_kg)}</span>
+                      <div className="pt-2 sm:pt-3 border-t border-neutral-100 flex items-center justify-between gap-1 sm:gap-2">
+                        <div className="flex items-center text-neutral-800 bg-neutral-100/90 border border-neutral-200/70 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl">
+                          <Scale className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5 text-[#1B4820]" strokeWidth={2.5} />
+                          <span className="text-[11px] sm:text-xs font-black tracking-tight">{formatWeight(animal.last_weight_kg)}</span>
                         </div>
                       </div>
                     </div>

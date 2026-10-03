@@ -407,7 +407,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
   };
 
   return (
-    <div className="relative pb-28 sm:pb-24">
+    <div className={`relative ${isModal ? 'pb-4' : 'pb-28 sm:pb-24'}`}>
       {/* Toast Notificación */}
       {toast.show && (
         <div className={`fixed z-[100] px-5 py-3.5 rounded-2xl shadow-xl transition-all top-5 left-1/2 -translate-x-1/2 font-bold text-sm flex items-center gap-3 text-white ${
@@ -418,7 +418,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         </div>
       )}
 
-      <form onSubmit={handleSubmit(handleSave)} className="space-y-6 max-w-2xl mx-auto">
+      <form onSubmit={handleSubmit(handleSave)} className="space-y-6 max-w-4xl mx-auto">
         
         {/* ========================================================================= */}
         {/* 1. NÚMERO DE ARETE & 2. NÚMERO DE CHIP & 3. NOMBRE (OPCIONAL)            */}
@@ -434,7 +434,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* 1. Número de arete */}
             <div>
               <label className="text-[11px] font-black text-[#1B4820] uppercase tracking-wider mb-1.5 block">
@@ -466,7 +466,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
             </div>
 
             {/* 3. Nombre (opcional) */}
-            <div className="sm:col-span-2">
+            <div>
               <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                 <Tag className="w-3.5 h-3.5 text-neutral-400" />
                 3. Nombre (Opcional)
@@ -474,7 +474,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               <input
                 type="text"
                 {...register('name')}
-                placeholder="Ej. Mariposa, Lucero, El Sultán"
+                placeholder="Ej. Mariposa, Lucero"
                 className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all"
               />
             </div>
@@ -588,139 +588,141 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
             </div>
           </div>
 
-          {/* 8. Dueño */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
-                <UserCheck className="w-3.5 h-3.5 text-neutral-400" />
-                8. Dueño
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowQuickOwnerInput(prev => !prev)}
-                className="text-[11px] font-bold text-[#1B4820] hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-3 h-3" />
-                <span>{showQuickOwnerInput ? 'Cancelar' : 'Nuevo Dueño'}</span>
-              </button>
-            </div>
-
-            {showQuickOwnerInput && (
-              <div className="mb-3 p-3 bg-neutral-50 rounded-2xl border border-neutral-200 flex items-center gap-2 animate-in fade-in">
-                <input
-                  type="text"
-                  placeholder="Nombre del nuevo dueño..."
-                  value={quickOwnerName}
-                  onChange={(e) => setQuickOwnerName(e.target.value)}
-                  className="flex-1 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:ring-1 focus:ring-[#1B4820]"
-                />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* 8. Dueño */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5 text-neutral-400" />
+                  8. Dueño
+                </label>
                 <button
                   type="button"
-                  disabled={isSavingQuickOwner}
-                  onClick={handleQuickCreateOwner}
-                  className="bg-[#1B4820] hover:bg-[#0F2912] text-white text-xs font-bold px-3 py-2 rounded-xl transition-all cursor-pointer disabled:opacity-50"
-                >
-                  {isSavingQuickOwner ? 'Guardando...' : 'Crear y Usar'}
-                </button>
-              </div>
-            )}
-
-            <CustomSelect
-              value={selectedOwnerId}
-              onChange={(val) => setValue('owner_id', val)}
-              options={[
-                { value: '', label: 'Sin dueño asignado' },
-                ...owners.map(o => ({ value: o.id, label: o.name }))
-              ]}
-              placeholder="Selecciona el dueño..."
-            />
-          </div>
-
-          {/* 9. Finca */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
-                <Building2 className="w-3.5 h-3.5 text-neutral-400" />
-                9. Finca
-              </label>
-              <button
-                type="button"
-                onClick={() => setIsFarmModalOpen(true)}
-                className="text-[11px] font-bold text-[#1B4820] hover:underline flex items-center gap-1 cursor-pointer"
-              >
-                <Plus className="w-3 h-3" />
-                <span>Gestionar Fincas</span>
-              </button>
-            </div>
-
-            <CustomSelect
-              value={selectedFarmId}
-              onChange={(val) => setValue('farm_id', val)}
-              options={[
-                { value: '', label: 'Sin finca asignada' },
-                ...farms.map(f => ({ value: f.id, label: `${f.name}${f.location ? ` (${f.location})` : ''}` }))
-              ]}
-              placeholder="Selecciona la finca..."
-            />
-          </div>
-
-          {/* 10. Potrero (si se escoge finca se puede seleccionar potrero) */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className={`text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
-                selectedFarmId ? 'text-neutral-700' : 'text-neutral-400'
-              }`}>
-                10. Potrero
-              </label>
-              {selectedFarmId && (
-                <button
-                  type="button"
-                  onClick={() => setShowQuickPotreroInput(prev => !prev)}
+                  onClick={() => setShowQuickOwnerInput(prev => !prev)}
                   className="text-[11px] font-bold text-[#1B4820] hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   <Plus className="w-3 h-3" />
-                  <span>{showQuickPotreroInput ? 'Cancelar' : 'Nuevo Potrero'}</span>
+                  <span>{showQuickOwnerInput ? 'Cancelar' : 'Nuevo'}</span>
                 </button>
+              </div>
+
+              {showQuickOwnerInput && (
+                <div className="mb-3 p-3 bg-neutral-50 rounded-2xl border border-neutral-200 flex items-center gap-2 animate-in fade-in">
+                  <input
+                    type="text"
+                    placeholder="Nombre del dueño..."
+                    value={quickOwnerName}
+                    onChange={(e) => setQuickOwnerName(e.target.value)}
+                    className="flex-1 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:ring-1 focus:ring-[#1B4820]"
+                  />
+                  <button
+                    type="button"
+                    disabled={isSavingQuickOwner}
+                    onClick={handleQuickCreateOwner}
+                    className="bg-[#1B4820] hover:bg-[#0F2912] text-white text-xs font-bold px-3 py-2 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isSavingQuickOwner ? '...' : 'Crear'}
+                  </button>
+                </div>
               )}
+
+              <CustomSelect
+                value={selectedOwnerId}
+                onChange={(val) => setValue('owner_id', val)}
+                options={[
+                  { value: '', label: 'Sin dueño asignado' },
+                  ...owners.map(o => ({ value: o.id, label: o.name }))
+                ]}
+                placeholder="Selecciona el dueño..."
+              />
             </div>
 
-            {selectedFarmId ? (
-              <>
-                {showQuickPotreroInput && (
-                  <div className="mb-3 p-3 bg-neutral-50 rounded-2xl border border-neutral-200 flex items-center gap-2 animate-in fade-in">
-                    <input
-                      type="text"
-                      placeholder="Nombre del nuevo potrero..."
-                      value={quickPotreroName}
-                      onChange={(e) => setQuickPotreroName(e.target.value)}
-                      className="flex-1 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:ring-1 focus:ring-[#1B4820]"
-                    />
-                    <button
-                      type="button"
-                      disabled={isSavingQuickPotrero}
-                      onClick={handleQuickCreatePotrero}
-                      className="bg-[#1B4820] hover:bg-[#0F2912] text-white text-xs font-bold px-3 py-2 rounded-xl transition-all cursor-pointer disabled:opacity-50"
-                    >
-                      {isSavingQuickPotrero ? 'Guardando...' : 'Crear y Usar'}
-                    </button>
-                  </div>
-                )}
-
-                <CustomSelect
-                  value={selectedPotreroId}
-                  onChange={(val) => setValue('potrero_id', val)}
-                  options={[
-                    { value: '', label: 'Sin potrero asignado' },
-                    ...potreros.map(p => ({ value: p.id, label: p.name }))
-                  ]}
-                  placeholder={potreros.length === 0 ? "No hay potreros en esta finca (puedes crear uno)" : "Selecciona el potrero..."}
-                />
-              </>
-            ) : (
-              <div className="p-3 bg-neutral-50 rounded-2xl border border-neutral-200/70 text-xs text-neutral-400 font-medium italic">
-                Selecciona una finca primero para poder asignar o crear un potrero.
+            {/* 9. Finca */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-neutral-400" />
+                  9. Finca
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setIsFarmModalOpen(true)}
+                  className="text-[11px] font-bold text-[#1B4820] hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>Fincas</span>
+                </button>
               </div>
-            )}
+
+              <CustomSelect
+                value={selectedFarmId}
+                onChange={(val) => setValue('farm_id', val)}
+                options={[
+                  { value: '', label: 'Sin finca asignada' },
+                  ...farms.map(f => ({ value: f.id, label: `${f.name}${f.location ? ` (${f.location})` : ''}` }))
+                ]}
+                placeholder="Selecciona la finca..."
+              />
+            </div>
+
+            {/* 10. Potrero (si se escoge finca se puede seleccionar potrero) */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className={`text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                  selectedFarmId ? 'text-neutral-700' : 'text-neutral-400'
+                }`}>
+                  10. Potrero
+                </label>
+                {selectedFarmId && (
+                  <button
+                    type="button"
+                    onClick={() => setShowQuickPotreroInput(prev => !prev)}
+                    className="text-[11px] font-bold text-[#1B4820] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>{showQuickPotreroInput ? 'Cancelar' : 'Nuevo'}</span>
+                  </button>
+                )}
+              </div>
+
+              {selectedFarmId ? (
+                <>
+                  {showQuickPotreroInput && (
+                    <div className="mb-3 p-3 bg-neutral-50 rounded-2xl border border-neutral-200 flex items-center gap-2 animate-in fade-in">
+                      <input
+                        type="text"
+                        placeholder="Nombre potrero..."
+                        value={quickPotreroName}
+                        onChange={(e) => setQuickPotreroName(e.target.value)}
+                        className="flex-1 bg-white border border-neutral-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none focus:ring-1 focus:ring-[#1B4820]"
+                      />
+                      <button
+                        type="button"
+                        disabled={isSavingQuickPotrero}
+                        onClick={handleQuickCreatePotrero}
+                        className="bg-[#1B4820] hover:bg-[#0F2912] text-white text-xs font-bold px-3 py-2 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {isSavingQuickPotrero ? '...' : 'Crear'}
+                      </button>
+                    </div>
+                  )}
+
+                  <CustomSelect
+                    value={selectedPotreroId}
+                    onChange={(val) => setValue('potrero_id', val)}
+                    options={[
+                      { value: '', label: 'Sin potrero asignado' },
+                      ...potreros.map(p => ({ value: p.id, label: p.name }))
+                    ]}
+                    placeholder={potreros.length === 0 ? "Sin potreros (crea uno)" : "Selecciona potrero..."}
+                  />
+                </>
+              ) : (
+                <div className="p-3 bg-neutral-50 rounded-2xl border border-neutral-200/70 text-xs text-neutral-400 font-medium italic">
+                  Selecciona una finca primero para asignar un potrero.
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -784,20 +786,6 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               onChange={(val) => setValue('breed', val)}
               options={POPULAR_BREEDS_LIST.map(b => ({ value: b, label: b }))}
               placeholder="Selecciona la raza..."
-            />
-          </div>
-
-          {/* Campo libre para raza personalizada si no está en la lista */}
-          <div>
-            <label className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-1 block ml-1">
-              O escribe una raza personalizada:
-            </label>
-            <input
-              type="text"
-              value={selectedBreed}
-              onChange={(e) => setValue('breed', e.target.value)}
-              placeholder="Ej. Nelore Pintado, Senepol x Brahman..."
-              className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-2.5 text-xs font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20"
             />
           </div>
         </div>
@@ -891,9 +879,9 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
           </div>
         </div>
 
-        {/* BOTONES DE ACCIÓN FIJADOS AL FONDO DE PANTALLA */}
-        <div className="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-md border-t border-neutral-200/90 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] py-3 px-4">
-          <div className="max-w-2xl mx-auto flex items-center gap-3">
+        {/* BOTONES DE ACCIÓN FIJADOS AL FONDO */}
+        <div className={`${isModal ? 'sticky bottom-0 -mx-6 -mb-8 sm:-mb-10 px-6 py-3.5' : 'fixed bottom-0 inset-x-0 py-3 px-4'} z-50 bg-white/95 backdrop-blur-md border-t border-neutral-200/90 shadow-[0_-4px_25px_rgba(0,0,0,0.08)]`}>
+          <div className="max-w-4xl mx-auto flex items-center gap-3">
             {onCancel && (
               <button
                 type="button"

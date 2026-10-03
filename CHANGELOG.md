@@ -4,6 +4,23 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.2.2-phase2-ux-polish] - 2026-10-02
+
+### Mejorado y Corregido
+- **Botón Flotante (FAB) de Edición en Vista Móvil ([`DetailsTab.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/DetailsTab.jsx))**:
+  - Implementado botón flotante animado de edición fijado a la parte inferior derecha (`fixed bottom-20 right-4 z-30 md:hidden`), alineado exactamente al estilo de los botones de acción de `EvolutionTab` y `HealthTab`.
+- **Modal de Edición Más Ancho en Laptop ([`BottomSheet.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/ui/BottomSheet.jsx), [`PerfilAnimal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/PerfilAnimal.jsx) y [`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - Configurado ancho expandido `max-w-4xl lg:max-w-5xl` en el modal de edición de perfil en laptop.
+  - Formulario adaptado a `max-w-4xl` con distribución en 3 columnas para datos básicos (Arete, Chip, Nombre) y ubicación (Dueño, Finca, Potrero), proporcionando una visualización despejada y espaciosa.
+- **Llamado de Atención Visual en Sincronización ([`SyncStatus.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/ui/SyncStatus.jsx))**:
+  - Animación continua de crecimiento y reducción (`scale: [1, 1.09, 1]`) en el botón del encabezado cuando el estado es pendiente (`pendingItemsCount > 0`), con resaltado en tono ámbar para indicar cambios pendientes por respaldar.
+- **Eliminación de Registro de Raza Nueva ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - Retirado el campo de ingreso manual de raza libre, dejando exclusivamente la selección desde la lista predeterminada con "Sin raza".
+- **Catálogo de Animales en 2 Columnas para Móvil ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - Cuadrícula configurada como `grid-cols-2` en pantallas móviles, ajustando badges de sexo/estado, padding interior y tipografías para un diseño de 2 columnas proporcional y legible.
+
+---
+
 ## [1.2.1-phase2-corrections] - 2026-10-02
 
 ### Corregido y Mejorado

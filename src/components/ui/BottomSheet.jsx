@@ -13,6 +13,7 @@ export default function BottomSheet({
   title, 
   description, 
   children,
+  maxWidth = 'max-w-lg',
   style = {}
 }) {
   const [isDesktop, setIsDesktop] = useState(false);
@@ -93,7 +94,7 @@ export default function BottomSheet({
             style={containerStyle}
             className={`fixed flex flex-col bg-white shadow-2xl overflow-hidden
               ${isDesktop 
-                ? 'top-1/2 left-1/2 w-[95%] max-w-lg max-h-[85dvh] rounded-3xl' 
+                ? `top-1/2 left-1/2 w-[95%] ${maxWidth} max-h-[88dvh] rounded-3xl` 
                 : 'inset-x-0 bottom-0 max-h-[92dvh] rounded-t-[2.5rem]'
               }`}
           >
