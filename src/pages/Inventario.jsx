@@ -19,6 +19,7 @@ import {
   Cpu,
   UserCheck
 } from 'lucide-react';
+import { FaMars, FaVenus } from 'react-icons/fa6';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, clearLocalData } from '@/lib/db';
 import { calculateAge, formatWeight, parseLocalDate } from '@/lib/dateUtils';
@@ -699,31 +700,31 @@ export default function InventarioPage() {
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
 
-                      {/* Badge de Sexo */}
-                      <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
-                        <span className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm ${
-                          animal.sex === 'Hembra' ? 'bg-pink-600/90 backdrop-blur-xs' : 'bg-blue-700/90 backdrop-blur-xs'
+                      {/* Barra Superior de Badges Alineados (Género y Activo/Inactivo) */}
+                      <div className="absolute top-2 inset-x-2 sm:top-2.5 sm:inset-x-2.5 flex items-center justify-between z-10 pointer-events-none gap-1.5">
+                        {/* Pill de Género */}
+                        <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none ${
+                          animal.sex === 'Hembra' ? 'bg-pink-600/90' : 'bg-blue-700/90'
                         }`}>
-                          {animal.sex || 'Bovino'}
+                          {animal.sex === 'Hembra' ? (
+                            <FaVenus className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+                          ) : (
+                            <FaMars className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+                          )}
+                          <span>{animal.sex || 'Bovino'}</span>
                         </span>
-                      </div>
 
-                      {/* Badge de Status (Activo / Inactivo) */}
-                      <div className="absolute top-2 right-2 sm:top-3 sm:right-3">
-                        <div className={`px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex items-center gap-1 sm:gap-1.5 shadow-sm backdrop-blur-xs ${
-                          animal.status === 'Inactivo' 
-                            ? 'bg-neutral-800/85 text-white' 
-                            : 'bg-emerald-600/90 text-white'
+                        {/* Pill de Status (Activo / Inactivo) */}
+                        <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none ${
+                          animal.status === 'Inactivo' ? 'bg-neutral-800/85' : 'bg-emerald-600/90'
                         }`}>
                           {animal.status === 'Inactivo' ? (
-                            <XCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-300" />
+                            <XCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-300 shrink-0" />
                           ) : (
-                            <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-200" />
+                            <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-200 shrink-0" />
                           )}
-                          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider">
-                            {animal.status || 'Activo'}
-                          </span>
-                        </div>
+                          <span>{animal.status || 'Activo'}</span>
+                        </span>
                       </div>
                     </div>
 

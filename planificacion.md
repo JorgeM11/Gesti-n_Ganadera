@@ -85,6 +85,7 @@ flowchart TD
     - [x] **Llamado de Atención en Sincronización (`SyncStatus.jsx`)**: Animación de pulso/respiración (crece y se disminuye) cuando hay pendientes de sincronizar.
     - [x] **Eliminación de Registro de Raza Nueva (`AnimalForm.jsx`)**: Removido campo de texto libre para raza personalizada, manteniendo selector predefinido.
     - [x] **Cards de Animales en 2 Columnas para Móvil (`Inventario.jsx`)**: Cuadrícula `grid-cols-2` fija en teléfonos móviles con diseño y tipografía optimizados.
+    - [x] **Alineación de Pills de Género y Estado en Cards (`Inventario.jsx`)**: Ambas pills unificadas en fila flex compartida sobre la foto con idéntica altura, padding, iconos y centrado vertical.
   - [x] **Actualización de Ficha Técnica ([`DetailsTab.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/DetailsTab.jsx)) e Inventario ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
     - Visualización limpia de arete, chip, nombre, dueño, finca, potrero, raza sin porcentaje y estado.
 
