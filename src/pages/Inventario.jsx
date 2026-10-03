@@ -67,12 +67,22 @@ const SearchInput = ({ isMobile = false, searchTerm, setSearchTerm, onOpenFilter
     <Search className="w-4 h-4 text-neutral-500 mr-2 shrink-0" />
     <input
       type="text"
-      placeholder={isMobile ? "Buscar código o nombre..." : "Buscar animal por código o nombre..."}
+      placeholder={isMobile ? "Buscar arete, chip, nombre..." : "Buscar por arete, chip, nombre"}
       value={searchTerm}
       onChange={(e) => setSearchTerm(e.target.value)}
       className="flex-1 bg-transparent border-none outline-none text-neutral-900 font-medium placeholder-neutral-400 text-sm w-full"
     />
-    <div className="border-l pl-3 ml-2 border-neutral-200 shrink-0 relative">
+    {searchTerm && (
+      <button
+        type="button"
+        onClick={() => setSearchTerm('')}
+        className="p-1 text-neutral-400 hover:text-neutral-600 mr-1 cursor-pointer"
+        title="Limpiar búsqueda"
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
+    )}
+    <div className="border-l pl-3 ml-1 border-neutral-200 shrink-0 relative">
       <button 
         type="button"
         onClick={onOpenFilters} 
@@ -157,6 +167,7 @@ export default function InventarioPage() {
   // --- ESTADOS PARA FINCAS, POTREROS Y DUEÑOS ---
   const [selectedFarmFilter, setSelectedFarmFilter] = useState('ALL');
   const [selectedPotreroFilter, setSelectedPotreroFilter] = useState('ALL');
+  const [selectedOwnerFilter, setSelectedOwnerFilter] = useState('ALL');
   const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
   const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
 
@@ -262,6 +273,7 @@ export default function InventarioPage() {
     setFilters({ sex: [], status: [], category: [], breed: [] });
     setSelectedFarmFilter('ALL');
     setSelectedPotreroFilter('ALL');
+    setSelectedOwnerFilter('ALL');
   };
 
   const activeFiltersCount = 
@@ -270,7 +282,8 @@ export default function InventarioPage() {
     filters.category.length + 
     filters.breed.length + 
     (selectedFarmFilter !== 'ALL' ? 1 : 0) +
-    (selectedPotreroFilter !== 'ALL' ? 1 : 0);
+    (selectedPotreroFilter !== 'ALL' ? 1 : 0) +
+    (selectedOwnerFilter !== 'ALL' ? 1 : 0);
 
   // Lógica para detectar exactamente los 8 meses
   const is8MonthsOld = (animal) => {
@@ -286,18 +299,35 @@ export default function InventarioPage() {
     if (!allAnimals) return [];
 
     const filtered = allAnimals.filter(a => {
-      const term = searchTerm.toLowerCase();
-      const animalName = (a.name || '').toLowerCase();
-      const animalNum = (a.number || '').toLowerCase();
-      const animalChip = (a.chip_number || '').toLowerCase();
-      const animalOwner = (ownerMap[a.owner_id] || '').toLowerCase();
-      const matchesSearch = !term || animalNum.includes(term) || animalName.includes(term) || animalChip.includes(term) || animalOwner.includes(term) || a.id.toLowerCase().includes(term);
+      const term = searchTerm.toLowerCase().trim();
+      const termClean = term.replace(/[\s-]/g, '');
+      const animalName = (a.name || '').toLowerCase().trim();
+      const animalNum = String(a.number || '').toLowerCase().trim();
+      const animalChip = String(a.chip_number || '').toLowerCase().trim();
+      const animalOwner = (ownerMap[a.owner_id] || '').toLowerCase().trim();
+
+      const numClean = animalNum.replace(/[\s-]/g, '');
+      const chipClean = animalChip.replace(/[\s-]/g, '');
+
+      const matchesSearch = !term || 
+        animalNum.includes(term) || 
+        (termClean.length > 0 && numClean.includes(termClean)) ||
+        animalName.includes(term) || 
+        animalChip.includes(term) || 
+        (termClean.length > 0 && chipClean.includes(termClean)) ||
+        animalOwner.includes(term) || 
+        String(a.id || '').toLowerCase().includes(term);
       
       const matchesSex = filters.sex.length === 0 || filters.sex.includes(a.sex);
       const currentStatus = a.status || 'Activo';
       const matchesStatus = filters.status.length === 0 || filters.status.includes(currentStatus);
       const matchesFarm = selectedFarmFilter === 'ALL' || a.farm_id === selectedFarmFilter;
       const matchesPotrero = selectedPotreroFilter === 'ALL' || a.potrero_id === selectedPotreroFilter;
+      const matchesOwner = selectedOwnerFilter === 'ALL' 
+        ? true 
+        : selectedOwnerFilter === 'NONE'
+          ? !a.owner_id
+          : a.owner_id === selectedOwnerFilter;
       
       const currentBreed = a.breed || 'Sin raza';
       const matchesBreed = filters.breed.length === 0 || filters.breed.includes(currentBreed);
@@ -313,7 +343,7 @@ export default function InventarioPage() {
       }
       const matchesCategory = filters.category.length === 0 || filters.category.includes(category);
 
-      return matchesSearch && matchesSex && matchesStatus && matchesCategory && matchesFarm && matchesPotrero && matchesBreed;
+      return matchesSearch && matchesSex && matchesStatus && matchesCategory && matchesFarm && matchesPotrero && matchesOwner && matchesBreed;
     });
 
     // Ordenar: Los de 8 meses resaltados van de primeros
@@ -326,12 +356,12 @@ export default function InventarioPage() {
     });
 
     return [...highlighted, ...normal];
-  }, [allAnimals, searchTerm, filters, selectedFarmFilter, selectedPotreroFilter, viewedHighlights, ownerMap]);
+  }, [allAnimals, searchTerm, filters, selectedFarmFilter, selectedPotreroFilter, selectedOwnerFilter, viewedHighlights, ownerMap]);
 
   // --- REINICIAR PAGINACIÓN AL FILTRAR O BUSCAR ---
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filters, selectedFarmFilter, selectedPotreroFilter]);
+  }, [searchTerm, filters, selectedFarmFilter, selectedPotreroFilter, selectedOwnerFilter]);
 
   // --- PAGINACIÓN ---
   const totalPages = Math.ceil(filteredAnimals.length / ITEMS_PER_PAGE);
@@ -442,13 +472,30 @@ export default function InventarioPage() {
             </div>
 
             <div className="p-6 overflow-y-auto space-y-6 flex-1">
-              {/* 1. Filtro de Finca (Sin el botón de crear finca) */}
+              {/* 1. Filtro de Finca */}
               <div>
-                <h4 className="text-sm font-black text-neutral-900 mb-2 uppercase tracking-wider">Finca</h4>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-black text-neutral-900 uppercase tracking-wider">Finca</h4>
+                  {selectedFarmFilter !== 'ALL' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedFarmFilter('ALL');
+                        setSelectedPotreroFilter('ALL');
+                      }}
+                      className="text-[11px] font-bold text-[#1B4820] hover:underline cursor-pointer"
+                    >
+                      Todas
+                    </button>
+                  )}
+                </div>
                 <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
                   <button
                     type="button"
-                    onClick={() => setSelectedFarmFilter('ALL')}
+                    onClick={() => {
+                      setSelectedFarmFilter('ALL');
+                      setSelectedPotreroFilter('ALL');
+                    }}
                     className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       selectedFarmFilter === 'ALL'
                         ? 'bg-[#1B4820] text-white shadow-xs'
@@ -482,53 +529,134 @@ export default function InventarioPage() {
                     );
                   })}
                 </div>
+              </div>
 
-                {/* Sub-filtro de Potreros de la Finca Seleccionada */}
-                {selectedFarmFilter !== 'ALL' && (
-                  <div className="mt-3 pl-3 border-l-2 border-emerald-500/40 space-y-1.5 animate-in fade-in">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-black uppercase text-[#1B4820] tracking-wider">Potreros</span>
-                      {selectedPotreroFilter !== 'ALL' && (
-                        <button
-                          type="button"
-                          onClick={() => setSelectedPotreroFilter('ALL')}
-                          className="text-[10px] font-bold text-neutral-400 hover:text-neutral-700 underline"
-                        >
-                          Ver todos
-                        </button>
-                      )}
-                    </div>
+              {/* 2. Filtro de Potrero (después de escoger finca) */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-black text-neutral-900 uppercase tracking-wider">
+                    Potrero {selectedFarmFilter !== 'ALL' && farmMap[selectedFarmFilter] ? `(${farmMap[selectedFarmFilter]})` : ''}
+                  </h4>
+                  {selectedFarmFilter !== 'ALL' && selectedPotreroFilter !== 'ALL' && (
                     <button
                       type="button"
                       onClick={() => setSelectedPotreroFilter('ALL')}
-                      className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                      className="text-[11px] font-bold text-[#1B4820] hover:underline cursor-pointer"
+                    >
+                      Todos
+                    </button>
+                  )}
+                </div>
+
+                {selectedFarmFilter === 'ALL' ? (
+                  <div className="p-3 bg-neutral-50 rounded-2xl border border-neutral-200/80 text-xs text-neutral-500 font-medium">
+                    ℹ️ Selecciona una finca arriba para habilitar el filtro por potrero.
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPotreroFilter('ALL')}
+                      className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         selectedPotreroFilter === 'ALL'
-                          ? 'bg-[#1B4820] text-white'
+                          ? 'bg-[#1B4820] text-white shadow-xs'
                           : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                       }`}
                     >
-                      Todos los potreros
+                      Todos los potreros de {farmMap[selectedFarmFilter]}
                     </button>
-                    {potreros.filter(p => p.farm_id === selectedFarmFilter).map(p => {
-                      const count = allAnimals?.filter(a => a.potrero_id === p.id).length || 0;
-                      return (
-                        <button
-                          type="button"
-                          key={p.id}
-                          onClick={() => setSelectedPotreroFilter(p.id)}
-                          className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-all flex items-center justify-between cursor-pointer ${
-                            selectedPotreroFilter === p.id
-                              ? 'bg-[#1B4820] text-white'
-                              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
-                          }`}
-                        >
-                          <span className="truncate">{p.name}</span>
-                          <span className="opacity-75 ml-1 text-[10px]">({count})</span>
-                        </button>
-                      );
-                    })}
+                    {potreros.filter(p => p.farm_id === selectedFarmFilter).length === 0 ? (
+                      <p className="text-xs text-neutral-400 italic p-2">Esta finca no tiene potreros registrados.</p>
+                    ) : (
+                      potreros.filter(p => p.farm_id === selectedFarmFilter).map(p => {
+                        const count = allAnimals?.filter(a => a.potrero_id === p.id).length || 0;
+                        return (
+                          <button
+                            type="button"
+                            key={p.id}
+                            onClick={() => setSelectedPotreroFilter(p.id)}
+                            className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                              selectedPotreroFilter === p.id
+                                ? 'bg-[#1B4820] text-white shadow-xs'
+                                : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                            }`}
+                          >
+                            <span className="truncate">{p.name}</span>
+                            <span className="opacity-75 ml-2 text-[10px]">({count})</span>
+                          </button>
+                        );
+                      })
+                    )}
                   </div>
                 )}
+              </div>
+
+              {/* 3. Filtro por Dueño */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-sm font-black text-neutral-900 uppercase tracking-wider">Dueño / Propietario</h4>
+                  {selectedOwnerFilter !== 'ALL' && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedOwnerFilter('ALL')}
+                      className="text-[11px] font-bold text-[#1B4820] hover:underline cursor-pointer"
+                    >
+                      Todos
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedOwnerFilter('ALL')}
+                    className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      selectedOwnerFilter === 'ALL'
+                        ? 'bg-[#1B4820] text-white shadow-xs'
+                        : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                    }`}
+                  >
+                    Todos los Dueños ({allAnimals?.length || 0})
+                  </button>
+                  {owners.map(o => {
+                    const count = allAnimals?.filter(a => a.owner_id === o.id).length || 0;
+                    return (
+                      <button
+                        type="button"
+                        key={o.id}
+                        onClick={() => setSelectedOwnerFilter(o.id)}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                          selectedOwnerFilter === o.id
+                            ? 'bg-[#1B4820] text-white shadow-xs'
+                            : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <UserCheck className="w-3.5 h-3.5 opacity-60 shrink-0" />
+                          <span className="truncate">{o.name}</span>
+                        </div>
+                        <span className="opacity-75 ml-2 text-[10px]">({count})</span>
+                      </button>
+                    );
+                  })}
+                  {(() => {
+                    const sinDuenoCount = allAnimals?.filter(a => !a.owner_id).length || 0;
+                    if (sinDuenoCount === 0) return null;
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedOwnerFilter('NONE')}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                          selectedOwnerFilter === 'NONE'
+                            ? 'bg-[#1B4820] text-white shadow-xs'
+                            : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                        }`}
+                      >
+                        <span className="truncate italic text-neutral-500">Sin dueño asignado</span>
+                        <span className="opacity-75 ml-2 text-[10px]">({sinDuenoCount})</span>
+                      </button>
+                    );
+                  })()}
+                </div>
               </div>
 
               {/* 2. Filtro por Raza */}
@@ -647,16 +775,65 @@ export default function InventarioPage() {
       <div className="max-w-7xl mx-auto px-4 md:px-8 mt-5 md:mt-8 relative z-0">
 
         {activeFiltersCount > 0 && !isBatchMode && (
-          <div className="mb-4 flex items-center justify-between bg-emerald-50 border border-emerald-200/80 text-emerald-950 px-4 py-2.5 rounded-2xl shadow-2xs">
-            <span className="text-xs font-bold uppercase tracking-wider">Filtros Activos ({activeFiltersCount})</span>
-            <button 
-              type="button"
-              onClick={clearFilters} 
-              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white text-emerald-950 hover:bg-emerald-100/70 border border-emerald-300 text-xs font-black shadow-xs transition-all active:scale-95 cursor-pointer"
-            >
-              <X className="w-3.5 h-3.5 text-emerald-800 stroke-[2.5]" />
-              <span>Limpiar filtros</span>
-            </button>
+          <div className="mb-4 bg-emerald-50 border border-emerald-200/80 text-emerald-950 p-3 rounded-2xl shadow-2xs space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#1B4820]">
+                Filtros Activos ({activeFiltersCount})
+              </span>
+              <button 
+                type="button"
+                onClick={clearFilters} 
+                className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white text-emerald-950 hover:bg-emerald-100/70 border border-emerald-300 text-xs font-black shadow-xs transition-all active:scale-95 cursor-pointer"
+              >
+                <X className="w-3 h-3 text-emerald-800 stroke-[2.5]" />
+                <span>Limpiar todos</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+              {selectedFarmFilter !== 'ALL' && (
+                <span className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 shadow-2xs">
+                  <span>Finca: {farmMap[selectedFarmFilter] || 'Seleccionada'}</span>
+                  <button type="button" onClick={() => { setSelectedFarmFilter('ALL'); setSelectedPotreroFilter('ALL'); }} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
+                </span>
+              )}
+              {selectedPotreroFilter !== 'ALL' && (
+                <span className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 shadow-2xs">
+                  <span>Potrero: {potreroMap[selectedPotreroFilter] || 'Seleccionado'}</span>
+                  <button type="button" onClick={() => setSelectedPotreroFilter('ALL')} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
+                </span>
+              )}
+              {selectedOwnerFilter !== 'ALL' && (
+                <span className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 shadow-2xs">
+                  <span>Dueño: {selectedOwnerFilter === 'NONE' ? 'Sin dueño' : (ownerMap[selectedOwnerFilter] || 'Seleccionado')}</span>
+                  <button type="button" onClick={() => setSelectedOwnerFilter('ALL')} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
+                </span>
+              )}
+              {filters.sex.map(s => (
+                <span key={s} className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 shadow-2xs">
+                  <span>{s}</span>
+                  <button type="button" onClick={() => toggleFilter('sex', s)} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
+                </span>
+              ))}
+              {filters.status.map(st => (
+                <span key={st} className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 shadow-2xs">
+                  <span>{st}</span>
+                  <button type="button" onClick={() => toggleFilter('status', st)} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
+                </span>
+              ))}
+              {filters.breed.map(b => (
+                <span key={b} className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 shadow-2xs">
+                  <span>Raza: {b}</span>
+                  <button type="button" onClick={() => toggleFilter('breed', b)} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
+                </span>
+              ))}
+              {filters.category.map(c => (
+                <span key={c} className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 shadow-2xs">
+                  <span>{c}</span>
+                  <button type="button" onClick={() => toggleFilter('category', c)} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
+                </span>
+              ))}
+            </div>
           </div>
         )}
 

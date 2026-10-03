@@ -16,10 +16,15 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
   - Animación continua de crecimiento y reducción (`scale: [1, 1.09, 1]`) en el botón del encabezado cuando el estado es pendiente (`pendingItemsCount > 0`), con resaltado en tono ámbar para indicar cambios pendientes por respaldar.
 - **Eliminación de Registro de Raza Nueva ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
   - Retirado el campo de ingreso manual de raza libre, dejando exclusivamente la selección desde la lista predeterminada con "Sin raza".
-- **Catálogo de Animales en 2 Columnas para Móvil ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
-  - Cuadrícula configurada como `grid-cols-2` en pantallas móviles, ajustando badges de sexo/estado, padding interior y tipografías para un diseño de 2 columnas proporcional y legible.
 - **Alineación de Pills de Género y Estado en Cards ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
   - Se alinearon perfectamente las pills de género y estado en una fila flex compartida sobre la foto (`flex items-center justify-between`), estandarizando sus alturas, iconos (`FaVenus`/`FaMars` y `CheckCircle2`/`XCircle`) y alineación vertical.
+- **Filtro Contextual por Potrero y Filtro por Dueño ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - En el panel lateral de filtros se incorporó la selección de potreros activada al escoger una finca, mostrando el listado con conteo de animales por potrero.
+  - Se añadió el filtro por Dueño/Propietario con opciones para todos los dueños, cada dueño particular y animales sin dueño asignado.
+- **Búsqueda por Número de Chip ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - La barra de búsqueda filtra de forma robusta por número de chip electrónico (limpiando espacios y guiones), complementando la búsqueda por arete, nombre o dueño con botón de borrado rápido.
+- **Banner Interactivo de Filtros Activos ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - Se despliegan chips individuales interactivos para remover selectivamente filtros de finca, potrero, dueño, sexo, raza o categoría.
 
 ---
 
