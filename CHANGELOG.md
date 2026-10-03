@@ -32,6 +32,10 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
   - En el modal de edición, los botones permanecen siempre visibles fijados directamente al borde inferior del modal (`sticky bottom-0 -mx-6 px-6 py-3.5`) y sin margen inferior sobrante, apoyados por la propiedad `noPaddingBottom` en `BottomSheet`.
 - **Botón de Acción en Estado Vacío de Modales ([`OwnerModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/OwnerModal.jsx) y [`FarmModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/FarmModal.jsx))**:
   - Al abrir el modal de gestión de dueños sin registros previos, la opción para registrar el primer/nuevo dueño ahora es un botón destacado (`bg-[#1B4820]` con icono `+`), reemplazando el enlace de texto plano subrayado. Se aplicó la misma mejora en el modal de fincas para mantener consistencia.
+- **Protección de Datos: Eliminación Restringida ([`OwnerModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/OwnerModal.jsx) y [`FarmModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/FarmModal.jsx))**:
+  - Se eliminaron las opciones y botones de borrado para Dueños, Potreros y Fincas; únicamente pueden crearse y editarse para salvaguardar la integridad de las relaciones históricas.
+- **Nuevo Icono en Barra Lateral ([`NavigationDrawer.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/NavigationDrawer.jsx))**:
+  - En la cabecera del drawer ("Ganadera - Gestión & Control") se sustituyó el icono de escudo (`ShieldCheck`) por la silueta de una vaca (`GiCow`).
 
 ---
 

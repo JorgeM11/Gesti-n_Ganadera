@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Users, Pencil, Trash2, UserCheck, Search } from 'lucide-react';
+import { X, Plus, Users, Pencil, UserCheck, Search } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
-import { createOwner, updateOwner, deleteOwner } from '@/lib/ownerUtils';
+import { createOwner, updateOwner } from '@/lib/ownerUtils';
 
 export default function OwnerModal({ isOpen, onClose, onOwnerCreated, onOwnerUpdated, initialView = 'list' }) {
   const [activeView, setActiveView] = useState(initialView); // 'list' | 'create' | 'edit'
@@ -80,21 +80,6 @@ export default function OwnerModal({ isOpen, onClose, onOwnerCreated, onOwnerUpd
       setError(err.message || 'Error al guardar el dueño');
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  const handleDelete = async (owner) => {
-    const ownerAnimalsCount = animals.filter(a => a.owner_id === owner.id).length;
-    const confirmMessage = ownerAnimalsCount > 0 
-      ? `Este dueño tiene ${ownerAnimalsCount} animal(es) asignado(s). ¿Deseas eliminarlo? Los animales quedarán sin dueño asignado.`
-      : `¿Eliminar a "${owner.name}"?`;
-
-    if (window.confirm(confirmMessage)) {
-      try {
-        await deleteOwner(owner.id);
-      } catch (err) {
-        alert('Error al eliminar el dueño');
-      }
     }
   };
 
@@ -252,15 +237,6 @@ export default function OwnerModal({ isOpen, onClose, onOwnerCreated, onOwnerUpd
                               title={`Editar ${owner.name}`}
                             >
                               <Pencil className="w-3.5 h-3.5" />
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(owner)}
-                              className="p-2 rounded-xl text-red-500 bg-red-50 hover:bg-red-500 hover:text-white transition-all shadow-2xs cursor-pointer border border-red-200/60"
-                              title={`Eliminar ${owner.name}`}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </div>

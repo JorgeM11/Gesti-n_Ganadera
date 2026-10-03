@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MapPin, Building2, Plus, Users, Pencil, Trash2, ChevronDown, Check } from 'lucide-react';
+import { X, MapPin, Building2, Plus, Users, Pencil, ChevronDown, Check } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { createFarm, updateFarm } from '@/lib/farmUtils';
-import { createPotrero, updatePotrero, deletePotrero } from '@/lib/potreroUtils';
+import { createPotrero, updatePotrero } from '@/lib/potreroUtils';
 
 export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdated, initialView = 'list' }) {
   const [activeView, setActiveView] = useState(initialView); // 'list' | 'create' | 'edit'
@@ -85,20 +85,6 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
       setEditingPotreroName('');
     } catch (err) {
       alert(err.message || 'Error al actualizar potrero');
-    }
-  };
-
-  const handleDeletePotrero = async (potrero) => {
-    const potreroAnimalsCount = animals.filter(a => a.potrero_id === potrero.id).length;
-    const msg = potreroAnimalsCount > 0
-      ? `Este potrero tiene ${potreroAnimalsCount} animal(es). ¿Seguro de eliminarlo? Los animales quedarán sin potrero asignado.`
-      : `¿Eliminar el potrero "${potrero.name}"?`;
-    if (window.confirm(msg)) {
-      try {
-        await deletePotrero(potrero.id);
-      } catch (err) {
-        alert('Error al eliminar potrero');
-      }
     }
   };
 
@@ -427,27 +413,19 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
                                           </span>
                                         </div>
 
-                                        <div className="flex items-center gap-1 shrink-0">
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setEditingPotreroId(pot.id);
-                                              setEditingPotreroName(pot.name);
-                                            }}
-                                            className="p-1 text-neutral-400 hover:text-neutral-700 cursor-pointer"
-                                            title="Editar nombre"
-                                          >
-                                            <Pencil className="w-3 h-3" />
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => handleDeletePotrero(pot)}
-                                            className="p-1 text-red-400 hover:text-red-600 cursor-pointer"
-                                            title="Eliminar potrero"
-                                          >
-                                            <Trash2 className="w-3 h-3" />
-                                          </button>
-                                        </div>
+                                          <div className="flex items-center gap-1 shrink-0">
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                setEditingPotreroId(pot.id);
+                                                setEditingPotreroName(pot.name);
+                                              }}
+                                              className="p-1 text-neutral-400 hover:text-neutral-700 cursor-pointer"
+                                              title="Editar nombre"
+                                            >
+                                              <Pencil className="w-3 h-3" />
+                                            </button>
+                                          </div>
                                       </div>
                                     );
                                   })

@@ -11,10 +11,10 @@ import {
   RefreshCcw, 
   LogOut, 
   CheckCircle2, 
-  ShieldCheck, 
   ChevronRight,
   ExternalLink
 } from 'lucide-react';
+import { GiCow } from 'react-icons/gi';
 
 export default function NavigationDrawer({
   isOpen,
@@ -60,7 +60,7 @@ export default function NavigationDrawer({
               <div className="p-6 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/70">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-2xl bg-[#1B4820] flex items-center justify-center text-white shadow-md shadow-[#1B4820]/20">
-                    <ShieldCheck className="w-5 h-5" />
+                    <GiCow className="w-6 h-6" />
                   </div>
                   <div>
                     <h2 className="text-base font-black text-neutral-900 tracking-tight">Ganadera</h2>
