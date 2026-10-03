@@ -143,6 +143,6 @@ flowchart TD
 | :--- | :---: | :---: | :---: | :--- |
 | **Puesta en marcha Fase 1** | 2026-10-02 | **Completado** | Antigravity AI | Proyecto `gestion-ganadera` creado y compilando al 100% sobre la base de `App-ganadera-v2`. |
 | **Fase 2: Eliminaciones solicitadas** | 2026-10-02 | **Completado** | Antigravity AI | Retirado ordeño, tactos, servicios reproductivos, modo lotes en vacunación y botón `+` directo. Compilación verificada con éxito. |
-| **Fase 2: Nuevas funcionalidades frontend** | 2026-10-02 | **Completado** | Antigravity AI | Implementados Potreros por Finca, Dueños, nuevo orden en AnimalForm (arete, chip, nombre, género, nacimiento, peso, color, dueño, finca, potrero, padres, raza sin %, activo/inactivo, foto + desc) y filtros. |
-| **Pase a Fase 3: Nueva BD Supabase** | Pendiente | *Por iniciar* | Antigravity AI & Usuario | Listo para diseñar la nueva estructura de base de datos en Supabase con potreros, dueños, y nuevos campos. |
+| **Fase 2: Nuevas funcionalidades frontend** | 2026-10-03 | **Completado** | Antigravity AI & Usuario | Potreros por Finca en modal propio, Dueños en modal propio, orden en AnimalForm (Raza tras características biológicas), escáner de código de barras integrado en chip y buscador de inventario. |
+| **Pase a Fase 3: Nueva BD Supabase** | 2026-10-03 | **Listo para iniciar** | Antigravity AI & Usuario | Estructura previa documentada al 100%. Preparado para crear nuevo proyecto Supabase, esquema SQL con potreros, dueños, y nuevos campos. Detalles visuales pendientes se abordarán al culminar Fase 3. |
 
