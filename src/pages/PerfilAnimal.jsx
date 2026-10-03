@@ -236,6 +236,7 @@ function ProfileContent() {
         title="Editar Animal"
         description={`Actualiza la información de #${animal.number}`}
         maxWidth="max-w-4xl lg:max-w-5xl"
+        noPaddingBottom
       >
         <AnimalForm 
           isModal
@@ -256,6 +257,7 @@ function ProfileContent() {
             title={`Registrar ${modal.sex === 'Macho' ? 'Padre' : 'Madre'}`}
             description="Completa los datos mínimos para identificar al progenitor."
             style={{ zIndex: 60 + index * 10 }}
+            noPaddingBottom
           >
             <AnimalForm 
               isModal

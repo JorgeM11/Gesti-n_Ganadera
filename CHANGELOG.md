@@ -27,6 +27,9 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
   - Se despliegan chips individuales interactivos para remover selectivamente filtros de finca, potrero, dueño, sexo, raza o categoría.
 - **Scroll Unificado en Panel de Filtros ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
   - Se removieron los scrolls internos (`max-h-* overflow-y-auto`) de las listas de Fincas, Potreros, Dueños y Razas, permitiendo un desplazamiento vertical natural y unificado a través de un único scroll normal para todo el panel.
+- **Botones de Cancelar y Guardar Equitativos y Fijados al Fondo del Modal ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx), [`BottomSheet.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/ui/BottomSheet.jsx) y [`PerfilAnimal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/PerfilAnimal.jsx))**:
+  - Tanto en Registrar como en Editar, los botones de "Cancelar" y "Guardar / Registrar" ahora tienen exactamente el mismo tamaño (50% de ancho con `flex-1` cada uno).
+  - En el modal de edición, los botones permanecen siempre visibles fijados directamente al borde inferior del modal (`sticky bottom-0 -mx-6 px-6 py-3.5`) y sin margen inferior sobrante, apoyados por la propiedad `noPaddingBottom` en `BottomSheet`.
 
 ---
 

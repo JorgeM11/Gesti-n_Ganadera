@@ -407,7 +407,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
   };
 
   return (
-    <div className={`relative ${isModal ? 'pb-4' : 'pb-28 sm:pb-24'}`}>
+    <div className={`relative ${isModal ? 'pb-0' : 'pb-28 sm:pb-24'}`}>
       {/* Toast Notificación */}
       {toast.show && (
         <div className={`fixed z-[100] px-5 py-3.5 rounded-2xl shadow-xl transition-all top-5 left-1/2 -translate-x-1/2 font-bold text-sm flex items-center gap-3 text-white ${
@@ -880,13 +880,19 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         </div>
 
         {/* BOTONES DE ACCIÓN FIJADOS AL FONDO */}
-        <div className={`${isModal ? 'sticky bottom-0 -mx-6 -mb-8 sm:-mb-10 px-6 py-3.5' : 'fixed bottom-0 inset-x-0 py-3 px-4'} z-50 bg-white/95 backdrop-blur-md border-t border-neutral-200/90 shadow-[0_-4px_25px_rgba(0,0,0,0.08)]`}>
+        <div
+          className={`${
+            isModal
+              ? 'sticky bottom-0 -mx-6 px-6 py-3.5 mt-6 bg-white/95 backdrop-blur-md border-t border-neutral-200/90 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] z-50'
+              : 'fixed bottom-0 inset-x-0 py-3.5 px-4 bg-white/95 backdrop-blur-md border-t border-neutral-200/90 shadow-[0_-4px_25px_rgba(0,0,0,0.08)] z-50'
+          }`}
+        >
           <div className="max-w-4xl mx-auto flex items-center gap-3">
             {onCancel && (
               <button
                 type="button"
                 onClick={onCancel}
-                className="flex-1 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-sm font-bold py-3.5 rounded-2xl transition-colors cursor-pointer"
+                className="flex-1 bg-neutral-100 hover:bg-neutral-200 active:scale-[0.99] text-neutral-700 text-sm font-bold py-3.5 rounded-2xl transition-all flex items-center justify-center cursor-pointer"
               >
                 Cancelar
               </button>
@@ -895,7 +901,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-2 bg-[#1B4820] hover:bg-[#0F2912] active:scale-[0.99] text-white text-sm font-black py-3.5 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="flex-1 bg-[#1B4820] hover:bg-[#0F2912] active:scale-[0.99] text-white text-sm font-bold py-3.5 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? (
                 <span>Guardando...</span>

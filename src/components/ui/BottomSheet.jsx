@@ -14,7 +14,8 @@ export default function BottomSheet({
   description, 
   children,
   maxWidth = 'max-w-lg',
-  style = {}
+  style = {},
+  noPaddingBottom = false
 }) {
   const [isDesktop, setIsDesktop] = useState(false);
 
@@ -123,7 +124,7 @@ export default function BottomSheet({
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 overflow-y-auto px-6 pb-8 sm:pb-10 pt-4">
+            <div className={`flex-1 overflow-y-auto px-6 pt-4 ${noPaddingBottom ? 'pb-0' : 'pb-8 sm:pb-10'}`}>
               {children}
             </div>
           </motion.div>

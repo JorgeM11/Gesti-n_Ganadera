@@ -87,6 +87,7 @@ function NuevoAnimalContent() {
             title={`Registrar ${modal.sex === 'Macho' ? 'Padre' : 'Madre'}`}
             description="Completa los datos mínimos para identificar al progenitor."
             style={{ zIndex: 50 + index * 10 }} // Incrementar Z-Index para modales anidados
+            noPaddingBottom
           >
             <AnimalForm 
               isModal
