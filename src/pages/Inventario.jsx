@@ -45,21 +45,19 @@ const ITEMS_PER_PAGE = 48;
 
 // --- COMPONENTE DE CHECKBOX ---
 const FilterCheckbox = ({ label, count, checked, onChange }) => (
-  <label className="flex items-center gap-3 py-2.5 cursor-pointer group select-none">
-    <input
-      type="checkbox"
-      className="hidden"
-      checked={checked}
-      onChange={onChange}
-    />
-    <div className={`w-5 h-5 rounded-[6px] border-[1.5px] flex items-center justify-center transition-all ${
+  <button
+    type="button"
+    onClick={onChange}
+    className="w-full flex items-center gap-3 py-2.5 cursor-pointer group select-none text-left transition-colors hover:bg-neutral-50 px-2 rounded-xl"
+  >
+    <div className={`w-5 h-5 rounded-[6px] border-[1.5px] flex items-center justify-center transition-all shrink-0 ${
       checked ? 'bg-[#1B4820] border-[#1B4820]' : 'border-neutral-300 bg-white group-hover:border-[#1B4820]/50'
     }`}>
       {checked && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
     </div>
-    <span className="text-sm font-bold text-neutral-700 flex-1 group-hover:text-black transition-colors">{label}</span>
+    <span className={`text-sm flex-1 transition-colors ${checked ? 'font-black text-[#1B4820]' : 'font-bold text-neutral-700 group-hover:text-black'}`}>{label}</span>
     {count !== undefined && <span className="text-xs font-bold text-neutral-400">({count})</span>}
-  </label>
+  </button>
 );
 
 const SearchInput = ({ isMobile = false, searchTerm, setSearchTerm, onOpenFilters, activeFiltersCount, onScanBarcode }) => (
@@ -268,8 +266,8 @@ export default function InventarioPage() {
     if (!allAnimals) return [];
     const set = new Set();
     allAnimals.forEach(a => {
-      if (a.breed) set.add(a.breed);
-      else set.add('Mestizo');
+      const b = (a.breed || '').trim() || 'Sin raza';
+      set.add(b);
     });
     return Array.from(set).sort();
   }, [allAnimals]);
@@ -335,7 +333,11 @@ export default function InventarioPage() {
       const matchesSex = filters.sex.length === 0 || filters.sex.includes(a.sex);
       const currentStatus = a.status || 'Activo';
       const matchesStatus = filters.status.length === 0 || filters.status.includes(currentStatus);
-      const matchesFarm = selectedFarmFilter === 'ALL' || a.farm_id === selectedFarmFilter;
+      const matchesFarm = selectedFarmFilter === 'ALL' 
+        ? true 
+        : selectedFarmFilter === 'NONE'
+          ? !a.farm_id
+          : a.farm_id === selectedFarmFilter;
       const matchesPotrero = selectedPotreroFilter === 'ALL' || a.potrero_id === selectedPotreroFilter;
       const matchesOwner = selectedOwnerFilter === 'ALL' 
         ? true 
@@ -343,7 +345,7 @@ export default function InventarioPage() {
           ? !a.owner_id
           : a.owner_id === selectedOwnerFilter;
       
-      const currentBreed = a.breed || 'Sin raza';
+      const currentBreed = (a.breed || '').trim() || 'Sin raza';
       const matchesBreed = filters.breed.length === 0 || filters.breed.includes(currentBreed);
 
       let category = 'Desconocida';
@@ -372,12 +374,12 @@ export default function InventarioPage() {
     return [...highlighted, ...normal];
   }, [allAnimals, searchTerm, filters, selectedFarmFilter, selectedPotreroFilter, selectedOwnerFilter, viewedHighlights, ownerMap]);
 
-  // --- REINICIAR PAGINACIÓN AL FILTRAR O BUSCAR ---
+  // --- REINICIAR PAGINACION AL FILTRAR O BUSCAR ---
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filters, selectedFarmFilter, selectedPotreroFilter, selectedOwnerFilter]);
 
-  // --- PAGINACIÓN ---
+  // --- PAGINACION ---
   const totalPages = Math.ceil(filteredAnimals.length / ITEMS_PER_PAGE);
   const paginatedAnimals = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -389,7 +391,7 @@ export default function InventarioPage() {
     return allAnimals.filter(a => {
       if (type === 'sex') return a.sex === value;
       if (type === 'status') return (a.status || 'Activo') === value;
-      if (type === 'breed') return (a.breed || 'Mestizo') === value;
+      if (type === 'breed') return ((a.breed || '').trim() || 'Sin raza') === value;
       if (type === 'category') {
         let cat = 'Desconocida';
         if (a.birth_date) {
@@ -544,6 +546,27 @@ export default function InventarioPage() {
                       </button>
                     );
                   })}
+                  {(() => {
+                    const sinFincaCount = allAnimals?.filter(a => !a.farm_id).length || 0;
+                    if (sinFincaCount === 0) return null;
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedFarmFilter('NONE');
+                          setSelectedPotreroFilter('ALL');
+                        }}
+                        className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                          selectedFarmFilter === 'NONE'
+                            ? 'bg-[#1B4820] text-white shadow-xs'
+                            : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+                        }`}
+                      >
+                        <span className="truncate italic text-neutral-500">Sin finca asignada</span>
+                        <span className="opacity-75 ml-2 text-[10px]">({sinFincaCount})</span>
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -812,7 +835,7 @@ export default function InventarioPage() {
             <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
               {selectedFarmFilter !== 'ALL' && (
                 <span className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 shadow-2xs">
-                  <span>Finca: {farmMap[selectedFarmFilter] || 'Seleccionada'}</span>
+                  <span>Finca: {selectedFarmFilter === 'NONE' ? 'Sin finca' : (farmMap[selectedFarmFilter] || 'Seleccionada')}</span>
                   <button type="button" onClick={() => { setSelectedFarmFilter('ALL'); setSelectedPotreroFilter('ALL'); }} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
                 </span>
               )}
@@ -868,7 +891,6 @@ export default function InventarioPage() {
             >
               {paginatedAnimals.map((animal) => {
                 const isHighlight = is8MonthsOld(animal);
-                const animalDisplayName = animal.name ? animal.name : `#${animal.number}`;
 
                 const CardContent = (
                   <motion.article 
@@ -892,103 +914,74 @@ export default function InventarioPage() {
                       <AnimalImage
                         photoPath={animal.photo_path}
                         photoBlob={animal.photo_blob}
-                        alt={animalDisplayName}
+                        alt={`Arete #${animal.number}`}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-
-                      {/* Barra Superior de Badges Alineados (Género y Activo/Inactivo) */}
-                      <div className="absolute top-2 inset-x-2 sm:top-2.5 sm:inset-x-2.5 flex items-center justify-between z-10 pointer-events-none gap-1.5">
-                        {/* Pill de Género */}
-                        <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none ${
-                          animal.sex === 'Hembra' ? 'bg-pink-600/90' : 'bg-blue-700/90'
-                        }`}>
-                          {animal.sex === 'Hembra' ? (
-                            <FaVenus className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
-                          ) : (
-                            <FaMars className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
-                          )}
-                          <span>{animal.sex || 'Bovino'}</span>
-                        </span>
-
-                        {/* Pill de Status (Activo / Inactivo) */}
-                        <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none ${
-                          animal.status === 'Inactivo' ? 'bg-neutral-800/85' : 'bg-emerald-600/90'
-                        }`}>
-                          {animal.status === 'Inactivo' ? (
-                            <XCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-300 shrink-0" />
-                          ) : (
-                            <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-200 shrink-0" />
-                          )}
-                          <span>{animal.status || 'Activo'}</span>
-                        </span>
-                      </div>
                     </div>
 
-                    {/* SECCIÓN DE INFORMACIÓN ORDENADA (SIN SOLAPAMIENTOS) */}
-                    <div className="p-3 sm:p-5 flex flex-col justify-between flex-1 gap-2 sm:gap-3">
-                      <div>
-                        {/* Nombre / Código del Animal */}
-                        <div className="mb-1.5 sm:mb-2">
+                    {/* SECCIÓN DE INFORMACIÓN: SOLO 7 CAMPOS REQUERIDOS */}
+                    <div className="p-3 sm:p-4 flex flex-col justify-between flex-1 gap-2 sm:gap-2.5">
+                      <div className="space-y-1.5">
+                        {/* 1. Código de Arete */}
+                        <div>
                           <h2 
-                            className="text-sm sm:text-lg font-black text-neutral-900 leading-tight truncate group-hover:text-[#1B4820] transition-colors" 
-                            title={animalDisplayName}
+                            className="text-base sm:text-lg font-black text-neutral-900 leading-tight group-hover:text-[#1B4820] transition-colors truncate"
                           >
-                            {animalDisplayName}
+                            #{animal.number}
                           </h2>
-                          <div className="flex items-center gap-1 sm:gap-2 mt-0.5 flex-wrap">
-                            {animal.name && (
-                              <span className="text-[10px] sm:text-xs font-bold text-neutral-400">#{animal.number}</span>
-                            )}
-                            {animal.chip_number && (
-                              <span className="inline-flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-[10px] font-black bg-blue-50 text-blue-800 px-1.5 py-0.5 rounded-md border border-blue-200/60 truncate max-w-full">
-                                <Cpu className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
-                                <span className="truncate">{animal.chip_number}</span>
-                              </span>
-                            )}
-                          </div>
                         </div>
 
-                        {/* Fila 1: Raza (Sin porcentaje) */}
-                        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-semibold text-neutral-700 py-0.5">
-                          <Dna className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#1B4820] shrink-0" />
+                        {/* 2. Chip */}
+                        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-neutral-600 truncate">
+                          <Cpu className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                           <span className="truncate">
-                            {animal.breed || 'Sin raza'}
+                            <span className="font-semibold text-neutral-700">Chip:</span> {animal.chip_number || 'Sin chip'}
                           </span>
                         </div>
 
-                        {/* Fila 2: Finca y Potrero */}
-                        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-neutral-600 py-0.5">
-                          <Building2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-neutral-400 shrink-0" />
+                        {/* 3. Raza */}
+                        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-neutral-600 truncate">
+                          <Dna className="w-3.5 h-3.5 text-[#1B4820] shrink-0" />
                           <span className="truncate">
-                            {animal.farm_id && farmMap[animal.farm_id] ? farmMap[animal.farm_id] : 'Sin finca'}
-                            {animal.potrero_id && potreroMap[animal.potrero_id] ? ` · ${potreroMap[animal.potrero_id]}` : ''}
+                            <span className="font-semibold text-neutral-700">Raza:</span> {animal.breed || 'Sin raza'}
                           </span>
                         </div>
 
-                        {/* Fila 3: Dueño (si tiene) */}
-                        {animal.owner_id && ownerMap[animal.owner_id] && (
-                          <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-neutral-600 py-0.5">
-                            <UserCheck className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-neutral-400 shrink-0" />
-                            <span className="truncate">
-                              Dueño: {ownerMap[animal.owner_id]}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Fila 4: Edad */}
-                        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-neutral-600 py-0.5">
-                          <Calendar className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-neutral-400 shrink-0" />
+                        {/* 4. Finca */}
+                        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-neutral-600 truncate">
+                          <Building2 className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                           <span className="truncate">
-                            {calculateAge(animal.birth_date)}
+                            <span className="font-semibold text-neutral-700">Finca:</span> {farmMap[animal.farm_id] || 'Sin finca'}
+                          </span>
+                        </div>
+
+                        {/* 5. Dueño */}
+                        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-neutral-600 truncate">
+                          <UserCheck className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                          <span className="truncate">
+                            <span className="font-semibold text-neutral-700">Dueño:</span> {ownerMap[animal.owner_id] || 'Sin dueño'}
+                          </span>
+                        </div>
+
+                        {/* 6. Edad */}
+                        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-neutral-600 truncate">
+                          <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                          <span className="truncate">
+                            <span className="font-semibold text-neutral-700">Edad:</span> {calculateAge(animal.birth_date)}
                           </span>
                         </div>
                       </div>
 
-                      {/* Fila Inferior: Peso */}
-                      <div className="pt-2 sm:pt-3 border-t border-neutral-100 flex items-center justify-between gap-1 sm:gap-2">
-                        <div className="flex items-center text-neutral-800 bg-neutral-100/90 border border-neutral-200/70 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl">
-                          <Scale className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5 text-[#1B4820]" strokeWidth={2.5} />
-                          <span className="text-[11px] sm:text-xs font-black tracking-tight">{formatWeight(animal.last_weight_kg)}</span>
+                      {/* 7. Peso */}
+                      <div className="pt-2 border-t border-neutral-100 flex items-center justify-between">
+                        <div className="flex items-center justify-between text-neutral-800 bg-neutral-100/90 border border-neutral-200/70 px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg w-full">
+                          <span className="text-[10px] sm:text-[11px] font-semibold text-neutral-500 uppercase tracking-wider flex items-center gap-1">
+                            <Scale className="w-3 h-3 text-[#1B4820]" strokeWidth={2.5} />
+                            Peso
+                          </span>
+                          <span className="text-xs sm:text-sm font-black text-neutral-900 tracking-tight">
+                            {formatWeight(animal.last_weight_kg)}
+                          </span>
                         </div>
                       </div>
                     </div>

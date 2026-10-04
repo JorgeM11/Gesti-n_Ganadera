@@ -57,7 +57,7 @@ function NuevoAnimalContent() {
       
       {/* HEADER PRINCIPAL */}
       <header className="px-4 py-5 sticky top-0 z-20 bg-[#FCFCFA]/80 backdrop-blur-md border-b border-neutral-100">
-        <div className="max-w-2xl mx-auto flex items-center gap-4">
+        <div className="max-w-3xl mx-auto flex items-center gap-4">
           <Link to="/inventario" className="p-2 -ml-2 hover:bg-neutral-100 rounded-full transition-colors cursor-pointer">
             <ArrowLeft className="w-6 h-6 text-[#1B4820]" />
           </Link>
@@ -68,7 +68,7 @@ function NuevoAnimalContent() {
       </header>
 
       {/* FORMULARIO BASE */}
-      <div className="max-w-2xl mx-auto px-4 mt-6">
+      <div className="max-w-3xl mx-auto px-4 mt-6">
         <AnimalForm 
           initialValues={initialValues}
           onCancel={() => navigate('/inventario')}

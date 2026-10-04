@@ -368,11 +368,11 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
     <div className={`relative ${isModal ? 'pb-0' : 'pb-28 sm:pb-24'}`}>
       {/* Toast Notificación */}
       {toast.show && (
-        <div className={`fixed z-[100] px-5 py-3.5 rounded-2xl shadow-xl transition-all top-5 left-1/2 -translate-x-1/2 font-bold text-sm flex items-center gap-3 text-white ${
+        <div className={`fixed z-[100] px-4 sm:px-5 py-3 rounded-2xl shadow-2xl transition-all top-5 left-1/2 -translate-x-1/2 font-bold text-xs sm:text-sm flex items-center gap-2.5 text-white whitespace-nowrap max-w-[95vw] ${
           toast.type === 'success' ? 'bg-[#1A3621]' : 'bg-red-600'
         }`}>
-          <CheckCircle className="w-5 h-5" />
-          {toast.message}
+          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+          <span className="whitespace-nowrap">{toast.message}</span>
         </div>
       )}
 
