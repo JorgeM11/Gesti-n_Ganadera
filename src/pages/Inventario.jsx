@@ -961,7 +961,7 @@ export default function InventarioPage() {
                         {/* Chip (solo el dato) */}
                         <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-neutral-600 py-0.5 truncate">
                           <Cpu className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                          <span className="truncate">{animal.chip_number || 'Sin chip'}</span>
+                          <span className="truncate font-bold text-neutral-900">{animal.chip_number || 'Sin chip'}</span>
                         </div>
 
                         {/* Raza (solo el dato) */}

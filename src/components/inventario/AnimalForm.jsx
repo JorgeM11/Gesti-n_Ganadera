@@ -432,21 +432,10 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
 
             {/* 2. Número de chip con escaneo de código de barras */}
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
-                  <Cpu className="w-3.5 h-3.5 text-neutral-400" />
-                  2. Número de Chip
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setIsBarcodeScannerOpen(true)}
-                  className="text-[11px] font-bold text-[#1B4820] hover:text-[#0F2912] flex items-center gap-1 cursor-pointer bg-emerald-50 hover:bg-emerald-100/80 px-2 py-0.5 rounded-lg border border-emerald-200/80 transition-all shadow-2xs"
-                  title="Escanear código de barras con la cámara"
-                >
-                  <ScanBarcode className="w-3.5 h-3.5 text-[#1B4820]" />
-                  <span>Escanear</span>
-                </button>
-              </div>
+              <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                <Cpu className="w-3.5 h-3.5 text-neutral-400" />
+                2. Número de Chip
+              </label>
 
               <div className="relative">
                 <Controller

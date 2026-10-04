@@ -84,30 +84,23 @@ export default function DetailsTab({ animal, onEdit }) {
           </div>
         </div>
 
-        {/* Identificador Principal */}
+        {/* Identificador Principal (Solo número, chip y raza) */}
         <div className="flex items-center justify-between px-1">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-3xl sm:text-4xl font-black text-[#1B4820] tracking-tight block">
-                #{animal.number}
-              </span>
-              {animal.name && (
-                <span className="text-lg sm:text-xl font-bold text-neutral-800 self-end mb-1">
-                  ({animal.name})
-                </span>
-              )}
-            </div>
+            <span className="text-3xl sm:text-4xl font-black text-[#1B4820] tracking-tight block">
+              #{animal.number}
+            </span>
 
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              {animal.chip_number && (
+            <div className="flex items-center gap-2 mt-1">
+              {animal.chip_number ? (
                 <span className="inline-flex items-center gap-1 text-[11px] font-bold bg-blue-50 text-blue-800 px-2.5 py-0.5 rounded-full border border-blue-200">
                   <Cpu className="w-3 h-3" />
                   Chip: {animal.chip_number}
                 </span>
-              )}
-              {animal.color && (
-                <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">
-                  Color: {animal.color}
+              ) : (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-neutral-400">
+                  <Cpu className="w-3 h-3" />
+                  Sin chip
                 </span>
               )}
             </div>
