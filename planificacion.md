@@ -103,25 +103,26 @@ flowchart TD
 
 ---
 
-### ⏳ Fase 3: Diseño y Despliegue de Nueva BD en Supabase
+### ✅ Fase 3: Diseño y Despliegue de Nueva BD en Supabase
 > **Objetivo**: Crear y aprovisionar un nuevo proyecto/esquema en Supabase que tome como base la estructura original y añada todas las tablas, columnas, restricciones e índices demandados por el nuevo frontend.
 
-- [ ] Creación del nuevo proyecto en Supabase Cloud.
-- [ ] Extracción y análisis del DDL de la base de datos anterior.
-- [ ] Modificación y creación de scripts SQL de migración (nuevas tablas, campos, llaves foráneas).
-- [ ] Configuración de buckets de almacenamiento para fotos (`gestion_images`).
-- [ ] Políticas de seguridad Row Level Security (RLS) y roles de usuario.
-- [ ] Actualización del esquema local Dexie (`src/lib/db.js`) para alinear versiones y migraciones.
+- [x] Creación del nuevo proyecto en Supabase Cloud (`mdyycsydocenrauzvalu`).
+- [x] Extracción y análisis del DDL de la base de datos anterior.
+- [x] Modificación y creación de scripts SQL de migración (nuevas tablas `potreros`, `owners`, campos `chip_number`, `name`, `admin_id` para futuros obreros, llaves foráneas).
+- [x] Configuración de buckets de almacenamiento para fotos (`ganadera_images`, público con 4 políticas RLS).
+- [x] Políticas de seguridad Row Level Security (RLS) y roles de usuario.
+- [x] Actualización del esquema local Dexie (`src/lib/db.js`) para alinear versiones y migraciones.
 
 ---
 
-### ⏳ Fase 4: Conexión Frontend con la Nueva BD
+### ✅ Fase 4: Conexión Frontend con la Nueva BD
 > **Objetivo**: Enlazar la aplicación con la nueva instancia de Supabase y validar la comunicación de ida y vuelta.
 
-- [ ] Actualización de variables de entorno `.env.local` con las nuevas URL y Anon Key.
-- [ ] Ajustes en `supabaseClient.js`, `syncUtils.js` y `authService.js` según nuevos esquemas.
-- [ ] Validación de la cola de sincronización (`sync_queue`) con los nuevos endpoints y tablas.
-- [ ] Pruebas de autenticación y seed del primer administrador en la nueva BD.
+- [x] Actualización de variables de entorno `.env.local` con las nuevas URL y Anon Key del nuevo proyecto.
+- [x] Ajustes en `supabaseClient.js`, `syncUtils.js` y `authService.js` según nuevos esquemas.
+- [x] Validación de la cola de sincronización (`sync_queue`) con los nuevos endpoints y tablas (`potreros`, `owners`).
+- [x] Pruebas de autenticación y seed del primer administrador en la nueva BD (`admin@campo.com`).
+- [x] Pruebas de integración E2E automatizadas (inserción, lectura relacional con joins y limpieza de fincas, potreros, dueños y animales con chip).
 
 ---
 
@@ -144,5 +145,7 @@ flowchart TD
 | **Puesta en marcha Fase 1** | 2026-10-02 | **Completado** | Antigravity AI | Proyecto `gestion-ganadera` creado y compilando al 100% sobre la base de `App-ganadera-v2`. |
 | **Fase 2: Eliminaciones solicitadas** | 2026-10-02 | **Completado** | Antigravity AI | Retirado ordeño, tactos, servicios reproductivos, modo lotes en vacunación y botón `+` directo. Compilación verificada con éxito. |
 | **Fase 2: Nuevas funcionalidades frontend** | 2026-10-03 | **Completado** | Antigravity AI & Usuario | Potreros por Finca en modal propio, Dueños en modal propio, orden en AnimalForm (Raza tras características biológicas), escáner de código de barras integrado en chip y buscador de inventario. |
-| **Pase a Fase 3: Nueva BD Supabase** | 2026-10-03 | **Listo para iniciar** | Antigravity AI & Usuario | Estructura previa documentada al 100%. Preparado para crear nuevo proyecto Supabase, esquema SQL con potreros, dueños, y nuevos campos. Detalles visuales pendientes se abordarán al culminar Fase 3. |
+| **Fase 3: Nueva BD Supabase** | 2026-10-04 | **Completado** | Antigravity AI & Usuario | Proyecto `mdyycsydocenrauzvalu` aprovisionado, tablas `potreros`, `owners`, `animals` con chip, estructura para obreros, RLS y bucket `ganadera_images`. |
+| **Fase 4: Conexión Frontend con Nueva BD** | 2026-10-04 | **Completado** | Antigravity AI | `.env.local` actualizado, `syncUtils.js` sincronizando `potreros` y `owners`. Tests E2E de inserción, lectura relacional y storage superados al 100%. |
+| **Pase a Fase 5 y Detalles Visuales** | 2026-10-04 | **Listo para iniciar** | Antigravity AI & Usuario | Preparado para abordar los detalles visuales pendientes solicitados por el usuario y realizar pruebas de campo. |
 

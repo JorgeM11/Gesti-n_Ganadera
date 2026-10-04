@@ -3,7 +3,7 @@ import Dexie from 'dexie';
 /**
  * @typedef {Object} SyncQueueItem
  * @property {number} [id]
- * @property {'animals' | 'growth_events' | 'services' | 'pregnancy_checks' | 'health_records'} table_name
+ * @property {'farms' | 'potreros' | 'owners' | 'animals' | 'growth_events' | 'health_records' | 'usuarios'} table_name
  * @property {'INSERT' | 'UPDATE' | 'DELETE'} operation
  * @property {any} payload
  * @property {string} created_at

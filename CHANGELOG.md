@@ -4,6 +4,23 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.3.0-phase3-phase4-supabase-integration] - 2026-10-04
+
+### Añadido y Desplegado (Fases 3 y 4)
+- **Nueva Instancia de Supabase Cloud (`mdyycsydocenrauzvalu`)**:
+  - Aprovisionada y desplegada la nueva base de datos en PostgreSQL con soporte nativo para potreros obligatorios por finca, dueños de ganado, número de microchip RFID, nombres de animales y trazabilidad de eventos.
+  - Diseñada la arquitectura relacional preparada para el futuro rol de **Obrero** (`role: 'obrero'`, `admin_id` jerárquico y `created_by_user_id` para auditoría de acciones sin alterar la UI actual).
+  - Activadas políticas de Row Level Security (RLS) en todas las tablas con permisos integrales para el cliente PWA offline-first.
+  - Sembrado el usuario administrador inicial (`admin@campo.com`).
+- **Almacenamiento Multimedia (Storage `ganadera_images`)**:
+  - Bucket público `ganadera_images` verificado y configurado con límite de 10 MB, tipos MIME permitidos y políticas de subida, consulta y sobreescritura de imágenes de animales y pesajes.
+- **Conexión Frontend y Sincronización Adaptada**:
+  - Actualizadas las credenciales en `.env.local` con la nueva Project URL y Anon Key.
+  - Modificado el motor de sincronización ([`syncUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/syncUtils.js)) para realizar PULL, PUSH y reconciliación de las nuevas tablas (`potreros`, `owners`) y purga de tablas heredadas.
+  - Ejecutadas pruebas de integración E2E automatizadas verificando con éxito al 100%: login, inserción de fincas, potreros, dueños, animales con chip, consultas relacionales con joins, subida de fotos a Storage y borrado limpio.
+
+---
+
 ## [1.2.6-phase2-refinements] - 2026-10-03
 
 ### Corregido y Perfeccionado

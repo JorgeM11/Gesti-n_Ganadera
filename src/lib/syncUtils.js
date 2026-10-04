@@ -187,12 +187,11 @@ export async function pullFromServer() {
 
   const tables = [
     'farms',
+    'potreros',
+    'owners',
     'animals',
     'growth_events',
-    'services',
-    'pregnancy_checks',
     'health_records',
-    'milking_records',
     'usuarios'
   ];
 
