@@ -177,18 +177,18 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
       scannerRef.current = html5Qr;
 
       // Configuración de cámara directa y ultra rápida:
-      // Usamos facingMode: 'environment' directamente sin esperar la lenta enumeración previa
+      // html5-qrcode exige exactamente 1 clave en este objeto: 'facingMode' o 'deviceId'
       const cameraConfig = preferredCameraId
-        ? { deviceId: { exact: preferredCameraId } }
-        : {
-            facingMode: 'environment',
-            width: { ideal: 1280 },
-            height: { ideal: 720 }
-          };
+        ? { deviceId: preferredCameraId }
+        : { facingMode: 'environment' };
 
       // Configuración de escaneo a 20 FPS con visor apaisado para chips
       const config = {
         fps: 20,
+        videoConstraints: {
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
         qrbox: (viewfinderWidth, viewfinderHeight) => {
           const width = Math.min(Math.floor(viewfinderWidth * 0.88), 340);
           const height = Math.min(Math.floor(viewfinderHeight * 0.42), 160);
