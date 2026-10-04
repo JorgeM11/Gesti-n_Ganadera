@@ -147,5 +147,6 @@ flowchart TD
 | **Fase 2: Nuevas funcionalidades frontend** | 2026-10-03 | **Completado** | Antigravity AI & Usuario | Potreros por Finca en modal propio, Dueños en modal propio, orden en AnimalForm (Raza tras características biológicas), escáner de código de barras integrado en chip y buscador de inventario. |
 | **Fase 3: Nueva BD Supabase** | 2026-10-04 | **Completado** | Antigravity AI & Usuario | Proyecto `mdyycsydocenrauzvalu` aprovisionado, tablas `potreros`, `owners`, `animals` con chip, estructura para obreros, RLS y bucket `ganadera_images`. |
 | **Fase 4: Conexión Frontend con Nueva BD** | 2026-10-04 | **Completado** | Antigravity AI | `.env.local` actualizado, `syncUtils.js` sincronizando `potreros` y `owners`. Tests E2E de inserción, lectura relacional y storage superados al 100%. |
-| **Pase a Fase 5 y Detalles Visuales** | 2026-10-04 | **Listo para iniciar** | Antigravity AI & Usuario | Preparado para abordar los detalles visuales pendientes solicitados por el usuario y realizar pruebas de campo. |
+| **Pase a Fase 5 y Detalles Visuales** | 2026-10-04 | **Completado** | Antigravity AI & Usuario | Aplicados ajustes estéticos (cards, toast, formulario, perfil) y estabilizado el escáner de barras 1D con cámara trasera. |
+| **Fase 5: Pruebas Exhaustivas y QA** | 2026-10-04 | **Pendiente / Siguiente** | Antigravity AI & Usuario | Listo para iniciar pruebas de campo, modo offline, sincronización y PWA. |
 

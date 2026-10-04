@@ -4,6 +4,23 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.3.1-ui-and-scanner-enhancements] - 2026-10-04
+
+### Mejorado y Corregido (Perfeccionamiento Previo a QA)
+- **Estabilización Total del Escáner de Código de Barras ([`BarcodeScannerModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/BarcodeScannerModal.jsx))**:
+  - Resuelto el ciclo de reinicio infinito de cámara aislando dependencias y protegiendo callbacks con `useRef`.
+  - Priorizada la cámara trasera física (`environment`) por defecto en teléfonos móviles y tablets.
+  - Alternancia inteligente entre cámaras (trasera ↔ delantera) y soporte continuo de linterna/flash.
+  - Eliminados decodificadores de códigos QR y matrices 2D, optimizando la lectura exclusivamente para códigos lineales 1D (Code 128, Code 39, EAN-13, UPC, ITF) con inicio instantáneo.
+  - Diseñados los botones de escaneo como botones táctiles dedicados en vistas móvil y tablet en formularios y barra de búsqueda.
+- **Ajustes Estéticos en Inventario y Formularios**:
+  - **Cards de Inventario ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**: Número de arete en verde destacado, número de microchip en negrita, datos limpios (código, chip, raza, dueño, edad, peso, tags de género y estatus).
+  - **Formulario de Registro y Edición ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**: Ancho del formulario optimizado en pantallas de escritorio, y registro de evento de nacimiento limpio (solo fecha de nacimiento sin descripciones o pesos automáticos).
+  - **Ficha de Perfil ([`PerfilAnimal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/PerfilAnimal.jsx))**: Visualización rápida depurada debajo de la foto del ejemplar (número, chip, raza, peso y edad).
+  - **Notificación Móvil**: Toast de guardado en modal de edición renderizado en una sola línea en pantallas pequeñas.
+
+---
+
 ## [1.3.0-phase3-phase4-supabase-integration] - 2026-10-04
 
 ### Añadido y Desplegado (Fases 3 y 4)
