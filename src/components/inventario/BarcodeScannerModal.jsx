@@ -20,6 +20,7 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
   const [isTorchOn, setIsTorchOn] = useState(false);
   const [cameras, setCameras] = useState([]);
   const [selectedCameraIndex, setSelectedCameraIndex] = useState(0);
+  const [selectedFacingMode, setSelectedFacingMode] = useState('environment');
   const [lastScannedCode, setLastScannedCode] = useState(null);
 
   const scannerRef = useRef(null);
@@ -137,18 +138,37 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
     }
   };
 
-  // Alternar entre cámaras trasera / delantera si hay más de una
+  // Alternar entre cámaras trasera / delantera
   const handleSwitchCamera = async () => {
-    if (cameras.length <= 1) return;
-    const nextIndex = (selectedCameraIndex + 1) % cameras.length;
-    setSelectedCameraIndex(nextIndex);
+    let currentCams = cameras;
+    if (!currentCams || currentCams.length <= 1) {
+      try {
+        const fetched = await Html5Qrcode.getCameras();
+        if (Array.isArray(fetched) && fetched.length > 0) {
+          currentCams = fetched;
+          setCameras(fetched);
+        }
+      } catch (e) {
+        console.warn('Error consultando cámaras:', e);
+      }
+    }
+
     await stopScanner();
-    startScanning(cameras[nextIndex].id);
+
+    if (currentCams && currentCams.length > 1) {
+      const nextIndex = (selectedCameraIndex + 1) % currentCams.length;
+      setSelectedCameraIndex(nextIndex);
+      startScanning(currentCams[nextIndex].id);
+    } else {
+      // Alternar directamente por facingMode si no hay múltiples deviceIds listados
+      const nextFacing = selectedFacingMode === 'environment' ? 'user' : 'environment';
+      setSelectedFacingMode(nextFacing);
+      startScanning({ facingMode: nextFacing });
+    }
   };
 
   // Iniciar el escaneo con Html5Qrcode
-  // Iniciar el escaneo con Html5Qrcode
-  const startScanning = useCallback(async (preferredCameraId = null) => {
+  const startScanning = useCallback(async (preferredCameraOrConfig = null) => {
     setIsInitializing(true);
     setCameraError('');
     setLastScannedCode(null);
@@ -176,19 +196,50 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
       });
       scannerRef.current = html5Qr;
 
-      // Configuración de cámara directa y ultra rápida:
-      // html5-qrcode exige exactamente 1 clave en este objeto: 'facingMode' o 'deviceId'
-      const cameraConfig = preferredCameraId
-        ? { deviceId: preferredCameraId }
-        : { facingMode: 'environment' };
+      // 1. Obtener lista de cámaras si ya están disponibles
+      let currentCams = cameras;
+      if (!currentCams || currentCams.length === 0) {
+        try {
+          const list = await Html5Qrcode.getCameras();
+          if (Array.isArray(list) && list.length > 0) {
+            currentCams = list;
+            setCameras(list);
+          }
+        } catch {
+          // Normal si no hay permisos previos
+        }
+      }
+
+      // 2. Determinar configuración de cámara (siempre trasera por defecto en móviles y tablets)
+      let cameraConfig;
+      if (preferredCameraOrConfig) {
+        cameraConfig = preferredCameraOrConfig;
+      } else if (currentCams && currentCams.length > 0) {
+        // Encontrar la cámara trasera en la lista de dispositivos
+        const rearCamera = currentCams.find(c => {
+          const l = (c.label || '').toLowerCase();
+          return l.includes('back') || 
+                 l.includes('rear') || 
+                 l.includes('trasera') || 
+                 l.includes('trasero') || 
+                 l.includes('environment');
+        });
+
+        if (rearCamera) {
+          const idx = currentCams.indexOf(rearCamera);
+          setSelectedCameraIndex(idx !== -1 ? idx : 0);
+          cameraConfig = rearCamera.id;
+        } else {
+          cameraConfig = { facingMode: 'environment' };
+        }
+      } else {
+        cameraConfig = { facingMode: 'environment' };
+      }
 
       // Configuración de escaneo a 20 FPS con visor apaisado para chips
+      // NOTA: NO incluir videoConstraints aquí porque html5-qrcode ignora cameraIdOrConfig si se especifican
       const config = {
         fps: 20,
-        videoConstraints: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
         qrbox: (viewfinderWidth, viewfinderHeight) => {
           const width = Math.min(Math.floor(viewfinderWidth * 0.88), 340);
           const height = Math.min(Math.floor(viewfinderHeight * 0.42), 160);
@@ -197,32 +248,46 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
         aspectRatio: 1.0
       };
 
-      await html5Qr.start(
-        cameraConfig,
-        config,
-        (decodedText) => {
-          handleDecoded(decodedText);
-        },
-        () => {
-          // Frame escaneado sin código
+      try {
+        await html5Qr.start(
+          cameraConfig,
+          config,
+          (decodedText) => {
+            handleDecoded(decodedText);
+          },
+          () => {}
+        );
+      } catch (startErr) {
+        // Si falló con ID específico, reintentar con facingMode: environment
+        if (typeof cameraConfig === 'string') {
+          console.warn('Reintentando con facingMode: environment...', startErr);
+          await html5Qr.start(
+            { facingMode: 'environment' },
+            config,
+            (decodedText) => handleDecoded(decodedText),
+            () => {}
+          );
+        } else {
+          throw startErr;
         }
-      );
+      }
 
       setIsInitializing(false);
 
-      // Enumerar cámaras en segundo plano para alternar cámara sin bloquear la apertura inicial
-      Html5Qrcode.getCameras()
-        .then(cams => {
-          if (Array.isArray(cams) && cams.length > 0) {
-            setCameras(cams);
-          }
-        })
-        .catch(() => {});
+      // Enumerar cámaras post-permiso para asegurar nombres de etiquetas y habilitar cambio de cámara
+      try {
+        const postPermCams = await Html5Qrcode.getCameras();
+        if (Array.isArray(postPermCams) && postPermCams.length > 0) {
+          setCameras(postPermCams);
+        }
+      } catch (e) {
+        console.warn('Error listando cámaras post-permiso:', e);
+      }
 
       // Inspeccionar linterna de inmediato
       setTimeout(() => {
         checkTorchCapability();
-      }, 200);
+      }, 250);
 
     } catch (err) {
       console.error('Error al iniciar escáner de código de barras:', err);
@@ -239,7 +304,7 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
       setCameraError(userMsg);
       setIsInitializing(false);
     }
-  }, [handleDecoded, checkTorchCapability]);
+  }, [handleDecoded, checkTorchCapability, cameras]);
 
   // Efecto de ciclo de vida del modal: inicio instantáneo
   useEffect(() => {
@@ -381,16 +446,14 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
                     </button>
                   )}
 
-                  {cameras.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={handleSwitchCamera}
-                      className="p-2.5 rounded-xl bg-black/60 text-white border border-white/10 hover:bg-black/80 backdrop-blur-md transition-all cursor-pointer"
-                      title="Cambiar cámara"
-                    >
-                      <SwitchCamera className="w-4 h-4" />
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={handleSwitchCamera}
+                    className="p-2.5 rounded-xl bg-black/60 text-white border border-white/10 hover:bg-black/80 backdrop-blur-md transition-all cursor-pointer"
+                    title="Cambiar cámara (delantera / trasera)"
+                  >
+                    <SwitchCamera className="w-4 h-4" />
+                  </button>
                 </div>
               )}
             </div>
