@@ -147,6 +147,7 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
   };
 
   // Iniciar el escaneo con Html5Qrcode
+  // Iniciar el escaneo con Html5Qrcode
   const startScanning = useCallback(async (preferredCameraId = null) => {
     setIsInitializing(true);
     setCameraError('');
@@ -158,54 +159,36 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
         throw new Error('Tu navegador o dispositivo no admite acceso a la cámara.');
       }
 
-      // Enumerar cámaras disponibles
-      let availableCameras = [];
-      try {
-        availableCameras = await Html5Qrcode.getCameras();
-        setCameras(availableCameras);
-      } catch {
-        // En algunos entornos no se permite enumerar antes de pedir permiso
-      }
-
-      // Crear instancia de Html5Qrcode
+      // Crear instancia de Html5Qrcode con formatos optimizados
       const html5Qr = new Html5Qrcode(containerId, {
         formatsToSupport: [
           Html5QrcodeSupportedFormats.CODE_128,
           Html5QrcodeSupportedFormats.CODE_39,
-          Html5QrcodeSupportedFormats.CODE_93,
           Html5QrcodeSupportedFormats.EAN_13,
           Html5QrcodeSupportedFormats.EAN_8,
           Html5QrcodeSupportedFormats.UPC_A,
           Html5QrcodeSupportedFormats.UPC_E,
           Html5QrcodeSupportedFormats.ITF,
-          Html5QrcodeSupportedFormats.CODABAR,
-          Html5QrcodeSupportedFormats.DATA_MATRIX,
-          Html5QrcodeSupportedFormats.QR_CODE
+          Html5QrcodeSupportedFormats.QR_CODE,
+          Html5QrcodeSupportedFormats.DATA_MATRIX
         ],
         verbose: false
       });
       scannerRef.current = html5Qr;
 
-      // Configuración de cámara: preferir cámara trasera
-      let cameraConfig = { facingMode: 'environment' };
-      if (preferredCameraId) {
-        cameraConfig = { deviceId: { exact: preferredCameraId } };
-      } else if (availableCameras.length > 0) {
-        // Buscar cámara trasera por etiqueta
-        const rearCamera = availableCameras.find(c => 
-          c.label.toLowerCase().includes('back') || 
-          c.label.toLowerCase().includes('rear') || 
-          c.label.toLowerCase().includes('trasera') || 
-          c.label.toLowerCase().includes('environment')
-        );
-        if (rearCamera) {
-          cameraConfig = { deviceId: { exact: rearCamera.id } };
-        }
-      }
+      // Configuración de cámara directa y ultra rápida:
+      // Usamos facingMode: 'environment' directamente sin esperar la lenta enumeración previa
+      const cameraConfig = preferredCameraId
+        ? { deviceId: { exact: preferredCameraId } }
+        : {
+            facingMode: 'environment',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          };
 
-      // Configuración de escaneo (rectángulo apaisado optimizado para códigos 1D de microchips)
+      // Configuración de escaneo a 20 FPS con visor apaisado para chips
       const config = {
-        fps: 15,
+        fps: 20,
         qrbox: (viewfinderWidth, viewfinderHeight) => {
           const width = Math.min(Math.floor(viewfinderWidth * 0.88), 340);
           const height = Math.min(Math.floor(viewfinderHeight * 0.42), 160);
@@ -221,15 +204,25 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
           handleDecoded(decodedText);
         },
         () => {
-          // Frame escaneado sin código (esperado)
+          // Frame escaneado sin código
         }
       );
 
       setIsInitializing(false);
-      // Dar un breve momento para inspeccionar linterna
+
+      // Enumerar cámaras en segundo plano para alternar cámara sin bloquear la apertura inicial
+      Html5Qrcode.getCameras()
+        .then(cams => {
+          if (Array.isArray(cams) && cams.length > 0) {
+            setCameras(cams);
+          }
+        })
+        .catch(() => {});
+
+      // Inspeccionar linterna de inmediato
       setTimeout(() => {
         checkTorchCapability();
-      }, 600);
+      }, 200);
 
     } catch (err) {
       console.error('Error al iniciar escáner de código de barras:', err);
@@ -248,15 +241,14 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
     }
   }, [handleDecoded, checkTorchCapability]);
 
-  // Efecto de ciclo de vida del modal
+  // Efecto de ciclo de vida del modal: inicio instantáneo
   useEffect(() => {
     if (isOpen) {
-      // Pequeño timeout para asegurar que el div del DOM esté montado
-      const timer = setTimeout(() => {
+      const animFrame = requestAnimationFrame(() => {
         startScanning();
-      }, 100);
+      });
       return () => {
-        clearTimeout(timer);
+        cancelAnimationFrame(animFrame);
         stopScanner();
       };
     } else {
