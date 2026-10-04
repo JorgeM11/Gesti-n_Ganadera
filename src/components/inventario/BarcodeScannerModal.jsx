@@ -27,6 +27,13 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
   const isStoppingRef = useRef(false);
   const containerId = 'ganadera-barcode-scanner-view';
 
+  const onScanSuccessRef = useRef(onScanSuccess);
+  const onCloseRef = useRef(onClose);
+  onScanSuccessRef.current = onScanSuccess;
+  onCloseRef.current = onClose;
+
+  const camerasRef = useRef([]);
+
   // Sonido sintético de escaneo exitoso (880Hz Beep)
   const playBeep = useCallback(() => {
     try {
@@ -80,7 +87,7 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
     }
   }, []);
 
-  // Manejo de código detectado
+  // Manejo de código detectado (estable, sin dependencias volátiles)
   const handleDecoded = useCallback(async (decodedText) => {
     if (!decodedText || isStoppingRef.current) return;
     const cleanCode = decodedText.trim();
@@ -93,13 +100,13 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
 
     // Detener escáner y entregar resultado
     await stopScanner();
-    if (onScanSuccess) {
-      onScanSuccess(cleanCode);
+    if (onScanSuccessRef.current) {
+      onScanSuccessRef.current(cleanCode);
     }
-    if (onClose) {
-      onClose();
+    if (onCloseRef.current) {
+      onCloseRef.current();
     }
-  }, [playBeep, triggerVibrate, stopScanner, onScanSuccess, onClose]);
+  }, [playBeep, triggerVibrate, stopScanner]);
 
   // Inspeccionar capacidades de la cámara (linterna)
   const checkTorchCapability = useCallback(() => {
@@ -140,12 +147,13 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
 
   // Alternar entre cámaras trasera / delantera
   const handleSwitchCamera = async () => {
-    let currentCams = cameras;
+    let currentCams = camerasRef.current.length > 0 ? camerasRef.current : cameras;
     if (!currentCams || currentCams.length <= 1) {
       try {
         const fetched = await Html5Qrcode.getCameras();
         if (Array.isArray(fetched) && fetched.length > 0) {
           currentCams = fetched;
+          camerasRef.current = fetched;
           setCameras(fetched);
         }
       } catch (e) {
@@ -155,12 +163,30 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
 
     await stopScanner();
 
+    // Si tenemos lista de cámaras con nombres/etiquetas
     if (currentCams && currentCams.length > 1) {
-      const nextIndex = (selectedCameraIndex + 1) % currentCams.length;
-      setSelectedCameraIndex(nextIndex);
-      startScanning(currentCams[nextIndex].id);
+      const isCurrentlyFront = selectedFacingMode === 'user';
+      const targetOppositeCam = currentCams.find(c => {
+        const l = (c.label || '').toLowerCase();
+        if (isCurrentlyFront) {
+          return l.includes('back') || l.includes('rear') || l.includes('trasera') || l.includes('trasero') || l.includes('environment');
+        } else {
+          return l.includes('front') || l.includes('delantera') || l.includes('user') || l.includes('anterior');
+        }
+      });
+
+      if (targetOppositeCam) {
+        const targetIdx = currentCams.indexOf(targetOppositeCam);
+        setSelectedCameraIndex(targetIdx);
+        setSelectedFacingMode(isCurrentlyFront ? 'environment' : 'user');
+        startScanning(targetOppositeCam.id);
+      } else {
+        const nextIndex = (selectedCameraIndex + 1) % currentCams.length;
+        setSelectedCameraIndex(nextIndex);
+        startScanning(currentCams[nextIndex].id);
+      }
     } else {
-      // Alternar directamente por facingMode si no hay múltiples deviceIds listados
+      // Alternar directamente por facingMode nativo
       const nextFacing = selectedFacingMode === 'environment' ? 'user' : 'environment';
       setSelectedFacingMode(nextFacing);
       startScanning({ facingMode: nextFacing });
@@ -195,12 +221,13 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
       scannerRef.current = html5Qr;
 
       // 1. Obtener lista de cámaras si ya están disponibles
-      let currentCams = cameras;
+      let currentCams = camerasRef.current;
       if (!currentCams || currentCams.length === 0) {
         try {
           const list = await Html5Qrcode.getCameras();
           if (Array.isArray(list) && list.length > 0) {
             currentCams = list;
+            camerasRef.current = list;
             setCameras(list);
           }
         } catch {
@@ -276,7 +303,17 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
       try {
         const postPermCams = await Html5Qrcode.getCameras();
         if (Array.isArray(postPermCams) && postPermCams.length > 0) {
+          camerasRef.current = postPermCams;
           setCameras(postPermCams);
+          if (!preferredCameraOrConfig) {
+            const rearIdx = postPermCams.findIndex(c => {
+              const l = (c.label || '').toLowerCase();
+              return l.includes('back') || l.includes('rear') || l.includes('trasera') || l.includes('trasero') || l.includes('environment');
+            });
+            if (rearIdx !== -1) {
+              setSelectedCameraIndex(rearIdx);
+            }
+          }
         }
       } catch (e) {
         console.warn('Error listando cámaras post-permiso:', e);
@@ -302,22 +339,20 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
       setCameraError(userMsg);
       setIsInitializing(false);
     }
-  }, [handleDecoded, checkTorchCapability, cameras]);
+  }, [handleDecoded, checkTorchCapability]);
 
-  // Efecto de ciclo de vida del modal: inicio instantáneo
+  // Efecto de ciclo de vida del modal: se ejecuta ÚNICAMENTE al abrir o cerrar
   useEffect(() => {
     if (isOpen) {
-      const animFrame = requestAnimationFrame(() => {
-        startScanning();
-      });
+      startScanning();
       return () => {
-        cancelAnimationFrame(animFrame);
         stopScanner();
       };
     } else {
       stopScanner();
     }
-  }, [isOpen, startScanning, stopScanner]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
