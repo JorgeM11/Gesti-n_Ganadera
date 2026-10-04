@@ -1,0 +1,6 @@
+# Robots.txt - Gestión Ganadera
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://gestionganadera.app/sitemap.xml

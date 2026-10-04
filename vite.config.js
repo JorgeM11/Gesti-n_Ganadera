@@ -53,23 +53,28 @@ export default defineConfig({
         ]
       },
       manifest: {
-        name: 'Gestión Ganadera',
+        name: 'Gestión Ganadera — Plataforma de Precisión',
         short_name: 'Ganadera',
-        description: 'Gestión Ganadera Offline',
-        theme_color: '#173418', // Usando el color primary del sistema de diseño
-        background_color: '#f9faf4', // Usando el color background del sistema de diseño
+        description: 'Gestión Ganadera Offline-First para Campo. Control integral bovino, pesajes, potreros y sanidad.',
+        theme_color: '#173418',
+        background_color: '#f9faf4',
         display: 'standalone',
+        orientation: 'any',
+        lang: 'es',
+        categories: ['business', 'productivity', 'utilities'],
         start_url: "/",
         icons: [
           {
-            src: '/icons/icon-192x192.png', // <-- Agregado /icons/
+            src: '/icons/icon-192x192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           },
           {
-            src: '/icons/icon-512x512.png', // <-- Agregado /icons/
+            src: '/icons/icon-512x512.png',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
       }
