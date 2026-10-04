@@ -302,7 +302,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
           await addToSyncQueue('animals', 'INSERT', animalData);
         }
 
-        // Si se especificó fecha de nacimiento, reflejar o actualizar el evento 'Nacimiento' en growth_events
+        // Si se especificó fecha de nacimiento, reflejar o actualizar el evento 'Nacimiento' en growth_events (solo fecha, sin peso ni descripción)
         if (data.birth_date) {
           const existingBirthEvent = await db.growth_events
             .where('animal_id')
@@ -314,7 +314,6 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
             const updatedBirthEvent = {
               ...existingBirthEvent,
               event_date: data.birth_date,
-              weight_kg: finalWeight !== null && finalWeight !== undefined ? finalWeight : existingBirthEvent.weight_kg,
               updated_at: now
             };
             await db.growth_events.put(updatedBirthEvent);
@@ -326,11 +325,11 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               animal_id: animalId,
               event_type: 'Nacimiento',
               event_date: data.birth_date,
-              weight_kg: finalWeight !== null && finalWeight !== undefined ? finalWeight : null,
+              weight_kg: null,
               mother_weight_kg: null,
               scrotal_circumference_cm: null,
               navel_length: null,
-              observations: 'Registro de nacimiento',
+              observations: null,
               photo_path: null,
               photo_blob: null,
               created_at: now,

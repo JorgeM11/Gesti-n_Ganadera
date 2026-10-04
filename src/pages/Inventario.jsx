@@ -952,7 +952,7 @@ export default function InventarioPage() {
                         {/* Código de Arete */}
                         <div className="mb-1 sm:mb-1.5">
                           <h2 
-                            className="text-base sm:text-lg font-black text-neutral-900 leading-tight group-hover:text-[#1B4820] transition-colors truncate"
+                            className="text-base sm:text-lg font-black text-[#1B4820] leading-tight truncate"
                           >
                             #{animal.number}
                           </h2>
