@@ -816,7 +816,7 @@ export default function InventarioPage() {
       {/* CONTENIDO PRINCIPAL */}
       <div className="max-w-7xl mx-auto px-4 md:px-8 mt-5 md:mt-8 relative z-0">
 
-        {activeFiltersCount > 0 && !isBatchMode && (
+        {activeFiltersCount > 0 && (
           <div className="mb-4 bg-emerald-50 border border-emerald-200/80 text-emerald-950 p-3 rounded-2xl shadow-2xs space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-[#1B4820]">
@@ -917,13 +917,40 @@ export default function InventarioPage() {
                         alt={`Arete #${animal.number}`}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
+
+                      {/* Barra Superior de Badges Alineados (Género y Activo/Inactivo) */}
+                      <div className="absolute top-2 inset-x-2 sm:top-2.5 sm:inset-x-2.5 flex items-center justify-between z-10 pointer-events-none gap-1.5">
+                        {/* Pill de Género */}
+                        <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none ${
+                          animal.sex === 'Hembra' ? 'bg-pink-600/90' : 'bg-blue-700/90'
+                        }`}>
+                          {animal.sex === 'Hembra' ? (
+                            <FaVenus className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+                          ) : (
+                            <FaMars className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+                          )}
+                          <span>{animal.sex || 'Bovino'}</span>
+                        </span>
+
+                        {/* Pill de Status (Activo / Inactivo) */}
+                        <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none ${
+                          animal.status === 'Inactivo' ? 'bg-neutral-800/85' : 'bg-emerald-600/90'
+                        }`}>
+                          {animal.status === 'Inactivo' ? (
+                            <XCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-300 shrink-0" />
+                          ) : (
+                            <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-200 shrink-0" />
+                          )}
+                          <span>{animal.status || 'Activo'}</span>
+                        </span>
+                      </div>
                     </div>
 
-                    {/* SECCIÓN DE INFORMACIÓN: SOLO 7 CAMPOS REQUERIDOS */}
-                    <div className="p-3 sm:p-4 flex flex-col justify-between flex-1 gap-2 sm:gap-2.5">
-                      <div className="space-y-1.5">
-                        {/* 1. Código de Arete */}
-                        <div>
+                    {/* SECCIÓN DE INFORMACIÓN */}
+                    <div className="p-3 sm:p-5 flex flex-col justify-between flex-1 gap-2 sm:gap-3">
+                      <div>
+                        {/* Código de Arete */}
+                        <div className="mb-1 sm:mb-1.5">
                           <h2 
                             className="text-base sm:text-lg font-black text-neutral-900 leading-tight group-hover:text-[#1B4820] transition-colors truncate"
                           >
@@ -931,57 +958,40 @@ export default function InventarioPage() {
                           </h2>
                         </div>
 
-                        {/* 2. Chip */}
-                        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-neutral-600 truncate">
+                        {/* Chip (solo el dato) */}
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-neutral-600 py-0.5 truncate">
                           <Cpu className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                          <span className="truncate">
-                            <span className="font-semibold text-neutral-700">Chip:</span> {animal.chip_number || 'Sin chip'}
-                          </span>
+                          <span className="truncate">{animal.chip_number || 'Sin chip'}</span>
                         </div>
 
-                        {/* 3. Raza */}
-                        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-neutral-600 truncate">
+                        {/* Raza (solo el dato) */}
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-semibold text-neutral-700 py-0.5 truncate">
                           <Dna className="w-3.5 h-3.5 text-[#1B4820] shrink-0" />
-                          <span className="truncate">
-                            <span className="font-semibold text-neutral-700">Raza:</span> {animal.breed || 'Sin raza'}
-                          </span>
+                          <span className="truncate">{animal.breed || 'Sin raza'}</span>
                         </div>
 
-                        {/* 4. Finca */}
-                        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-neutral-600 truncate">
-                          <Building2 className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                          <span className="truncate">
-                            <span className="font-semibold text-neutral-700">Finca:</span> {farmMap[animal.farm_id] || 'Sin finca'}
-                          </span>
-                        </div>
-
-                        {/* 5. Dueño */}
-                        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-neutral-600 truncate">
+                        {/* Dueño */}
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-neutral-600 py-0.5 truncate">
                           <UserCheck className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                           <span className="truncate">
-                            <span className="font-semibold text-neutral-700">Dueño:</span> {ownerMap[animal.owner_id] || 'Sin dueño'}
+                            Dueño: {animal.owner_id && ownerMap[animal.owner_id] ? ownerMap[animal.owner_id] : 'Sin dueño'}
                           </span>
                         </div>
 
-                        {/* 6. Edad */}
-                        <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-neutral-600 truncate">
+                        {/* Edad */}
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-neutral-600 py-0.5 truncate">
                           <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                           <span className="truncate">
-                            <span className="font-semibold text-neutral-700">Edad:</span> {calculateAge(animal.birth_date)}
+                            Edad: {calculateAge(animal.birth_date)}
                           </span>
                         </div>
                       </div>
 
-                      {/* 7. Peso */}
-                      <div className="pt-2 border-t border-neutral-100 flex items-center justify-between">
-                        <div className="flex items-center justify-between text-neutral-800 bg-neutral-100/90 border border-neutral-200/70 px-2 py-1 sm:px-2.5 sm:py-1 rounded-lg w-full">
-                          <span className="text-[10px] sm:text-[11px] font-semibold text-neutral-500 uppercase tracking-wider flex items-center gap-1">
-                            <Scale className="w-3 h-3 text-[#1B4820]" strokeWidth={2.5} />
-                            Peso
-                          </span>
-                          <span className="text-xs sm:text-sm font-black text-neutral-900 tracking-tight">
-                            {formatWeight(animal.last_weight_kg)}
-                          </span>
+                      {/* Fila Inferior: Peso (como estaba antes) */}
+                      <div className="pt-2 sm:pt-3 border-t border-neutral-100 flex items-center justify-between gap-1 sm:gap-2">
+                        <div className="flex items-center text-neutral-800 bg-neutral-100/90 border border-neutral-200/70 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl">
+                          <Scale className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5 text-[#1B4820]" strokeWidth={2.5} />
+                          <span className="text-[11px] sm:text-xs font-black tracking-tight">{formatWeight(animal.last_weight_kg)}</span>
                         </div>
                       </div>
                     </div>
