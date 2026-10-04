@@ -7,7 +7,7 @@ import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 /**
  * BarcodeScannerModal:
  * Modal especializado para escanear códigos de barras de microchips / RFID con la cámara del dispositivo.
- * Optimizado para lectura de códigos 1D (Code 128, Code 39, EAN, UPC, ITF) y 2D (DataMatrix, QR).
+ * Optimizado exclusivamente para lectura de códigos de barras lineales 1D (Code 128, Code 39, EAN, UPC, ITF).
  * 
  * @param {boolean} isOpen - Controla visibilidad del modal
  * @param {function} onClose - Callback al cerrar/cancelar
@@ -188,9 +188,7 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
           Html5QrcodeSupportedFormats.EAN_8,
           Html5QrcodeSupportedFormats.UPC_A,
           Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.ITF,
-          Html5QrcodeSupportedFormats.QR_CODE,
-          Html5QrcodeSupportedFormats.DATA_MATRIX
+          Html5QrcodeSupportedFormats.ITF
         ],
         verbose: false
       });
