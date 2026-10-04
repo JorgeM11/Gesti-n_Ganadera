@@ -458,17 +458,17 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                       autoCorrect="off"
                       autoCapitalize="none"
                       placeholder="Ej. 982000345678901"
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl pl-4 pr-11 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all"
+                      className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl pl-4 pr-12 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all"
                     />
                   )}
                 />
                 <button
                   type="button"
                   onClick={() => setIsBarcodeScannerOpen(true)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-xl text-[#1B4820] hover:bg-emerald-100/70 transition-colors cursor-pointer"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-100/90 hover:bg-emerald-200 active:bg-emerald-300 active:scale-95 text-[#1B4820] border border-emerald-300/90 shadow-2xs transition-all cursor-pointer"
                   title="Escanear código de barras con la cámara"
                 >
-                  <ScanBarcode className="w-4 h-4" />
+                  <ScanBarcode className="w-4 h-4 stroke-[2.2]" />
                 </button>
               </div>
             </div>

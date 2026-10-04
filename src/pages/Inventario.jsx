@@ -87,10 +87,10 @@ const SearchInput = ({ isMobile = false, searchTerm, setSearchTerm, onOpenFilter
     <button
       type="button"
       onClick={onScanBarcode}
-      className="p-1.5 text-[#1B4820] hover:text-[#0F2912] hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer mr-1 shrink-0"
+      className="flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-100/90 hover:bg-emerald-200 active:bg-emerald-300 active:scale-95 text-[#1B4820] border border-emerald-300/90 shadow-2xs transition-all cursor-pointer mr-1.5 shrink-0"
       title="Escanear código de barras (chip o arete)"
     >
-      <ScanBarcode className="w-4 h-4" />
+      <ScanBarcode className="w-4 h-4 stroke-[2.2]" />
     </button>
     <div className="border-l pl-3 ml-1 border-neutral-200 shrink-0 relative">
       <button 
