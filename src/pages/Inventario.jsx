@@ -469,7 +469,7 @@ export default function InventarioPage() {
             </div>
 
             <div className="px-6 pt-2 lg:pt-6 pb-4 flex items-center justify-between border-b border-neutral-100">
-              <h3 className="text-xl font-black text-neutral-900">Filtros de Búsqueda</h3>
+              <h3 className="text-xl font-black text-neutral-900">Filtros</h3>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
@@ -590,7 +590,7 @@ export default function InventarioPage() {
                 {selectedFarmFilter === 'ALL' ? (
                   <div className="p-3 bg-neutral-50 rounded-2xl border border-neutral-200/80 text-xs text-neutral-500 font-medium flex items-center gap-2">
                     <Info className="w-4 h-4 text-neutral-400 shrink-0" />
-                    <span>Selecciona una finca arriba para habilitar el filtro por potrero.</span>
+                    <span>Selecciona una finca primero.</span>
                   </div>
                 ) : (
                   <div className="space-y-1.5">

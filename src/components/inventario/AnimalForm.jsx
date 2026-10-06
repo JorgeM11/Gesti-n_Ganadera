@@ -25,26 +25,26 @@ import BarcodeScannerModal from './BarcodeScannerModal';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { DateInput } from '@/components/ui/DateInput';
 
-// Lista de razas populares con "Sin raza" al inicio
+// Lista de razas: Mestizo de primero, luego las razas blancas, y luego las demás
 const POPULAR_BREEDS_LIST = [
-  'Sin raza',
   'Mestizo',
   'Brahman',
-  'Gyr',
-  'Guzerá',
   'Nelore',
+  'Guzerá',
+  'Charolais',
   'Carora',
+  'Gyr',
+  'Girolando',
   'Holstein',
   'Jersey',
   'Pardo Suizo',
   'Senepol',
-  'Angus',
   'Simmental',
-  'Charolais',
+  'Angus',
   'Brangus',
   'Braford',
-  'Girolando',
-  'Criollo Limonero'
+  'Criollo Limonero',
+  'Sin raza'
 ];
 
 // Esquema Zod ajustado al orden y requerimientos exactos

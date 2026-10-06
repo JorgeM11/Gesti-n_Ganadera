@@ -3,21 +3,24 @@
  */
 
 export const POPULAR_BREEDS = [
+  'Mestizo',
   'Brahman',
-  'Gyr',
-  'Guzerá',
   'Nelore',
+  'Guzerá',
+  'Charolais',
   'Carora',
+  'Gyr',
+  'Girolando',
   'Holstein',
   'Jersey',
   'Pardo Suizo',
+  'Senepol',
+  'Simmental',
   'Angus',
   'Brangus',
-  'Simmental',
-  'Senepol',
+  'Braford',
   'Criollo Limonero',
-  'Charolais',
-  'Mestizo'
+  'Sin raza'
 ];
 
 /**
