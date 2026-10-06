@@ -41,6 +41,8 @@ export default function GenealogySelector({
     const term = searchTerm.toLowerCase().trim();
     return animals.filter(a => 
       (a.number && a.number.toLowerCase().includes(term)) || 
+      (a.chip_number && a.chip_number.toLowerCase().includes(term)) ||
+      (a.name && a.name.toLowerCase().includes(term)) ||
       (a.breed && a.breed.toLowerCase().includes(term)) ||
       (a.color && a.color.toLowerCase().includes(term)) ||
       (a.id && a.id.toLowerCase().includes(term))
@@ -80,7 +82,7 @@ export default function GenealogySelector({
           <Search className="w-4 h-4 text-neutral-400 shrink-0" />
           <input
             type="text"
-            placeholder={selectedAnimal ? `#${selectedAnimal.number}${selectedAnimal.breed ? ` · ${selectedAnimal.breed}` : ''}` : `Buscar ${sex === 'Macho' ? 'Padre (Toro)' : 'Madre (Vaca)'}...`}
+            placeholder={selectedAnimal ? `${selectedAnimal.number ? `#${selectedAnimal.number}` : (selectedAnimal.name || (selectedAnimal.chip_number ? `Chip ${selectedAnimal.chip_number}` : 'S/N'))}${selectedAnimal.breed ? ` · ${selectedAnimal.breed}` : ''}` : `Buscar ${sex === 'Macho' ? 'Padre (Toro)' : 'Madre (Vaca)'}...`}
             className="flex-1 bg-transparent border-none outline-none text-neutral-800 placeholder-neutral-400 text-sm font-medium cursor-pointer"
             value={searchTerm}
             onChange={(e) => {
@@ -142,7 +144,14 @@ export default function GenealogySelector({
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-black text-sm text-neutral-900">#{animal.number}</span>
+                            <span className="font-black text-sm text-neutral-900">
+                              {animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'S/N'))}
+                            </span>
+                            {animal.number && animal.name && (
+                              <span className="text-xs text-neutral-600 font-semibold truncate">
+                                ({animal.name})
+                              </span>
+                            )}
                             {animal.breed && (
                               <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded-lg">
                                 <Dna className="w-3 h-3 text-neutral-400" />

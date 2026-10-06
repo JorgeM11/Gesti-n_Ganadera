@@ -64,7 +64,7 @@ export default function DetailsTab({ animal, onEdit }) {
           <AnimalImage
             photoPath={animal.photo_path}
             photoBlob={animal.photo_blob}
-            alt={`#${animal.number}`}
+            alt={animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'Animal'))}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
 
@@ -88,7 +88,7 @@ export default function DetailsTab({ animal, onEdit }) {
         <div className="flex items-center justify-between px-1">
           <div>
             <span className="text-3xl sm:text-4xl font-black text-[#1B4820] tracking-tight block">
-              #{animal.number}
+              {animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'Sin arete'))}
             </span>
 
             <div className="flex items-center gap-2 mt-1">
@@ -160,7 +160,7 @@ export default function DetailsTab({ animal, onEdit }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <InfoTile label="Número de Arete" icon={IdCard}>
-              <span className="font-black text-base text-neutral-900">#{animal.number}</span>
+              <span className="font-black text-base text-neutral-900">{animal.number ? `#${animal.number}` : 'Sin arete asignado'}</span>
             </InfoTile>
 
             <InfoTile label="Chip" icon={Cpu}>
@@ -257,7 +257,7 @@ export default function DetailsTab({ animal, onEdit }) {
                   to={`/inventario/perfil?id=${parents.father.id}`}
                   className="inline-flex items-center gap-1 font-bold text-sm text-[#1B4820] hover:underline"
                 >
-                  #{parents.father.number} {parents.father.name ? `(${parents.father.name})` : ''}
+                  {parents.father.number ? `#${parents.father.number}` : (parents.father.name || (parents.father.chip_number ? `Chip ${parents.father.chip_number}` : 'S/N'))} {parents.father.number && parents.father.name ? `(${parents.father.name})` : ''}
                   <ArrowUpRight className="w-3.5 h-3.5 opacity-60" />
                 </Link>
               ) : (
@@ -276,7 +276,7 @@ export default function DetailsTab({ animal, onEdit }) {
                   to={`/inventario/perfil?id=${parents.mother.id}`}
                   className="inline-flex items-center gap-1 font-bold text-sm text-[#1B4820] hover:underline"
                 >
-                  #{parents.mother.number} {parents.mother.name ? `(${parents.mother.name})` : ''}
+                  {parents.mother.number ? `#${parents.mother.number}` : (parents.mother.name || (parents.mother.chip_number ? `Chip ${parents.mother.chip_number}` : 'S/N'))} {parents.mother.number && parents.mother.name ? `(${parents.mother.name})` : ''}
                   <ArrowUpRight className="w-3.5 h-3.5 opacity-60" />
                 </Link>
               ) : (

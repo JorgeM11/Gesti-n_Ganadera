@@ -7,7 +7,8 @@ import {
   Camera, Save, X, Trash2, Plus, 
   CheckCircle, Building2, Dna, 
   Scale, Calendar, IdCard, Cpu, Tag, 
-  Palette, UserCheck, ShieldAlert, ScanBarcode
+  Palette, UserCheck, ShieldAlert, ScanBarcode,
+  AlertTriangle, AlertCircle
 } from 'lucide-react';
 import { GiCow } from 'react-icons/gi';
 import { FaMars, FaVenus } from 'react-icons/fa6';
@@ -47,10 +48,10 @@ const POPULAR_BREEDS_LIST = [
   'Sin raza'
 ];
 
-// Esquema Zod ajustado al orden y requerimientos exactos
+// Esquema Zod ajustado: se exige obligatoriamente número de arete/lomo o número de chip (al menos uno)
 const animalSchema = z.object({
-  // 1. Número de arete
-  number: z.string().min(1, 'El número de arete es obligatorio'),
+  // 1. Número de arete o lomo
+  number: z.string().nullable().optional(),
   // 2. Número de chip
   chip_number: z.string().nullable().optional(),
   // 3. Nombre (opcional)
@@ -79,6 +80,13 @@ const animalSchema = z.object({
   inactivity_reason: z.string().nullable().optional(),
   // 14. Foto + Descripción (opcional)
   observations: z.string().nullable().optional(),
+}).refine((data) => {
+  const hasNumber = (data.number || '').trim().length > 0;
+  const hasChip = (data.chip_number || '').trim().length > 0;
+  return hasNumber || hasChip;
+}, {
+  message: 'Debes ingresar al menos el Número de Arete/Lomo o el Número de Chip',
+  path: ['number']
 });
 
 // Sub-componente para subir la foto
@@ -145,6 +153,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
   // Consultas reactivas Dexie
   const farms = useLiveQuery(() => db.farms.filter(f => !f.deleted_at).toArray()) || [];
   const owners = useLiveQuery(() => db.owners.filter(o => !o.deleted_at).toArray()) || [];
+  const allAnimals = useLiveQuery(() => db.animals.filter(a => !a.deleted_at).toArray()) || [];
 
   const defaultValuesMapped = useMemo(() => {
     if (!initialValues) return {
@@ -198,6 +207,17 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
   const selectedOwnerId = watch('owner_id');
   const selectedPotreroId = watch('potrero_id');
   const selectedBreed = watch('breed');
+  const chipNumberValue = watch('chip_number');
+
+  // Detección en tiempo real de chip duplicado (excluyendo el animal en edición si aplica)
+  const duplicateChipAnimal = useMemo(() => {
+    const trimmed = (chipNumberValue || '').trim().toLowerCase();
+    if (!trimmed) return null;
+    return allAnimals.find(a => 
+      a.id !== initialValues?.id && 
+      (a.chip_number || '').trim().toLowerCase() === trimmed
+    ) || null;
+  }, [chipNumberValue, allAnimals, initialValues?.id]);
 
   // Potreros reactivos de la finca actualmente seleccionada
   const potreros = useLiveQuery(
@@ -266,11 +286,40 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         finalWeightDate = now;
       }
 
+      const cleanNumber = (data.number || '').trim();
+      const cleanChip = (data.chip_number || '').trim();
+
+      if (!cleanNumber && !cleanChip) {
+        setToast({ 
+          show: true, 
+          type: 'error', 
+          message: 'Debes ingresar al menos el Número de Arete/Lomo o el Número de Chip' 
+        });
+        setTimeout(() => setToast(p => ({ ...p, show: false })), 4000);
+        return;
+      }
+
+      if (cleanChip) {
+        const existingWithChip = allAnimals.find(a => 
+          a.id !== initialValues?.id && 
+          (a.chip_number || '').trim().toLowerCase() === cleanChip.toLowerCase()
+        );
+        if (existingWithChip) {
+          setToast({
+            show: true,
+            type: 'error',
+            message: `El chip ${cleanChip} ya está registrado en el animal ${existingWithChip.number ? `#${existingWithChip.number}` : (existingWithChip.name || 'existente')}. El chip debe ser único.`
+          });
+          setTimeout(() => setToast(p => ({ ...p, show: false })), 4500);
+          return;
+        }
+      }
+
       const animalData = {
         id: animalId,
         user_id: userId,
-        number: data.number.trim(),
-        chip_number: data.chip_number?.trim() || null,
+        number: cleanNumber,
+        chip_number: cleanChip || null,
         name: data.name?.trim() || null,
         sex: data.sex,
         birth_date: data.birth_date || null,
@@ -394,10 +443,11 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {/* 1. Número de arete */}
+            {/* 1. Número de arete o lomo */}
             <div>
-              <label className="text-[11px] font-black text-[#1B4820] uppercase tracking-wider mb-1.5 block">
-                1. Número de Arete *
+              <label className="text-[11px] font-black text-[#1B4820] uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                <span>1. Arete o Lomo</span>
+                
               </label>
               <Controller
                 name="number"
@@ -421,19 +471,27 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                     autoCapitalize="none"
                     placeholder="Ej. 104"
                     className={`w-full bg-neutral-50 border rounded-2xl px-4 py-3 text-sm font-bold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all ${
-                      errors.number ? 'border-red-400' : 'border-neutral-200'
+                      errors.number ? 'border-red-400 bg-red-50/20' : 'border-neutral-200'
                     }`}
                   />
                 )}
               />
-              {errors.number && <p className="text-[11px] text-red-500 font-semibold mt-1 ml-1">{errors.number.message}</p>}
+              {errors.number && (
+                <p className="text-[11px] text-red-500 font-semibold mt-1 ml-1 flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                  {errors.number.message}
+                </p>
+              )}
             </div>
 
             {/* 2. Número de chip con escaneo de código de barras */}
             <div>
-              <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                <Cpu className="w-3.5 h-3.5 text-neutral-400" />
-                2. Chip
+              <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Cpu className="w-3.5 h-3.5 text-neutral-400" />
+                  2. Chip
+                </span>
+                
               </label>
 
               <div className="relative">
@@ -458,7 +516,11 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                       autoCorrect="off"
                       autoCapitalize="none"
                       placeholder="Ej. 982000345678901"
-                      className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl pl-4 pr-12 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all"
+                      className={`w-full bg-neutral-50 border rounded-2xl pl-4 pr-12 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 transition-all ${
+                        duplicateChipAnimal
+                          ? 'border-red-500 focus:ring-red-200 bg-red-50/30 text-red-950 font-bold'
+                          : 'border-neutral-200 focus:ring-[#1B4820]/20'
+                      }`}
                     />
                   )}
                 />
@@ -471,6 +533,15 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                   <ScanBarcode className="w-4 h-4 stroke-[2.2]" />
                 </button>
               </div>
+
+              {duplicateChipAnimal && (
+                <div className="flex items-start gap-1.5 mt-1.5 p-2.5 bg-red-50 border border-red-200 rounded-xl text-red-600 animate-in fade-in duration-200">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span className="text-[11px] font-bold leading-tight">
+                    Este número de chip ya pertenece al animal {duplicateChipAnimal.number ? `#${duplicateChipAnimal.number}` : (duplicateChipAnimal.name || 'registrado')}.
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* 3. Nombre (opcional) */}
@@ -885,8 +956,8 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
 
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="flex-1 bg-[#1B4820] hover:bg-[#0F2912] active:scale-[0.99] text-white text-sm font-bold py-3.5 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              disabled={isSubmitting || !!duplicateChipAnimal}
+              className="flex-1 bg-[#1B4820] hover:bg-[#0F2912] active:scale-[0.99] text-white text-sm font-bold py-3.5 rounded-2xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? (
                 <span>Guardando...</span>
@@ -940,7 +1011,35 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         isOpen={isBarcodeScannerOpen}
         onClose={() => setIsBarcodeScannerOpen(false)}
         onScanSuccess={(scannedCode) => {
-          setValue('chip_number', scannedCode, { shouldValidate: true, shouldDirty: true });
+          const cleanCode = (scannedCode || '').trim();
+          if (!cleanCode) return;
+
+          // Verificar si ya existe en otro animal (excluyendo el actual en edición)
+          const existingAnimal = allAnimals.find(a => 
+            a.id !== initialValues?.id && 
+            (a.chip_number || '').trim().toLowerCase() === cleanCode.toLowerCase()
+          );
+
+          if (existingAnimal) {
+            // Requisito 2: Si se escanea el código para registrarlo, NO se debe colocar en el input y debe aparecer el aviso
+            setIsBarcodeScannerOpen(false);
+            setToast({
+              show: true,
+              type: 'error',
+              message: `El chip ${cleanCode} ya está registrado en el animal ${existingAnimal.number ? `#${existingAnimal.number}` : (existingAnimal.name || 'existente')}. No se puede asignar.`
+            });
+            setTimeout(() => setToast(p => ({ ...p, show: false })), 4500);
+            return;
+          }
+
+          setIsBarcodeScannerOpen(false);
+          setValue('chip_number', cleanCode, { shouldValidate: true, shouldDirty: true });
+          setToast({
+            show: true,
+            type: 'success',
+            message: `Chip escaneado: ${cleanCode}`
+          });
+          setTimeout(() => setToast(p => ({ ...p, show: false })), 3000);
         }}
       />
     </div>

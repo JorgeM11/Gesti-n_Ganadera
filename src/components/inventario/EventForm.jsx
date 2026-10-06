@@ -286,13 +286,13 @@ export default function EventForm({
           <AnimalImage 
             photoPath={animal.photo_path} 
             photoBlob={animal.photo_blob} 
-            alt={`#${animal.number}`}
+            alt={animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'Animal'))}
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
           <div className="absolute bottom-5 left-6 flex flex-col gap-0.5">
             <span className="text-[10px] uppercase font-black tracking-widest text-emerald-400">
-              Animal #{animal.number}
+              Animal {animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : ''))}
             </span>
             <span className="text-2xl sm:text-3xl font-black text-white tracking-tight uppercase">
               {getDisplayTitleExternal()}

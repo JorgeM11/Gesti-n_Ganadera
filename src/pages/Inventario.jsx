@@ -954,7 +954,7 @@ export default function InventarioPage() {
                           <h2 
                             className="text-base sm:text-lg font-black text-[#1B4820] leading-tight truncate"
                           >
-                            #{animal.number}
+                            {animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'Sin arete'))}
                           </h2>
                         </div>
 
