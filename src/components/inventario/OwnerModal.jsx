@@ -222,7 +222,7 @@ export default function OwnerModal({ isOpen, onClose, onOwnerCreated, onOwnerUpd
                             </div>
                             <div className="min-w-0">
                               <h4 className="text-sm font-bold text-neutral-900 truncate">{owner.name}</h4>
-                              <p className="text-[11px] text-neutral-400">Propietario registrado</p>
+                              <p className="text-[11px] text-neutral-400">Propietario</p>
                             </div>
                           </div>
 
