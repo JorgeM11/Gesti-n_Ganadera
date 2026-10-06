@@ -13,20 +13,23 @@ Este documento define la hoja de ruta estratégica, el desglose de fases, las de
 
 ---
 
-## 🗺️ Mapa de Fases de Desarrollo
+## 🗺️ Mapa de Fases y Macro-Estructura (3 Partes)
 
 ```mermaid
 flowchart TD
-    F1["Fase 1: Creación del Proyecto Base"] --> F2["Fase 2: Adaptación Funcional y UI/UX"]
-    F2 --> F3["Fase 3: Diseño y Creación de Nueva BD Supabase"]
-    F3 --> F4["Fase 4: Conexión Frontend con Nueva BD"]
-    F4 --> F5["Fase 5: Pruebas Exhaustivas y Lanzamiento"]
+    subgraph P1["PARTE 1 DE 3: Sistema Base, UI, BD Cloud & Offline (Completada ✅)"]
+        F1["Fase 1: Creación Base"] --> F2["Fase 2: Adaptación UI/UX"]
+        F2 --> F3["Fase 3: Nueva BD Supabase"]
+        F3 --> F4["Fase 4: Conexión Frontend"]
+        F4 --> F5["Fase 5: QA y Cierre"]
+    end
 
-    style F1 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
-    style F2 fill:#fff3e0,stroke:#e65100,stroke-width:2px
-    style F3 fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
-    style F4 fill:#ede7f6,stroke:#512da8,stroke-width:2px
-    style F5 fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    P1 --> P2["📡 PARTE 2 DE 3: Conexión con Escáner RFID Físico (En Espera ⏳)"]
+    P2 --> P3["👥 PARTE 3 DE 3: Módulo de Obreros y Despliegue en Producción (Planificada 🔮)"]
+
+    style P1 fill:#f1f8e9,stroke:#33691e,stroke-width:2px
+    style P2 fill:#fff8e1,stroke:#f57f17,stroke-width:2px
+    style P3 fill:#e1f5fe,stroke:#01579b,stroke-width:2px
 ```
 
 ---
@@ -135,7 +138,19 @@ flowchart TD
 - [x] Configuración técnica y semántica de SEO integral (OpenGraph, Twitter Cards, Schema.org JSON-LD, `robots.txt`, `sitemap.xml`).
 - [x] Ajustes finales de interfaz y catálogo: orden de razas con Mestizo de primero seguido de razas blancas, icono de vaca en contadores de finca, potrero y dueño, y etiqueta limpia de respaldo.
 - [x] Verificación de compilación en Vite 8 en menos de 1 segundo con 0 advertencias de código.
-- [x] Cierre y entrega formal del sistema con repositorio de GitHub al día.
+- [x] Cierre y entrega formal de la **Parte 1 de 3** con repositorio de GitHub al día.
+
+---
+
+### ⏳ Parte 2 de 3: Conexión con Escáner RFID Físico (Hardware)
+> **Objetivo**: Integrar la aplicación web progresiva (PWA) directamente con el dispositivo escáner / lector físico de microchips y aretes RFID (bastón o lector ganadero inalámbrico), permitiendo la captura automática de datos en campo.
+
+- [ ] **Aprobación del Cliente**: Presentación y validación de la Parte 1 por parte del cliente.
+- [ ] **Recepción de Especificaciones Técnicas**: En espera del informe detallado del cliente con modelo, fabricante, protocolo de enlace y tecnología del lector RFID (Bluetooth BLE / SPP, Web Serial / USB, emulación de teclado HID, o SDK/API específica).
+- [ ] **Diseño del Canal de Comunicación Hardware**:
+  - Implementación del listener de lectura rápida para captura automática de aretes en mangas y corrales.
+  - Sincronización instantánea con la búsqueda del inventario y el formulario de alta/edición de animales.
+- [ ] **Pruebas de Campo con el Escáner Físico**: Verificación de emparejamiento, latencia de lectura, alcance y reconexión automática en condiciones reales.
 
 ---
 
@@ -148,5 +163,6 @@ flowchart TD
 | **Fase 2: Nuevas funcionalidades frontend** | 2026-10-03 | **Completado** | Antigravity AI & Usuario | Potreros por Finca en modal propio, Dueños en modal propio, orden en AnimalForm (Raza tras características biológicas), escáner de código de barras integrado en chip y buscador de inventario. |
 | **Fase 3: Nueva BD Supabase** | 2026-10-04 | **Completado** | Antigravity AI & Usuario | Proyecto `mdyycsydocenrauzvalu` aprovisionado, tablas `potreros`, `owners`, `animals` con chip, estructura para obreros, RLS y bucket `ganadera_images`. |
 | **Fase 4: Conexión Frontend con Nueva BD** | 2026-10-04 | **Completado** | Antigravity AI | `.env.local` actualizado, `syncUtils.js` sincronizando `potreros` y `owners`. Tests E2E de inserción, lectura relacional y storage superados al 100%. |
-| **Fase 5: QA, SEO, Branding y Cierre** | 2026-10-06 | **Completado** | Antigravity AI & Usuario | Vaca blanca en iconos, SEO completo, orden de razas, multi-usuario probado, offline refinado y sincronización con GitHub completada al 100%. |
+| **Fase 5: QA, SEO, Branding y Cierre (Parte 1)** | 2026-10-06 | **Completado** | Antigravity AI & Usuario | Vaca blanca en iconos, SEO completo, orden de razas, multi-usuario probado, offline refinado y sincronización con GitHub completada al 100%. |
+| **Parte 2 de 3: Conexión con Escáner RFID** | 2026-10-06 | **En espera de especificaciones** | Antigravity AI & Usuario | Pendiente por aprobación del cliente e informe con especificaciones técnicas del lector RFID. |
 
