@@ -69,19 +69,29 @@ export default function SyncStatus() {
     bgColor = 'bg-emerald-50';
   }
 
-  const isPending = pendingItemsCount > 0 && syncStatus !== 'SYNCING';
+  const isPending = isOnline && pendingItemsCount > 0 && syncStatus !== 'SYNCING';
 
   return (
     <motion.button
       animate={isPending ? { scale: [1, 1.09, 1] } : { scale: 1 }}
       transition={isPending ? { repeat: Infinity, duration: 1.4, ease: "easeInOut" } : { duration: 0.2 }}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={isOnline ? { scale: 1.05 } : undefined}
+      whileTap={isOnline ? { scale: 0.95 } : undefined}
       onClick={handleSyncClick}
-      className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-full border transition-all shadow-sm cursor-pointer ${bgColor} ${
+      className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-full border transition-all shadow-sm ${
+        isOnline ? 'cursor-pointer' : 'cursor-default'
+      } ${bgColor} ${
         isPending ? 'border-amber-300 ring-2 ring-amber-400/60 shadow-amber-400/20 shadow-md' : 'border-transparent'
       }`}
-      title={isPending ? 'Hay cambios pendientes por sincronizar. Haz clic para sincronizar.' : undefined}
+      title={
+        !isOnline
+          ? pendingItemsCount > 0
+            ? `Modo Offline (${pendingItemsCount} cambio(s) guardados localmente)`
+            : 'Sin conexión a internet (modo offline)'
+          : isPending
+          ? 'Hay cambios pendientes por sincronizar. Haz clic para sincronizar.'
+          : undefined
+      }
     >
       <div className={isRotating ? 'animate-spin' : ''}>
         <StatusIcon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${statusColor}`} />
@@ -90,7 +100,7 @@ export default function SyncStatus() {
         {statusText}
       </span>
 
-      {pendingItemsCount > 0 && syncStatus !== 'SYNCING' && isOnline && (
+      {isPending && (
         <span className="flex h-2 w-2 relative">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
           <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>

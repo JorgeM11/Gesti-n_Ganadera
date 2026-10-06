@@ -4,6 +4,15 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.3.2-sync-status-offline-adjustment] - 2026-10-06
+
+### Ajustado y Optimizado
+- **Comportamiento del Botón de Sincronización en Modo Offline ([`SyncStatus.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/ui/SyncStatus.jsx))**:
+  - Desactivada la animación de pulso/titilado (`scale`) y el resplandor/anillo amarillo de pendientes cuando el dispositivo no tiene conexión a internet (`!isOnline`).
+  - El estado pendiente amarillo e interactivo ahora se activa exclusivamente cuando se detecta conexión activa (`isOnline`), manteniendo una visualización limpia y neutra en campo durante el trabajo offline.
+
+---
+
 ## [1.3.1-ui-and-scanner-enhancements] - 2026-10-04
 
 ### Mejorado y Corregido (Perfeccionamiento Previo a QA)
