@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MapPin, Building2, Plus, Users, Pencil } from 'lucide-react';
+import { X, MapPin, Building2, Plus, Pencil } from 'lucide-react';
+import { GiCow } from 'react-icons/gi';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { createFarm, updateFarm } from '@/lib/farmUtils';
@@ -125,7 +126,7 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
                     {activeView === 'edit' ? 'Editar Finca' : 'Gestión de Fincas'}
                   </h3>
                   <p className="text-xs text-neutral-500">
-                    {activeView === 'edit' ? `Modificando "${editingFarm?.name}"` : 'Fincas y haciendas ganaderas'}
+                    {activeView === 'edit' ? `Modificando "${editingFarm?.name}"` : 'Fincas ganaderas'}
                   </p>
                 </div>
               </div>
@@ -150,7 +151,7 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
                     : 'text-neutral-600 hover:text-black'
                 }`}
               >
-                Fincas Registradas ({farms.length})
+                Fincas ({farms.length})
               </button>
 
               <button
@@ -228,7 +229,7 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
 
                             <div className="flex items-center gap-2 shrink-0">
                               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200/60" title={`${farmAnimalsCount} animales`}>
-                                <Users className="w-3 h-3 text-emerald-600" />
+                                <GiCow className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                                 {farmAnimalsCount}
                               </span>
 
@@ -267,7 +268,7 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Ej. Hacienda El Mirador"
+                    placeholder="Ej. Hacienda"
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#1B4820]/20"
                     autoFocus
                     required
@@ -276,14 +277,14 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
 
                 <div>
                   <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-1 block">
-                    Ubicación / Sector
+                    Ubicación
                   </label>
                   <div className="relative">
                     <input
                       type="text"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
-                      placeholder="Ej. Calabozo, Guárico"
+                      placeholder="Ej. Guárico"
                       className="w-full bg-neutral-50 border border-neutral-200 rounded-xl pl-10 pr-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#1B4820]/20"
                     />
                     <MapPin className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3.5" />
@@ -292,12 +293,12 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
 
                 <div>
                   <label className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider mb-1 block">
-                    Descripción / Notas
+                    Descripción (Opcional)
                   </label>
                   <textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Notas sobre ubicación, capacidad o características..."
+                    placeholder="Notas"
                     rows={2}
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-[#1B4820]/20 resize-none"
                   />
@@ -317,7 +318,7 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
                     disabled={isSaving}
                     className="flex-1 bg-[#1B4820] hover:bg-emerald-950 text-white text-xs font-bold py-3.5 rounded-xl disabled:opacity-50 transition-all shadow-sm cursor-pointer"
                   >
-                    {isSaving ? 'Guardando...' : (editingFarm ? 'Actualizar Finca' : 'Guardar Finca')}
+                    {isSaving ? 'Guardando...' : (editingFarm ? 'Actualizar' : 'Guardar')}
                   </button>
                 </div>
               </form>

@@ -464,11 +464,11 @@ export default function EventForm({
         <div className="flex items-center gap-2 ml-1">
           <MessageSquare className="w-4 h-4 text-[#1B4820]" />
           <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-            Notas u Observaciones
+            Observaciones (Opcional)
           </label>
         </div>
         <textarea
-          placeholder="Añade detalles relevantes sobre este pesaje o evento..."
+          placeholder="Añade detalles"
           rows={3}
           className="font-medium text-neutral-800 text-sm outline-none w-full bg-neutral-50 hover:bg-neutral-100/70 focus:bg-white focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 rounded-2xl p-4 border border-neutral-200/80 transition-all resize-none placeholder-neutral-300 min-h-[90px]"
           {...register("observaciones")}

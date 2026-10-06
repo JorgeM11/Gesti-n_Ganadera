@@ -69,7 +69,7 @@ const SearchInput = ({ isMobile = false, searchTerm, setSearchTerm, onOpenFilter
     <Search className="w-4 h-4 text-neutral-500 mr-2 shrink-0" />
     <input
       type="text"
-      placeholder={isMobile ? "Buscar arete, chip, nombre..." : "Buscar por arete, chip o nombre"}
+      placeholder={isMobile ? "Buscar Animales" : "Buscar "}
       value={searchTerm}
       onChange={(e) => setSearchTerm(e.target.value)}
       className="flex-1 bg-transparent border-none outline-none text-neutral-900 font-medium placeholder-neutral-400 text-sm w-full"

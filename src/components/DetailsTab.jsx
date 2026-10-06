@@ -163,7 +163,7 @@ export default function DetailsTab({ animal, onEdit }) {
               <span className="font-black text-base text-neutral-900">#{animal.number}</span>
             </InfoTile>
 
-            <InfoTile label="Número de Chip" icon={Cpu}>
+            <InfoTile label="Chip" icon={Cpu}>
               <span className="font-bold text-sm text-neutral-800">
                 {animal.chip_number || 'Sin chip asignado'}
               </span>
@@ -175,7 +175,7 @@ export default function DetailsTab({ animal, onEdit }) {
               </span>
             </InfoTile>
 
-            <InfoTile label="Dueño / Propietario" icon={UserCheck}>
+            <InfoTile label="Dueño" icon={UserCheck}>
               <span className="font-bold text-sm text-neutral-800">
                 {owner?.name || 'Sin dueño asignado'}
               </span>
@@ -205,7 +205,7 @@ export default function DetailsTab({ animal, onEdit }) {
               </span>
             </InfoTile>
 
-            <InfoTile label="Color / Pelaje" icon={Palette}>
+            <InfoTile label="Color" icon={Palette}>
               <span className="font-bold text-sm text-neutral-800">
                 {animal.color || 'No especificado'}
               </span>
@@ -226,7 +226,7 @@ export default function DetailsTab({ animal, onEdit }) {
             </InfoTile>
 
             {animal.status === 'Inactivo' && animal.inactivity_reason && (
-              <InfoTile label="Motivo de Baja" className="sm:col-span-2">
+              <InfoTile label="Motivo" className="sm:col-span-2">
                 <span className="font-bold text-xs text-red-600 block">
                   {animal.inactivity_reason}
                 </span>
@@ -262,7 +262,7 @@ export default function DetailsTab({ animal, onEdit }) {
                 </Link>
               ) : (
                 <span className="text-sm font-semibold text-neutral-400">
-                  {animal.father_id || 'No registrado / Desconocido'}
+                  {animal.father_id || 'Desconocido'}
                 </span>
               )}
             </div>
@@ -281,7 +281,7 @@ export default function DetailsTab({ animal, onEdit }) {
                 </Link>
               ) : (
                 <span className="text-sm font-semibold text-neutral-400">
-                  {animal.mother_id || 'No registrada / Desconocida'}
+                  {animal.mother_id || 'Desconocida'}
                 </span>
               )}
             </div>

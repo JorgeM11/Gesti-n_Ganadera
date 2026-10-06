@@ -162,7 +162,7 @@ export default function NavigationDrawer({
                 {/* Separador sutil */}
                 <div className="my-2 border-t border-neutral-100" />
 
-                {/* 4. Respaldo Forzado */}
+                {/* 4. Respaldo */}
                 <button
                   type="button"
                   onClick={async () => {
@@ -183,7 +183,7 @@ export default function NavigationDrawer({
                       <RefreshCcw className={`w-5 h-5 text-neutral-600 ${isResyncing ? 'animate-spin text-[#1B4820]' : ''}`} />
                     )}
                     <span>
-                      {isResyncing ? 'Actualizando...' : resyncSuccess ? '¡Actualizado!' : 'Respaldo Forzado'}
+                      {isResyncing ? 'Actualizando...' : resyncSuccess ? '¡Actualizado!' : 'Respaldo'}
                     </span>
                   </div>
                   {isResyncing && (

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Users, Pencil, UserCheck, Search } from 'lucide-react';
+import { X, Plus, Pencil, UserCheck, Search } from 'lucide-react';
+import { GiCow } from 'react-icons/gi';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { createOwner, updateOwner } from '@/lib/ownerUtils';
@@ -117,7 +118,7 @@ export default function OwnerModal({ isOpen, onClose, onOwnerCreated, onOwnerUpd
                     {activeView === 'edit' ? 'Editar Dueño' : 'Gestión de Dueños'}
                   </h3>
                   <p className="text-xs text-neutral-500">
-                    {activeView === 'edit' ? `Modificando "${editingOwner?.name}"` : 'Propietarios y titulares de animales'}
+                    {activeView === 'edit' ? `Modificando "${editingOwner?.name}"` : 'Propietarios'}
                   </p>
                 </div>
               </div>
@@ -142,7 +143,7 @@ export default function OwnerModal({ isOpen, onClose, onOwnerCreated, onOwnerUpd
                     : 'text-neutral-600 hover:text-black'
                 }`}
               >
-                Dueños Registrados ({owners.length})
+                Dueños ({owners.length})
               </button>
 
               <button
@@ -227,7 +228,7 @@ export default function OwnerModal({ isOpen, onClose, onOwnerCreated, onOwnerUpd
 
                           <div className="flex items-center gap-2 shrink-0">
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200/60" title={`${ownerAnimalsCount} animales asignados`}>
-                              <Users className="w-3 h-3 text-emerald-600" />
+                              <GiCow className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                               {ownerAnimalsCount}
                             </span>
 
@@ -264,12 +265,10 @@ export default function OwnerModal({ isOpen, onClose, onOwnerCreated, onOwnerUpd
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Ej. Juan Pérez, Hacienda San José C.A."
+                    placeholder="Ej. Juan Pérez"
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all"
                   />
-                  <p className="text-[11px] text-neutral-400 mt-1 ml-1">
-                    Solo se requiere el nombre del propietario para vincular a los animales.
-                  </p>
+                  
                 </div>
 
                 <div className="flex gap-3 pt-2 border-t border-neutral-100">
@@ -285,7 +284,7 @@ export default function OwnerModal({ isOpen, onClose, onOwnerCreated, onOwnerUpd
                     disabled={isSaving}
                     className="flex-1 bg-[#1B4820] hover:bg-[#0F2912] text-white text-xs font-bold py-3.5 rounded-2xl transition-all shadow-md cursor-pointer disabled:opacity-50"
                   >
-                    {isSaving ? 'Guardando...' : (activeView === 'edit' ? 'Guardar Cambios' : 'Registrar Dueño')}
+                    {isSaving ? 'Guardando...' : (activeView === 'edit' ? 'Guardar' : 'Registrar')}
                   </button>
                 </div>
               </form>

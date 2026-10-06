@@ -235,9 +235,7 @@ export default function HealthForm({
               <h4 className="text-xl sm:text-2xl font-black text-[#1A3621] tracking-tight">Fecha de Aplicación</h4>
               <span className="text-red-500 font-black text-2xl leading-none">*</span>
             </div>
-            <p className="text-[13px] sm:text-sm font-semibold text-[#1A3621]/70 leading-relaxed md:max-w-sm">
-              Registrar la fecha exacta para el control de periodos de carencia.
-            </p>
+            
           </div>
 
           <div className="relative w-full sm:w-[45%]">

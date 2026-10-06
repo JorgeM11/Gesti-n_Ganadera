@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Users, Pencil, Fence, Building2, Search, AlertCircle } from 'lucide-react';
+import { X, Plus, Pencil, Fence, Building2, Search, AlertCircle } from 'lucide-react';
+import { GiCow } from 'react-icons/gi';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { createPotrero, updatePotrero } from '@/lib/potreroUtils';
@@ -155,7 +156,7 @@ export default function PotreroModal({
                     {activeView === 'edit' ? 'Editar Potrero' : 'Gestión de Potreros'}
                   </h3>
                   <p className="text-xs text-neutral-500">
-                    {activeView === 'edit' ? `Modificando "${editingPotrero?.name}"` : 'Divisiones y potreros por finca'}
+                    {activeView === 'edit' ? `Modificando "${editingPotrero?.name}"` : 'Potreros por finca'}
                   </p>
                 </div>
               </div>
@@ -180,7 +181,7 @@ export default function PotreroModal({
                     : 'text-neutral-600 hover:text-black'
                 }`}
               >
-                Potreros Registrados ({potreros.length})
+                Potreros ({potreros.length})
               </button>
 
               <button
@@ -273,7 +274,7 @@ export default function PotreroModal({
                               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 text-[11px] font-bold border border-emerald-200/60" 
                               title={`${potreroAnimalsCount} animales en este potrero`}
                             >
-                              <Users className="w-3 h-3 text-emerald-600" />
+                              <GiCow className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                               {potreroAnimalsCount}
                             </span>
 
@@ -311,7 +312,7 @@ export default function PotreroModal({
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Ej. Potrero La Laguna, Las Palmas 1"
+                    placeholder="Ej. Potrero 1"
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all"
                     autoFocus
                   />
@@ -341,7 +342,7 @@ export default function PotreroModal({
                     />
                   )}
                   <p className="text-[11px] text-neutral-400 mt-1 ml-1">
-                    El potrero debe pertenecer obligatoriamente a una finca.
+                    El potrero debe pertenecer a una finca.
                   </p>
                 </div>
 
@@ -358,7 +359,7 @@ export default function PotreroModal({
                     disabled={isSaving || farms.length === 0}
                     className="flex-1 bg-[#1B4820] hover:bg-[#0F2912] text-white text-xs font-bold py-3.5 rounded-2xl transition-all shadow-md cursor-pointer disabled:opacity-50"
                   >
-                    {isSaving ? 'Guardando...' : (activeView === 'edit' ? 'Guardar Cambios' : 'Registrar Potrero')}
+                    {isSaving ? 'Guardando...' : (activeView === 'edit' ? 'Guardar' : 'Registrar')}
                   </button>
                 </div>
               </form>

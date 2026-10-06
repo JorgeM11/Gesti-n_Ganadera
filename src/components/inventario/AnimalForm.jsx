@@ -419,7 +419,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                     spellCheck={false}
                     autoCorrect="off"
                     autoCapitalize="none"
-                    placeholder="Ej. 104, AR-001"
+                    placeholder="Ej. 104"
                     className={`w-full bg-neutral-50 border rounded-2xl px-4 py-3 text-sm font-bold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all ${
                       errors.number ? 'border-red-400' : 'border-neutral-200'
                     }`}
@@ -433,7 +433,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
             <div>
               <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                 <Cpu className="w-3.5 h-3.5 text-neutral-400" />
-                2. Número de Chip
+                2. Chip
               </label>
 
               <div className="relative">
@@ -499,7 +499,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                     spellCheck={false}
                     autoCorrect="off"
                     autoCapitalize="words"
-                    placeholder="Ej. Mariposa, Lucero"
+                    placeholder="Ej. Lucero"
                     className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all"
                   />
                 )}
@@ -594,7 +594,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               <input
                 type="text"
                 {...register('color')}
-                placeholder="Ej. Blanco, Barroso, Negro"
+                placeholder="Ej. Blanco"
                 className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20"
               />
             </div>
@@ -611,7 +611,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
             </div>
             <div>
               <h3 className="text-base font-black text-neutral-900">8. Raza</h3>
-              <p className="text-[11px] text-neutral-400 font-medium">Clasificación racial (con opción 'Sin raza')</p>
+              <p className="text-[11px] text-neutral-400 font-medium">Clasificación racial</p>
             </div>
           </div>
 
@@ -638,7 +638,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
             </div>
             <div>
               <h3 className="text-base font-black text-neutral-900">Ubicación y Propiedad</h3>
-              <p className="text-[11px] text-neutral-400 font-medium">Dueño, finca y potrero asignado</p>
+              <p className="text-[11px] text-neutral-400 font-medium">Dueño, finca y potrero</p>
             </div>
           </div>
 
@@ -731,7 +731,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                 />
               ) : (
                 <div className="p-3 bg-neutral-50 rounded-2xl border border-neutral-200/70 text-xs text-neutral-400 font-medium italic">
-                  Selecciona una finca primero para asignar un potrero.
+                  Selecciona una finca primero.
                 </div>
               )}
             </div>
@@ -811,19 +811,19 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                   : 'bg-neutral-50 border-neutral-200 text-neutral-600 hover:bg-neutral-100'
               }`}
             >
-              Inactivo (Baja)
+              Inactivo
             </button>
           </div>
 
           {selectedStatus === 'Inactivo' && (
             <div className="pt-2 animate-in fade-in">
               <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-1.5 block">
-                Motivo de la Baja
+                Motivo
               </label>
               <input
                 type="text"
                 {...register('inactivity_reason')}
-                placeholder="Ej. Vendido a Hacienda El Paraíso, Fallecimiento por causa natural..."
+                placeholder="Ej. Vendido, Fallecimiento"
                 className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20"
               />
             </div>
@@ -840,7 +840,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
             </div>
             <div>
               <h3 className="text-base font-black text-neutral-900">14. Foto y Descripción (Opcional)</h3>
-              <p className="text-[11px] text-neutral-400 font-medium">Fotografía del animal y notas adicionales</p>
+              <p className="text-[11px] text-neutral-400 font-medium">Fotografía del animal y notas</p>
             </div>
           </div>
 
@@ -853,12 +853,12 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
 
           <div>
             <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-1.5 block">
-              Descripción / Observaciones
+              Descripción
             </label>
             <textarea
               {...register('observations')}
               rows={3}
-              placeholder="Detalles particulares, señas, marcas o cualquier observación relevante..."
+              placeholder="Detalles particulares"
               className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl p-4 text-sm font-medium text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all resize-none"
             />
           </div>
@@ -893,7 +893,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               ) : (
                 <>
                   <Save className="w-4 h-4" />
-                  <span>{initialValues?.id ? 'Guardar Cambios' : 'Registrar Animal'}</span>
+                  <span>{initialValues?.id ? 'Guardar' : 'Registrar'}</span>
                 </>
               )}
             </button>
