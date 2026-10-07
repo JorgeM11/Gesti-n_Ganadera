@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Search, 
@@ -93,53 +93,111 @@ const FilterCheckbox = ({ label, count, checked, onChange }) => (
   </button>
 );
 
-const SearchInput = ({ isMobile = false, searchTerm, setSearchTerm, onOpenFilters, activeFiltersCount, onScanBarcode }) => (
-  <div className={`relative flex items-center ${isMobile
-    ? 'md:hidden bg-white mt-3 w-full border-neutral-300 shadow-xs'
-    : 'hidden md:flex bg-white md:w-full md:max-w-md border-neutral-200 shadow-sm'
-    } rounded-2xl py-2 px-4 border focus-within:border-[#1B4820] transition-all`}>
+const SearchInput = ({ isMobile = false, searchTerm, setSearchTerm, onOpenFilters, activeFiltersCount, onScanBarcode, onScannedCode }) => {
+  const searchScannerRef = useRef({ buffer: '', lastTime: 0, isScanning: false });
 
-    <Search className="w-4 h-4 text-neutral-500 mr-2 shrink-0" />
-    <input
-      type="text"
-      placeholder={isMobile ? "Buscar Animales" : "Buscar "}
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      className="flex-1 bg-transparent border-none outline-none text-neutral-900 font-medium placeholder-neutral-400 text-sm w-full"
-    />
-    {searchTerm && (
+  const handleSearchScan = (scannedCode) => {
+    const clean = (scannedCode || '').trim();
+    if (!clean) return;
+    setSearchTerm(clean);
+    if (onScannedCode) {
+      onScannedCode(clean);
+    }
+  };
+
+  return (
+    <div className={`relative flex items-center ${isMobile
+      ? 'md:hidden bg-white mt-3 w-full border-neutral-300 shadow-xs'
+      : 'hidden md:flex bg-white md:w-full md:max-w-md border-neutral-200 shadow-sm'
+      } rounded-2xl py-2 px-4 border focus-within:border-[#1B4820] transition-all`}>
+
+      <Search className="w-4 h-4 text-neutral-500 mr-2 shrink-0" />
+      <input
+        type="text"
+        placeholder={isMobile ? "Buscar Animales" : "Buscar "}
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        onFocus={(e) => {
+          e.target.select();
+        }}
+        onPaste={(e) => {
+          e.preventDefault();
+          const pasted = e.clipboardData.getData('text').trim();
+          if (pasted) {
+            handleSearchScan(pasted);
+          }
+        }}
+        onKeyDown={(e) => {
+          const now = Date.now();
+          const diff = now - searchScannerRef.current.lastTime;
+          searchScannerRef.current.lastTime = now;
+
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            if (searchScannerRef.current.buffer.length >= 2) {
+              const code = searchScannerRef.current.buffer.trim();
+              searchScannerRef.current.buffer = '';
+              searchScannerRef.current.isScanning = false;
+              handleSearchScan(code);
+              return;
+            }
+            if (e.target.value.trim()) {
+              handleSearchScan(e.target.value.trim());
+            }
+            return;
+          }
+
+          if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            if (diff < 50) {
+              // Ráfaga detectada de escáner en el buscador
+              if (!searchScannerRef.current.isScanning) {
+                searchScannerRef.current.isScanning = true;
+                // Borrar texto previo del input de búsqueda
+                setSearchTerm('');
+              }
+              searchScannerRef.current.buffer += e.key;
+            } else {
+              searchScannerRef.current.isScanning = false;
+              searchScannerRef.current.buffer = e.key;
+            }
+          }
+        }}
+        className="flex-1 bg-transparent border-none outline-none text-neutral-900 font-medium placeholder-neutral-400 text-sm w-full"
+      />
+      {searchTerm && (
+        <button
+          type="button"
+          onClick={() => setSearchTerm('')}
+          className="p-1 text-neutral-400 hover:text-neutral-600 mr-1 cursor-pointer"
+          title="Limpiar búsqueda"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      )}
       <button
         type="button"
-        onClick={() => setSearchTerm('')}
-        className="p-1 text-neutral-400 hover:text-neutral-600 mr-1 cursor-pointer"
-        title="Limpiar búsqueda"
+        onClick={onScanBarcode}
+        className="flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-100/90 hover:bg-emerald-200 active:bg-emerald-300 active:scale-95 text-[#1B4820] border border-emerald-300/90 shadow-2xs transition-all cursor-pointer mr-1.5 shrink-0"
+        title="Escanear código de barras (chip o arete)"
       >
-        <X className="w-3.5 h-3.5" />
+        <ScanBarcode className="w-4 h-4 stroke-[2.2]" />
       </button>
-    )}
-    <button
-      type="button"
-      onClick={onScanBarcode}
-      className="flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-100/90 hover:bg-emerald-200 active:bg-emerald-300 active:scale-95 text-[#1B4820] border border-emerald-300/90 shadow-2xs transition-all cursor-pointer mr-1.5 shrink-0"
-      title="Escanear código de barras (chip o arete)"
-    >
-      <ScanBarcode className="w-4 h-4 stroke-[2.2]" />
-    </button>
-    <div className="border-l pl-3 ml-1 border-neutral-200 shrink-0 relative">
-      <button 
-        type="button"
-        onClick={onOpenFilters} 
-        className="p-1 hover:bg-neutral-100 rounded-lg transition-colors focus:outline-none cursor-pointer"
-        title="Filtros"
-      >
-        <SlidersHorizontal className="w-4 h-4 text-neutral-700" />
-        {activeFiltersCount > 0 && (
-          <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-        )}
-      </button>
+      <div className="border-l pl-3 ml-1 border-neutral-200 shrink-0 relative">
+        <button 
+          type="button"
+          onClick={onOpenFilters} 
+          className="p-1 hover:bg-neutral-100 rounded-lg transition-colors focus:outline-none cursor-pointer"
+          title="Filtros"
+        >
+          <SlidersHorizontal className="w-4 h-4 text-neutral-700" />
+          {activeFiltersCount > 0 && (
+            <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+          )}
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function InventarioPage() {
   const navigate = useNavigate();
@@ -816,6 +874,7 @@ export default function InventarioPage() {
               onOpenFilters={() => setIsFilterOpen(true)} 
               activeFiltersCount={activeFiltersCount} 
               onScanBarcode={() => setIsBarcodeScannerOpen(true)}
+              onScannedCode={(code) => showToast('Código escaneado', `Buscando animal con código: ${code}`)}
             />
           </div>
 
@@ -830,6 +889,7 @@ export default function InventarioPage() {
             onOpenFilters={() => setIsFilterOpen(true)} 
             activeFiltersCount={activeFiltersCount} 
             onScanBarcode={() => setIsBarcodeScannerOpen(true)}
+            onScannedCode={(code) => showToast('Código escaneado', `Buscando animal con código: ${code}`)}
           />
         </div>
       </header>

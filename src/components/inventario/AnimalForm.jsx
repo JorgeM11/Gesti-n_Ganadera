@@ -259,6 +259,44 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
     setImage({ blob: null, preview: null, isModified: true });
   };
 
+  const chipScannerRef = useRef({
+    buffer: '',
+    lastTime: 0,
+    isScanning: false,
+  });
+
+  // Manejo centralizado de escaneo y pegado de chip (físico, paste o cámara)
+  const handleChipInputScan = (codeToAssign) => {
+    const cleanCode = (codeToAssign || '').trim();
+    if (!cleanCode) return;
+
+    // Verificar si ya existe en otro animal (excluyendo el actual en edición)
+    const existingAnimal = allAnimals.find(a => 
+      a.id !== initialValues?.id && 
+      (a.chip_number || '').trim().toLowerCase() === cleanCode.toLowerCase()
+    );
+
+    if (existingAnimal) {
+      // Requisito 1: Si se escanea o pega un código que ya existe, NO dejarlo pegar
+      setValue('chip_number', '', { shouldValidate: true, shouldDirty: true });
+      setToast({
+        show: true,
+        type: 'error',
+        message: `El chip ${cleanCode} ya está registrado.`
+      });
+      setTimeout(() => setToast(p => ({ ...p, show: false })), 4000);
+      return;
+    }
+
+    // Requisito 1 & 2: Reemplaza cualquier texto anterior y notifica
+    setValue('chip_number', cleanCode, { shouldValidate: true, shouldDirty: true });
+    setToast({
+      show: true,
+      type: 'success',
+      message: `Código escaneado: ${cleanCode}`
+    });
+    setTimeout(() => setToast(p => ({ ...p, show: false })), 3000);
+  };
 
   // Guardado de animal (Local-First puro)
   const handleSave = async (data) => {
@@ -433,7 +471,17 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         </div>
       )}
 
-      <form onSubmit={handleSubmit(handleSave)} className="space-y-6 max-w-4xl mx-auto" autoComplete="off" data-form-type="other">
+      <form 
+        onSubmit={handleSubmit(handleSave)} 
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+            e.preventDefault();
+          }
+        }}
+        className="space-y-6 max-w-4xl mx-auto" 
+        autoComplete="off" 
+        data-form-type="other"
+      >
         {/* Input señuelo oculto para absorber autocompletados no deseados de navegadores */}
         <input type="text" name="prevent_autofill" style={{ display: 'none' }} tabIndex={-1} autoComplete="off" readOnly />
 
@@ -514,6 +562,51 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                       value={field.value ?? ''}
                       onChange={field.onChange}
                       onBlur={field.onBlur}
+                      onFocus={(e) => {
+                        e.target.select();
+                      }}
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const pasted = e.clipboardData.getData('text').trim();
+                        if (pasted) {
+                          handleChipInputScan(pasted);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        const now = Date.now();
+                        const diff = now - chipScannerRef.current.lastTime;
+                        chipScannerRef.current.lastTime = now;
+
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (chipScannerRef.current.buffer.length >= 2) {
+                            const code = chipScannerRef.current.buffer.trim();
+                            chipScannerRef.current.buffer = '';
+                            chipScannerRef.current.isScanning = false;
+                            handleChipInputScan(code);
+                            return;
+                          }
+                          if (e.target.value.trim()) {
+                            handleChipInputScan(e.target.value.trim());
+                          }
+                          return;
+                        }
+
+                        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                          if (diff < 50) {
+                            // Ráfaga rápida detectada de escáner HID
+                            if (!chipScannerRef.current.isScanning) {
+                              chipScannerRef.current.isScanning = true;
+                              // Borrar cualquier texto previo para evitar concatenación
+                              setValue('chip_number', '');
+                            }
+                            chipScannerRef.current.buffer += e.key;
+                          } else {
+                            chipScannerRef.current.isScanning = false;
+                            chipScannerRef.current.buffer = e.key;
+                          }
+                        }
+                      }}
                       id="animal_rfid_identifier"
                       name="animal_rfid_identifier"
                       autoComplete="one-time-code"
@@ -1020,35 +1113,8 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         isOpen={isBarcodeScannerOpen}
         onClose={() => setIsBarcodeScannerOpen(false)}
         onScanSuccess={(scannedCode) => {
-          const cleanCode = (scannedCode || '').trim();
-          if (!cleanCode) return;
-
-          // Verificar si ya existe en otro animal (excluyendo el actual en edición)
-          const existingAnimal = allAnimals.find(a => 
-            a.id !== initialValues?.id && 
-            (a.chip_number || '').trim().toLowerCase() === cleanCode.toLowerCase()
-          );
-
-          if (existingAnimal) {
-            // Requisito 2: Si se escanea el código para registrarlo, NO se debe colocar en el input y debe aparecer el aviso
-            setIsBarcodeScannerOpen(false);
-            setToast({
-              show: true,
-              type: 'error',
-              message: `El chip ${cleanCode} ya está registrado.`
-            });
-            setTimeout(() => setToast(p => ({ ...p, show: false })), 4500);
-            return;
-          }
-
           setIsBarcodeScannerOpen(false);
-          setValue('chip_number', cleanCode, { shouldValidate: true, shouldDirty: true });
-          setToast({
-            show: true,
-            type: 'success',
-            message: `Chip escaneado: ${cleanCode}`
-          });
-          setTimeout(() => setToast(p => ({ ...p, show: false })), 3000);
+          handleChipInputScan(scannedCode);
         }}
       />
     </div>
