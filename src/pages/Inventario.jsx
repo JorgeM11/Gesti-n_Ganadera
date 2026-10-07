@@ -47,7 +47,7 @@ export const AGE_CATEGORIES = [
   { id: 'Becerro', label: 'Becerros (0 a 12 meses)' },
   { id: 'Maute Macho', label: 'Maute macho (+12 a 36 meses)' },
   { id: 'Maute Hembra', label: 'Maute Hembra (+12 a 24 meses)' },
-  { id: 'Novilla', label: 'Novillas (+24 a 36 meses)' },
+  { id: 'Novilla', label: 'Novilla (+24 a 36 meses)' },
   { id: 'Adulto', label: 'Adulto Toro/Vaca (+36 meses)' },
   { id: 'Desconocida', label: 'Edad Desconocida' },
 ];
