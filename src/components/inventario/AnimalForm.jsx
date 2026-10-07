@@ -149,6 +149,8 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
   });
 
   const [toast, setToast] = useState({ show: false, type: 'success', message: '' });
+  const [isSaved, setIsSaved] = useState(false);
+  const currentSavingIdRef = useRef(null);
 
   // Consultas reactivas Dexie
   const farms = useLiveQuery(() => db.farms.filter(f => !f.deleted_at).toArray()) || [];
@@ -209,15 +211,17 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
   const selectedBreed = watch('breed');
   const chipNumberValue = watch('chip_number');
 
-  // Detección en tiempo real de chip duplicado (excluyendo el animal en edición si aplica)
+  // Detección en tiempo real de chip duplicado (excluyendo el animal en edición o el animal en proceso de guardado)
   const duplicateChipAnimal = useMemo(() => {
+    if (isSubmitting || isSaved) return null;
     const trimmed = (chipNumberValue || '').trim().toLowerCase();
     if (!trimmed) return null;
+    const currentId = initialValues?.id || currentSavingIdRef.current;
     return allAnimals.find(a => 
-      a.id !== initialValues?.id && 
+      a.id !== currentId && 
       (a.chip_number || '').trim().toLowerCase() === trimmed
     ) || null;
-  }, [chipNumberValue, allAnimals, initialValues?.id]);
+  }, [chipNumberValue, allAnimals, initialValues?.id, isSubmitting, isSaved]);
 
   // Potreros reactivos de la finca actualmente seleccionada
   const potreros = useLiveQuery(
@@ -268,6 +272,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
 
       const isEditing = !!initialValues?.id;
       const animalId = initialValues?.id || crypto.randomUUID();
+      currentSavingIdRef.current = animalId;
       const now = new Date().toISOString();
 
       const photoBlobToSave = image.isModified
@@ -308,7 +313,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
           setToast({
             show: true,
             type: 'error',
-            message: `El chip ${cleanChip} ya está registrado en el animal ${existingWithChip.number ? `#${existingWithChip.number}` : (existingWithChip.name || 'existente')}. El chip debe ser único.`
+            message: `El chip ${cleanChip} ya está registrado.`
           });
           setTimeout(() => setToast(p => ({ ...p, show: false })), 4500);
           return;
@@ -391,6 +396,8 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         }
       });
 
+      setIsSaved(true);
+
       setToast({ 
         show: true, 
         type: 'success', 
@@ -406,6 +413,8 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
       }, 500);
 
     } catch (err) {
+      currentSavingIdRef.current = null;
+      setIsSaved(false);
       console.error('Error al guardar animal:', err);
       setToast({ show: true, type: 'error', message: 'Error al guardar el animal.' });
       setTimeout(() => setToast(p => ({ ...p, show: false })), 3000);
@@ -517,7 +526,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                       autoCapitalize="none"
                       placeholder="Ej. 982000345678901"
                       className={`w-full bg-neutral-50 border rounded-2xl pl-4 pr-12 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 transition-all ${
-                        duplicateChipAnimal
+                        (duplicateChipAnimal && !isSubmitting && !isSaved)
                           ? 'border-red-500 focus:ring-red-200 bg-red-50/30 text-red-950 font-bold'
                           : 'border-neutral-200 focus:ring-[#1B4820]/20'
                       }`}
@@ -534,7 +543,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                 </button>
               </div>
 
-              {duplicateChipAnimal && (
+              {duplicateChipAnimal && !isSubmitting && !isSaved && (
                 <div className="flex items-start gap-1.5 mt-1.5 p-2.5 bg-red-50 border border-red-200 rounded-xl text-red-600 animate-in fade-in duration-200">
                   <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                   <span className="text-[11px] font-bold leading-tight">
@@ -673,34 +682,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         </div>
 
         {/* ========================================================================= */}
-        {/* 8. RAZA SIN PORCENTAJE (CON OPCIÓN 'SIN RAZA')                            */}
-        {/* ========================================================================= */}
-        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200/80 shadow-sm space-y-4">
-          <div className="flex items-center gap-2.5 pb-2 border-b border-neutral-100">
-            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-              <Dna className="w-4 h-4" />
-            </div>
-            <div>
-              <h3 className="text-base font-black text-neutral-900">8. Raza</h3>
-              <p className="text-[11px] text-neutral-400 font-medium">Clasificación racial</p>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-2 block">
-              Seleccionar Raza
-            </label>
-            <CustomSelect
-              value={selectedBreed}
-              onChange={(val) => setValue('breed', val)}
-              options={POPULAR_BREEDS_LIST.map(b => ({ value: b, label: b }))}
-              placeholder="Selecciona la raza..."
-            />
-          </div>
-        </div>
-
-        {/* ========================================================================= */}
-        {/* 9. DUEÑO & 10. FINCA & 11. POTRERO                                        */}
+        {/* 8. DUEÑO & 9. FINCA & 10. POTRERO (UBICACIÓN Y PROPIEDAD)                 */}
         {/* ========================================================================= */}
         <div className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200/80 shadow-sm space-y-4">
           <div className="flex items-center gap-2.5 pb-2 border-b border-neutral-100">
@@ -714,12 +696,12 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* 9. Dueño */}
+            {/* 8. Dueño */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
                   <UserCheck className="w-3.5 h-3.5 text-neutral-400" />
-                  9. Dueño
+                  8. Dueño
                 </label>
                 <button
                   type="button"
@@ -742,12 +724,12 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               />
             </div>
 
-            {/* 10. Finca */}
+            {/* 9. Finca */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider flex items-center gap-1.5">
                   <Building2 className="w-3.5 h-3.5 text-neutral-400" />
-                  10. Finca
+                  9. Finca
                 </label>
                 <button
                   type="button"
@@ -770,13 +752,13 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
               />
             </div>
 
-            {/* 11. Potrero (si se escoge finca se puede seleccionar potrero) */}
+            {/* 10. Potrero (si se escoge finca se puede seleccionar potrero) */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className={`text-[11px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
                   selectedFarmId ? 'text-neutral-700' : 'text-neutral-400'
                 }`}>
-                  11. Potrero
+                  10. Potrero
                 </label>
                 {selectedFarmId && (
                   <button
@@ -806,6 +788,33 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                 </div>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
+        {/* 11. RAZA SIN PORCENTAJE (CON OPCIÓN 'SIN RAZA')                           */}
+        {/* ========================================================================= */}
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200/80 shadow-sm space-y-4">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-neutral-100">
+            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+              <Dna className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-neutral-900">11. Raza</h3>
+              <p className="text-[11px] text-neutral-400 font-medium">Clasificación racial</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-2 block">
+              Seleccionar Raza
+            </label>
+            <CustomSelect
+              value={selectedBreed}
+              onChange={(val) => setValue('breed', val)}
+              options={POPULAR_BREEDS_LIST.map(b => ({ value: b, label: b }))}
+              placeholder="Selecciona la raza..."
+            />
           </div>
         </div>
 
@@ -1026,7 +1035,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
             setToast({
               show: true,
               type: 'error',
-              message: `El chip ${cleanCode} ya está registrado en el animal ${existingAnimal.number ? `#${existingAnimal.number}` : (existingAnimal.name || 'existente')}. No se puede asignar.`
+              message: `El chip ${cleanCode} ya está registrado.`
             });
             setTimeout(() => setToast(p => ({ ...p, show: false })), 4500);
             return;
