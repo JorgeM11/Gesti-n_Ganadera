@@ -24,11 +24,11 @@ flowchart TD
         F4 --> F5["Fase 5: QA y Cierre"]
     end
 
-    P1 --> P2["📡 PARTE 2 DE 3: Conexión con Escáner RFID Físico (En Espera ⏳)"]
+    P1 --> P2["📡 PARTE 2 DE 3: Adaptación y Conexión con Escáner RFID (En Progreso 🚀)"]
     P2 --> P3["👥 PARTE 3 DE 3: Módulo de Obreros y Despliegue en Producción (Planificada 🔮)"]
 
     style P1 fill:#f1f8e9,stroke:#33691e,stroke-width:2px
-    style P2 fill:#fff8e1,stroke:#f57f17,stroke-width:2px
+    style P2 fill:#e8f5e9,stroke:#1b5e20,stroke-width:3px
     style P3 fill:#e1f5fe,stroke:#01579b,stroke-width:2px
 ```
 
@@ -142,15 +142,21 @@ flowchart TD
 
 ---
 
-### ⏳ Parte 2 de 3: Conexión con Escáner RFID Físico (Hardware)
-> **Objetivo**: Integrar la aplicación web progresiva (PWA) directamente con el dispositivo escáner / lector físico de microchips y aretes RFID (bastón o lector ganadero inalámbrico), permitiendo la captura automática de datos en campo.
+### 🚀 Parte 2 de 3: Adaptación del Sistema y Compatibilidad con Escáner RFID (En Progreso)
+> **Objetivo**: Integrar la aplicación web progresiva (PWA) directamente con el dispositivo escáner / lector físico de microchips y aretes RFID (bastón o lector ganadero inalámbrico), garantizando la compatibilidad del teléfono inteligente con el dispositivo y adaptando el software para la captura fluida, identificación instantánea y gestión en campo.
 
-- [ ] **Aprobación del Cliente**: Presentación y validación de la Parte 1 por parte del cliente.
-- [ ] **Recepción de Especificaciones Técnicas**: En espera del informe detallado del cliente con modelo, fabricante, protocolo de enlace y tecnología del lector RFID (Bluetooth BLE / SPP, Web Serial / USB, emulación de teclado HID, o SDK/API específica).
-- [ ] **Diseño del Canal de Comunicación Hardware**:
-  - Implementación del listener de lectura rápida para captura automática de aretes en mangas y corrales.
-  - Sincronización instantánea con la búsqueda del inventario y el formulario de alta/edición de animales.
-- [ ] **Pruebas de Campo con el Escáner Físico**: Verificación de emparejamiento, latencia de lectura, alcance y reconexión automática en condiciones reales.
+- [x] **Aprobación del Cliente**: Presentación y validación exitosa de la Parte 1 por parte del cliente.
+- [ ] **Compatibilidad del Teléfono con el Escáner (Hardware & Enlace)**:
+  - Enlace inalámbrico y por cable: soporte para protocolos de conexión móvil con escáneres ganaderos (Bluetooth HID en modo cuña de teclado, Bluetooth BLE / SPP, y USB OTG / Serial).
+  - Verificación de compatibilidad con navegadores móviles y entorno PWA instalable en smartphones (Android / iOS).
+  - Detección de estado de conexión, manejo de desconexión accidental y reconexión automática en campo (mangas y corrales).
+- [ ] **Modificación y Adaptación del Software (Frontend & UX)**:
+  - **Listener Global de Escaneo**: Receptor de eventos de lectura continua que capture el código del chip automáticamente sin obligar al operario a seleccionar manualmente un campo de texto en pantalla.
+  - **Identificación Instantánea en Inventario**: Apertura automática de la ficha técnica o resaltado del animal al recibir una lectura del escáner en la vista de inventario.
+  - **Formularios de Registro y Edición (`AnimalForm.jsx`)**: Autocompletado del chip RFID en tiempo real con validación inmediata de duplicidad (bloqueando la asignación si el chip ya existe).
+  - **Modo Manga / Lectura Rápida en Lote**: Flujo especializado para trabajo continuo en corral (conteo, pesaje rápido o registro secuencial sin tocar la pantalla).
+- [ ] **Recepción de Especificaciones Técnicas Detalladas**: En espera del informe técnico con modelo específico, fabricante y protocolo del escáner RFID para afinar la integración final.
+- [ ] **Pruebas de Campo con el Escáner Físico**: Verificación de emparejamiento, latencia de lectura, alcance y fiabilidad bajo condiciones operativas reales.
 
 ---
 
@@ -164,5 +170,6 @@ flowchart TD
 | **Fase 3: Nueva BD Supabase** | 2026-10-04 | **Completado** | Antigravity AI & Usuario | Proyecto `mdyycsydocenrauzvalu` aprovisionado, tablas `potreros`, `owners`, `animals` con chip, estructura para obreros, RLS y bucket `ganadera_images`. |
 | **Fase 4: Conexión Frontend con Nueva BD** | 2026-10-04 | **Completado** | Antigravity AI | `.env.local` actualizado, `syncUtils.js` sincronizando `potreros` y `owners`. Tests E2E de inserción, lectura relacional y storage superados al 100%. |
 | **Fase 5: QA, SEO, Branding y Cierre (Parte 1)** | 2026-10-06 | **Completado** | Antigravity AI & Usuario | Vaca blanca en iconos, SEO completo, orden de razas, multi-usuario probado, offline refinado y sincronización con GitHub completada al 100%. |
-| **Parte 2 de 3: Conexión con Escáner RFID** | 2026-10-06 | **En espera de especificaciones** | Antigravity AI & Usuario | Pendiente por aprobación del cliente e informe con especificaciones técnicas del lector RFID. |
+| **Parte 1: Refinamientos Finales** | 2026-10-06 | **Completado** | Antigravity AI & Usuario | Arete y chip alternativos esenciales, chip único con alerta reactiva y bloqueo, sección raza bajo ubicación y filtros por edad ganadera (becerros, mautes, novillas, adultos). |
+| **Parte 2 de 3: Conexión con Escáner RFID** | 2026-10-07 | **En progreso** | Antigravity AI & Usuario | Iniciada la fase 2: planificación de compatibilidad del teléfono con el escáner y adaptación del software (en espera de informe técnico con especificaciones del dispositivo). |
 

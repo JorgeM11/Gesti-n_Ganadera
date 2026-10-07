@@ -4,6 +4,30 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.4.0-phase2-rfid-planning] - 2026-10-07
+
+### Planificado e Iniciado (Parte 2 de 3: Conexión con Escáner RFID Físico)
+- **Apertura de la Parte 2 de 3 en Planificación ([`planificacion.md`](file:///C:/Users/joses/appganadera/gestion-ganadera/planificacion.md))**:
+  - Aprobación formal de la Parte 1 por parte del cliente registrada.
+  - Planificación técnica de la compatibilidad del teléfono inteligente con el escáner RFID (Bluetooth HID/BLE, USB-OTG/Serial y PWA en smartphones).
+  - Planificación de la adaptación del software (listener global de lectura, detección en mangas, prevención de chips duplicados y búsqueda instantánea en inventario).
+  - En espera de recepción del informe técnico con modelo y especificaciones del escáner.
+
+### Añadido y Perfeccionado (Cierre de la Parte 1)
+- **Identificación Esencial Alternativa de Animales ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - Obligatoriedad flexible: el animal debe contar con al menos número de arete/lomo o número de chip (o ambos a la vez).
+  - Soporte de visualización y búsqueda para ejemplares registrados exclusivamente con chip electrónico o nombre en tarjetas, detalles y genealogía.
+- **Número de Chip Único e Irrepetible ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - Detección en tiempo real de duplicidad de chip con advertencia visual inmediata y bloqueo del botón de guardado.
+  - Bloqueo en escáner óptico: si un código escaneado ya pertenece a otro animal, no se inserta en el input y emite una alerta descriptiva.
+  - Prevención de falsos positivos al registrar: exclusión de chequeo contra el propio animal recién guardado durante la transacción local.
+- **Reorganización Estructural del Formulario**:
+  - Sección **Raza** reubicada inmediatamente por debajo de **Ubicación y Propiedad** (Dueño, Finca y Potrero).
+- **Nuevo Filtro por Categorías de Edad Ganadera ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - Becerros (0 a 12 meses), Maute macho (+12 a 36 meses), Maute Hembra (+12 a 24 meses), Novillas (+24 a 36 meses), Adulto Toro/Vaca (+36 meses) y Edad Desconocida, con contadores en tiempo real y tags removibles.
+
+---
+
 ## [1.3.2-sync-status-offline-adjustment] - 2026-10-06
 
 ### Ajustado y Optimizado
