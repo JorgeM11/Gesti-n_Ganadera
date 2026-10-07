@@ -43,6 +43,39 @@ import { runFullSync } from '@/lib/syncUtils';
 
 const ITEMS_PER_PAGE = 48;
 
+export const AGE_CATEGORIES = [
+  { id: 'Becerro', label: 'Becerros (0 a 12 meses)' },
+  { id: 'Maute Macho', label: 'Maute macho (+12 a 36 meses)' },
+  { id: 'Maute Hembra', label: 'Maute Hembra (+12 a 24 meses)' },
+  { id: 'Novilla', label: 'Novilla (Solo Hembra) (+24 a 36 meses)' },
+  { id: 'Adulto', label: 'Toro y Vaca Adulto (+36 meses)' },
+  { id: 'Desconocida', label: 'Edad Desconocida' },
+];
+
+export function getAnimalAgeCategory(animal) {
+  if (!animal?.birth_date) return 'Desconocida';
+  const birth = parseLocalDate(animal.birth_date);
+  if (!birth || isNaN(birth.getTime())) return 'Desconocida';
+
+  const months = (new Date() - birth) / (1000 * 60 * 60 * 24 * 30.44);
+  if (months <= 12) return 'Becerro';
+
+  const sex = animal.sex;
+  if (sex === 'Macho') {
+    if (months <= 36) return 'Maute Macho';
+    return 'Adulto';
+  }
+
+  if (sex === 'Hembra') {
+    if (months <= 24) return 'Maute Hembra';
+    if (months <= 36) return 'Novilla';
+    return 'Adulto';
+  }
+
+  if (months <= 36) return 'Maute Macho';
+  return 'Adulto';
+}
+
 // --- COMPONENTE DE CHECKBOX ---
 const FilterCheckbox = ({ label, count, checked, onChange }) => (
   <button
@@ -348,15 +381,7 @@ export default function InventarioPage() {
       const currentBreed = (a.breed || '').trim() || 'Sin raza';
       const matchesBreed = filters.breed.length === 0 || filters.breed.includes(currentBreed);
 
-      let category = 'Desconocida';
-      if (a.birth_date) {
-        const birth = parseLocalDate(a.birth_date);
-        const months = (new Date() - birth) / (1000 * 60 * 60 * 24 * 30.44);
-        if (months < 9) category = 'Becerro';
-        else if (months < 19) category = 'Maute';
-        else if (months < 25) category = 'Novillo';
-        else category = 'Adulto';
-      }
+      const category = getAnimalAgeCategory(a);
       const matchesCategory = filters.category.length === 0 || filters.category.includes(category);
 
       return matchesSearch && matchesSex && matchesStatus && matchesCategory && matchesFarm && matchesPotrero && matchesOwner && matchesBreed;
@@ -393,15 +418,7 @@ export default function InventarioPage() {
       if (type === 'status') return (a.status || 'Activo') === value;
       if (type === 'breed') return ((a.breed || '').trim() || 'Sin raza') === value;
       if (type === 'category') {
-        let cat = 'Desconocida';
-        if (a.birth_date) {
-          const birth = parseLocalDate(a.birth_date);
-          const months = (new Date() - birth) / (1000 * 60 * 60 * 24 * 30.44);
-          if (months < 9) cat = 'Becerro';
-          else if (months < 19) cat = 'Maute';
-          else if (months < 25) cat = 'Novillo';
-          else cat = 'Adulto';
-        }
+        const cat = getAnimalAgeCategory(a);
         return cat === value;
       }
       return false;
@@ -741,11 +758,15 @@ export default function InventarioPage() {
               <div>
                 <h4 className="text-sm font-black text-neutral-900 mb-2 uppercase tracking-wider">Categoría por Edad</h4>
                 <div className="space-y-0.5">
-                  <FilterCheckbox label="Becerros/as (0 a 8 meses)" count={getCount('category', 'Becerro')} checked={filters.category.includes('Becerro')} onChange={() => toggleFilter('category', 'Becerro')} />
-                  <FilterCheckbox label="Mautes/as (9 a 18 meses)" count={getCount('category', 'Maute')} checked={filters.category.includes('Maute')} onChange={() => toggleFilter('category', 'Maute')} />
-                  <FilterCheckbox label="Novillos/as (19 a 24 meses)" count={getCount('category', 'Novillo')} checked={filters.category.includes('Novillo')} onChange={() => toggleFilter('category', 'Novillo')} />
-                  <FilterCheckbox label="Adultos Toro/Vaca (+24 meses)" count={getCount('category', 'Adulto')} checked={filters.category.includes('Adulto')} onChange={() => toggleFilter('category', 'Adulto')} />
-                  <FilterCheckbox label="Edad Desconocida" count={getCount('category', 'Desconocida')} checked={filters.category.includes('Desconocida')} onChange={() => toggleFilter('category', 'Desconocida')} />
+                  {AGE_CATEGORIES.map(cat => (
+                    <FilterCheckbox 
+                      key={cat.id} 
+                      label={cat.label} 
+                      count={getCount('category', cat.id)} 
+                      checked={filters.category.includes(cat.id)} 
+                      onChange={() => toggleFilter('category', cat.id)} 
+                    />
+                  ))}
                 </div>
               </div>
             </div>
@@ -869,12 +890,15 @@ export default function InventarioPage() {
                   <button type="button" onClick={() => toggleFilter('breed', b)} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
                 </span>
               ))}
-              {filters.category.map(c => (
-                <span key={c} className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 shadow-2xs">
-                  <span>{c}</span>
-                  <button type="button" onClick={() => toggleFilter('category', c)} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
-                </span>
-              ))}
+              {filters.category.map(c => {
+                const catObj = AGE_CATEGORIES.find(ac => ac.id === c);
+                return (
+                  <span key={c} className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 shadow-2xs">
+                    <span>{catObj ? catObj.label : c}</span>
+                    <button type="button" onClick={() => toggleFilter('category', c)} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
+                  </span>
+                );
+              })}
             </div>
           </div>
         )}
