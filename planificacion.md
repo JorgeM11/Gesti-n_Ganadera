@@ -25,7 +25,7 @@ flowchart TD
     end
 
     P1 --> P2["📡 PARTE 2 DE 3: Compatibilidad Escáner RFID (Culminada en Software ✅ - Espera de Campo)"]
-    P2 --> P3["👥 PARTE 3 DE 3: Módulo de Obreros y Despliegue en Producción (En Planificación 🚀)"]
+    P2 --> P3["📊 PARTE 3 DE 3: Dashboard, Eventos, Obreros y Despliegue (En Planificación 🚀)"]
 
     style P1 fill:#f1f8e9,stroke:#33691e,stroke-width:2px
     style P2 fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
@@ -159,20 +159,31 @@ flowchart TD
 
 ---
 
-### 🚀 Parte 3 de 3: Módulo de Obreros y Despliegue en Producción (En Progreso / Planificación)
-> **Objetivo**: Desarrollar el sistema de gestión de obreros/asistentes de campo subordinados a cada administrador de finca, configurar los permisos de acceso y preparar el despliegue final de la aplicación en producción.
+### 🚀 Parte 3 de 3: Dashboard Ejecutivo, Eventos en Inventario, Módulo de Obreros y Despliegue (En Progreso / Planificación)
+> **Objetivo**: Desarrollar la pantalla principal de Dashboard con analíticas y KPIs globales del rebaño, incorporar la sección de Eventos en Inventario para consulta y auditoría cronológica, construir el sistema de gestión de obreros/asistentes con roles y permisos acotados, y ejecutar el despliegue final en producción.
 
-- [ ] **Modelo de Datos y Permisos de Obreros (Supabase & Dexie)**:
+- [ ] **1. Dashboard Central Ganadero (Métricas & KPIs en Vivo)**:
+  - Vista general ejecutiva del rebaño con carga offline instantánea vía IndexedDB (Dexie).
+  - Tarjetas de resumen métrico: total de animales, distribución por sexo (machos/hembras), desglose por categorías ganaderas (becerros, mautes, novillas, adultos) y estado (activos/inactivos).
+  - Indicadores de peso promedio del rebaño y comparativas de ganancia de peso.
+  - Resumen de actividades recientes: nacimientos del mes, tratamientos sanitarios aplicados y alertas de animales pendientes por pesar o revisar.
+  - Accesos rápidos hacia Inventario, Eventos, Fincas y Registro de Animal.
+  - Enlace al Dashboard en la barra de navegación lateral (`NavigationDrawer.jsx`) y ruta `/dashboard`.
+- [ ] **2. Apartado de Eventos en Inventario (Historial & Trazabilidad)**:
+  - Vista o pestaña especializada en Inventario dedicada a la consulta y seguimiento de eventos (`growth_events`, nacimientos, destetes, pesajes y cambios de estatus).
+  - Línea de tiempo cronológica con filtros por rango de fecha, tipo de evento, finca, potrero y animal específico.
+  - Trazabilidad y auditoría: visualización de qué usuario (administrador u obrero) registró el evento, fecha exacta de captura y detalles asociados.
+- [ ] **3. Modelo de Datos y Permisos de Obreros (Supabase & Dexie)**:
   - Estructura relacional con campo `admin_id` en tablas maestras (ya aprovisionada en Supabase y Dexie).
   - Asignación de roles de usuario (`Administrador` vs `Obrero/Encargado`).
   - Restricciones de acceso y Row Level Security (RLS) para que el obrero solo acceda a los animales y fincas asignados por su administrador.
-- [ ] **Módulo de Gestión de Obreros en Frontend**:
+- [ ] **4. Módulo de Gestión de Obreros en Frontend**:
   - Panel administrativo para dar de alta obreros, asignar fincas y gestionar credenciales/estados.
   - Adaptación de la navegación lateral según el rol del usuario autenticado (ocultando gestión sensible a obreros).
-- [ ] **Flujo Operativo de Campo para Obreros**:
+- [ ] **5. Flujo Operativo de Campo para Obreros**:
   - Permisos estrictos: captura de pesajes, registro de tratamientos sanitarios y reporte de partos, sin permisos de borrado de fincas ni configuración global.
   - Registro de auditoría de creador/modificador en eventos.
-- [ ] **QA Final, Sincronización Concurrente y Despliegue en Producción**:
+- [ ] **6. QA Final, Sincronización Concurrente y Despliegue en Producción**:
   - Pruebas de sincronización offline-online concurrente entre Administrador y Obrero.
   - Puesta a punto de PWA y Service Worker para producción.
   - Despliegue definitivo en hosting cloud (Vercel / Supabase).
@@ -191,5 +202,5 @@ flowchart TD
 | **Fase 5: QA, SEO, Branding y Cierre (Parte 1)** | 2026-10-06 | **Completado** | Antigravity AI & Usuario | Vaca blanca en iconos, SEO completo, orden de razas, multi-usuario probado, offline refinado y sincronización con GitHub completada al 100%. |
 | **Parte 1: Refinamientos Finales** | 2026-10-06 | **Completado** | Antigravity AI & Usuario | Arete y chip alternativos esenciales, chip único con alerta reactiva y bloqueo, sección raza bajo ubicación y filtros por edad ganadera (becerros, mautes, novillas, adultos). |
 | **Parte 2: Cierre de Software Escáner RFID** | 2026-10-07 | **Completado** | Antigravity AI & Usuario | Software 100% adaptado con buffer de 200ms anti-jitter, protección contra pérdida de dígitos, borrado rápido y búsqueda instantánea. Culminada a espera de observaciones de campo. |
-| **Parte 3 de 3: Módulo de Obreros y Despliegue** | 2026-10-07 | **En progreso** | Antigravity AI & Usuario | Iniciada la planificación de la Parte 3: roles, permisos, módulo de obreros y preparación de despliegue a producción. |
+| **Parte 3 de 3: Dashboard, Eventos, Obreros y Despliegue** | 2026-10-07 | **En progreso** | Antigravity AI & Usuario | Incorporados formalmente a la Parte 3: Dashboard central ganadero, apartado de eventos en inventario, módulo de obreros y despliegue a producción. |
 

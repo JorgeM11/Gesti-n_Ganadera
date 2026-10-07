@@ -4,19 +4,19 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
-## [1.5.0-phase3-obreros-kickoff] - 2026-10-07
+## [1.5.0-phase3-dashboard-events-obreros-planning] - 2026-10-07
 
 ### Culminado (Cierre de la Parte 2 de 3: Compatibilidad RFID en Software)
 - **Cierre Formal de Software para Escáner RFID**:
   - Toda la adaptación de software queda 100% completada y probada (buffer anti-jitter de 200 ms, modo ráfaga, prevención de submits involuntarios por Enter, auto-selección al enfocar, sanitización de pegado, botones de borrado rápido en arete y chip, y búsqueda reactiva instantánea).
   - Pruebas físicas de campo en manga y calibración de hardware en pausa natural a la espera de recepción del dispositivo e informe del cliente.
 
-### Planificado e Iniciado (Parte 3 de 3: Módulo de Obreros y Despliegue en Producción)
+### Planificado e Iniciado (Parte 3 de 3: Dashboard, Eventos, Obreros y Despliegue)
 - **Apertura de la Parte 3 de 3 en Planificación ([`planificacion.md`](file:///C:/Users/joses/appganadera/gestion-ganadera/planificacion.md))**:
-  - Definición de arquitectura de roles (`Administrador` vs `Obrero/Encargado`).
-  - Aprovechamiento de la columna `admin_id` ya aprovisionada en Supabase y Dexie para aislamiento de obreros por finca.
-  - Planificación de panel de administración de obreros, permisos restringidos de campo (pesajes, salud, partos) y auditoría de eventos.
-  - Planificación de pruebas de sincronización concurrente offline-online y despliegue final en producción.
+  - **Dashboard Central Ganadero**: Pantalla de analíticas y KPIs globales en tiempo real (distribución por género, categorías de edad, promedios de peso, nacimientos del mes, tratamientos médicos y accesos rápidos operativos).
+  - **Apartado de Eventos en Inventario**: Sección especializada para visualización y seguimiento cronológico de eventos de crecimiento, pesajes, destetes y salud con filtros avanzados y auditoría.
+  - **Módulo de Obreros y Permisos**: Roles de usuario (`Administrador` vs `Obrero/Encargado`), aprovechamiento de `admin_id` en Supabase y Dexie, y permisos acotados de campo.
+  - **QA y Despliegue**: Pruebas de sincronización offline-online concurrente y despliegue final en producción.
 
 ---
 
