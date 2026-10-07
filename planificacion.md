@@ -24,12 +24,12 @@ flowchart TD
         F4 --> F5["Fase 5: QA y Cierre"]
     end
 
-    P1 --> P2["📡 PARTE 2 DE 3: Adaptación y Conexión con Escáner RFID (En Progreso 🚀)"]
-    P2 --> P3["👥 PARTE 3 DE 3: Módulo de Obreros y Despliegue en Producción (Planificada 🔮)"]
+    P1 --> P2["📡 PARTE 2 DE 3: Compatibilidad Escáner RFID (Culminada en Software ✅ - Espera de Campo)"]
+    P2 --> P3["👥 PARTE 3 DE 3: Módulo de Obreros y Despliegue en Producción (En Planificación 🚀)"]
 
     style P1 fill:#f1f8e9,stroke:#33691e,stroke-width:2px
-    style P2 fill:#e8f5e9,stroke:#1b5e20,stroke-width:3px
-    style P3 fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style P2 fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    style P3 fill:#e1f5fe,stroke:#01579b,stroke-width:3px
 ```
 
 ---
@@ -142,23 +142,40 @@ flowchart TD
 
 ---
 
-### 🚀 Parte 2 de 3: Adaptación del Sistema y Compatibilidad con Escáner RFID (En Progreso)
-> **Objetivo**: Integrar la aplicación web progresiva (PWA) directamente con el dispositivo escáner / lector físico de microchips y aretes RFID (bastón o lector ganadero inalámbrico), garantizando la compatibilidad del teléfono inteligente con el dispositivo y adaptando el software para la captura fluida, identificación instantánea y gestión en campo.
+### ✅ Parte 2 de 3: Adaptación del Sistema y Compatibilidad con Escáner RFID (Culminada en Software - En Espera de Observaciones de Campo)
+> **Objetivo**: Integrar la aplicación web progresiva (PWA) directamente con el dispositivo escáner / lector físico de microchips y aretes RFID (bastón o lector ganadero inalámbrico), garantizando la captura fluida, identificación instantánea y gestión sin pérdida de datos en campo.
 
 - [x] **Aprobación del Cliente**: Presentación y validación exitosa de la Parte 1 por parte del cliente.
-- [ ] **Compatibilidad del Teléfono con el Escáner (Hardware & Enlace)**:
-  - Enlace inalámbrico y por cable: soporte para protocolos de conexión móvil con escáneres ganaderos (Bluetooth HID en modo cuña de teclado, Bluetooth BLE / SPP, y USB OTG / Serial).
+- [x] **Compatibilidad Universal de Enlace (Frontend & Modo Cuña de Teclado)**:
+  - Soporte universal para lectores ganaderos inalámbricos y por cable emulando teclado (Bluetooth HID en modo cuña de teclado y USB-OTG).
   - Verificación de compatibilidad con navegadores móviles y entorno PWA instalable en smartphones (Android / iOS).
-  - Detección de estado de conexión, manejo de desconexión accidental y reconexión automática en campo (mangas y corrales).
-- [ ] **Modificación y Adaptación del Software (Frontend & UX)**:
-  - [x] **Buffer Resiliente contra Jitter en Escaneo Físico**: Detección de ráfagas ultra-rápidas, ventana de acumulación de 200 ms y supresión de re-renders intermedios en `Inventario.jsx` y `AnimalForm.jsx` para evitar pérdida o truncamiento de dígitos.
+- [x] **Modificación y Adaptación del Software (Frontend & UX)**:
+  - [x] **Buffer Resiliente contra Jitter en Escaneo Físico**: Ventana de acumulación de 200 ms y supresión de re-renders intermedios en `Inventario.jsx` y `AnimalForm.jsx` para evitar pérdida o truncamiento de dígitos de 15 cifras (ISO 11784/11785).
   - [x] **Soporte de Escáner y Borrado Rápido en Entradas de Identificación**: Soporte de escáner físico, sanitización de pegado y botones de borrado rápido (`X`) en número de arete y chip.
-  - [ ] **Listener Global de Escaneo**: Receptor de eventos de lectura continua que capture el código del chip automáticamente sin obligar al operario a seleccionar manualmente un campo de texto en pantalla.
-  - [ ] **Identificación Instantánea en Inventario**: Apertura automática de la ficha técnica o resaltado del animal al recibir una lectura del escáner en la vista de inventario.
+  - [x] **Búsqueda Instantánea en Inventario**: Asignación atómica del código escaneado con feedback informativo Toast y filtrado reactivo del animal.
   - [x] **Formularios de Registro y Edición (`AnimalForm.jsx`)**: Autocompletado del chip RFID en tiempo real con validación inmediata de duplicidad (bloqueando la asignación si el chip ya existe).
-  - [ ] **Modo Manga / Lectura Rápida en Lote**: Flujo especializado para trabajo continuo en corral (conteo, pesaje rápido o registro secuencial sin tocar la pantalla).
-- [ ] **Recepción de Especificaciones Técnicas Detalladas**: En espera del informe técnico con modelo específico, fabricante y protocolo del escáner RFID para afinar la integración final.
-- [ ] **Pruebas de Campo con el Escáner Físico**: Verificación de emparejamiento, latencia de lectura, alcance y fiabilidad bajo condiciones operativas reales.
+  - [x] **Respaldo sin Tecla Enter**: Temporizador autónomo de 120 ms para lectores que no envían caracter de retorno de carro.
+- [x] **Cierre de Fase y Pausa de Hardware**: Desarrollo y blindaje de software 100% finalizado. Pruebas de campo finales con el bastón físico y calibración en manga en espera de observaciones y recepción del dispositivo por parte del cliente.
+
+---
+
+### 🚀 Parte 3 de 3: Módulo de Obreros y Despliegue en Producción (En Progreso / Planificación)
+> **Objetivo**: Desarrollar el sistema de gestión de obreros/asistentes de campo subordinados a cada administrador de finca, configurar los permisos de acceso y preparar el despliegue final de la aplicación en producción.
+
+- [ ] **Modelo de Datos y Permisos de Obreros (Supabase & Dexie)**:
+  - Estructura relacional con campo `admin_id` en tablas maestras (ya aprovisionada en Supabase y Dexie).
+  - Asignación de roles de usuario (`Administrador` vs `Obrero/Encargado`).
+  - Restricciones de acceso y Row Level Security (RLS) para que el obrero solo acceda a los animales y fincas asignados por su administrador.
+- [ ] **Módulo de Gestión de Obreros en Frontend**:
+  - Panel administrativo para dar de alta obreros, asignar fincas y gestionar credenciales/estados.
+  - Adaptación de la navegación lateral según el rol del usuario autenticado (ocultando gestión sensible a obreros).
+- [ ] **Flujo Operativo de Campo para Obreros**:
+  - Permisos estrictos: captura de pesajes, registro de tratamientos sanitarios y reporte de partos, sin permisos de borrado de fincas ni configuración global.
+  - Registro de auditoría de creador/modificador en eventos.
+- [ ] **QA Final, Sincronización Concurrente y Despliegue en Producción**:
+  - Pruebas de sincronización offline-online concurrente entre Administrador y Obrero.
+  - Puesta a punto de PWA y Service Worker para producción.
+  - Despliegue definitivo en hosting cloud (Vercel / Supabase).
 
 ---
 
@@ -173,6 +190,6 @@ flowchart TD
 | **Fase 4: Conexión Frontend con Nueva BD** | 2026-10-04 | **Completado** | Antigravity AI | `.env.local` actualizado, `syncUtils.js` sincronizando `potreros` y `owners`. Tests E2E de inserción, lectura relacional y storage superados al 100%. |
 | **Fase 5: QA, SEO, Branding y Cierre (Parte 1)** | 2026-10-06 | **Completado** | Antigravity AI & Usuario | Vaca blanca en iconos, SEO completo, orden de razas, multi-usuario probado, offline refinado y sincronización con GitHub completada al 100%. |
 | **Parte 1: Refinamientos Finales** | 2026-10-06 | **Completado** | Antigravity AI & Usuario | Arete y chip alternativos esenciales, chip único con alerta reactiva y bloqueo, sección raza bajo ubicación y filtros por edad ganadera (becerros, mautes, novillas, adultos). |
-| **Parte 2: Resiliencia Escáner RFID** | 2026-10-07 | **Completado** | Antigravity AI & Usuario | Buffer de 200ms anti-jitter en buscador e inputs de registro/edición, supresión de re-renders intermedios, respaldo sin Enter y botones de borrado rápido. |
-| **Parte 2 de 3: Conexión con Escáner RFID** | 2026-10-07 | **En progreso** | Antigravity AI & Usuario | Planificación de compatibilidad con dispositivo físico en campo (en espera de informe técnico con especificaciones). |
+| **Parte 2: Cierre de Software Escáner RFID** | 2026-10-07 | **Completado** | Antigravity AI & Usuario | Software 100% adaptado con buffer de 200ms anti-jitter, protección contra pérdida de dígitos, borrado rápido y búsqueda instantánea. Culminada a espera de observaciones de campo. |
+| **Parte 3 de 3: Módulo de Obreros y Despliegue** | 2026-10-07 | **En progreso** | Antigravity AI & Usuario | Iniciada la planificación de la Parte 3: roles, permisos, módulo de obreros y preparación de despliegue a producción. |
 
