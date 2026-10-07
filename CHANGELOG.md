@@ -4,6 +4,21 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.4.1-rfid-scanner-resilience] - 2026-10-07
+
+### Corregido y Perfeccionado (Parte 2: Compatibilidad RFID y Entradas de Identificación)
+- **Buffer de Escáner Resiliente contra Jitter y Retardos ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx), [`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - Resuelto el truncamiento intermitente de códigos escaneados con lectores RFID físicos (Bluetooth HID / cuña de teclado).
+  - Umbral de tiempo inter-caracter ampliado a 200 ms para acumulación en buffer, evitando que una latencia momentánea o jitter de Bluetooth borre el inicio del código (como los 15 dígitos estándar ISO).
+  - Supresión de re-renders continuos durante la ráfaga de escaneo (`isScanning`), impidiendo que el motor de filtrado del inventario sature el hilo principal de JavaScript y provoque pérdida de pulsaciones de teclado.
+  - Temporizador de respaldo de 120 ms para inyectar automáticamente el código escaneado en dispositivos que no envíen el carácter `Enter` al final.
+- **Soporte Completo de Escáner y Pegado en Arete y Chip ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - Incorporada la lógica de buffer de escáner físico y sanitización de pegado tanto en el campo **1. Arete o Lomo** (`number`) como en **2. Chip** (`chip_number`).
+  - Auto-selección completa del contenido al enfocar el campo (`onFocus -> e.target.select()`) para permitir sobrescribir o limpiar el valor instantáneamente con un solo toque o escaneo.
+  - Añadidos botones dedicados de borrado rápido (`X`) en los campos de arete y chip cuando contienen texto, facilitando vaciar el valor sin borrar carácter por carácter.
+
+---
+
 ## [1.4.0-phase2-rfid-planning] - 2026-10-07
 
 ### Planificado e Iniciado (Parte 2 de 3: Conexión con Escáner RFID Físico)

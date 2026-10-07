@@ -94,7 +94,29 @@ const FilterCheckbox = ({ label, count, checked, onChange }) => (
 );
 
 const SearchInput = ({ isMobile = false, searchTerm, setSearchTerm, onOpenFilters, activeFiltersCount, onScanBarcode, onScannedCode }) => {
-  const searchScannerRef = useRef({ buffer: '', lastTime: 0, isScanning: false });
+  const searchScannerRef = useRef({ 
+    buffer: '', 
+    lastTime: 0, 
+    isScanning: false, 
+    timer: null 
+  });
+
+  const resetScanner = () => {
+    if (searchScannerRef.current.timer) {
+      clearTimeout(searchScannerRef.current.timer);
+      searchScannerRef.current.timer = null;
+    }
+    searchScannerRef.current.buffer = '';
+    searchScannerRef.current.isScanning = false;
+  };
+
+  useEffect(() => {
+    return () => {
+      if (searchScannerRef.current.timer) {
+        clearTimeout(searchScannerRef.current.timer);
+      }
+    };
+  }, []);
 
   const handleSearchScan = (scannedCode) => {
     const clean = (scannedCode || '').trim();
@@ -116,7 +138,13 @@ const SearchInput = ({ isMobile = false, searchTerm, setSearchTerm, onOpenFilter
         type="text"
         placeholder={isMobile ? "Buscar Animales" : "Buscar "}
         value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        onChange={(e) => {
+          // Si estamos en medio de una ráfaga de escaneo rápido, evitamos saturar React
+          // con re-renders de todo el inventario; el código completo se aplicará al terminar
+          if (!searchScannerRef.current.isScanning) {
+            setSearchTerm(e.target.value);
+          }
+        }}
         onFocus={(e) => {
           e.target.select();
         }}
@@ -132,33 +160,54 @@ const SearchInput = ({ isMobile = false, searchTerm, setSearchTerm, onOpenFilter
           const diff = now - searchScannerRef.current.lastTime;
           searchScannerRef.current.lastTime = now;
 
+          // 1. Manejo de terminador Enter (enviado comúnmente al final por escáneres RFID)
           if (e.key === 'Enter') {
             e.preventDefault();
-            if (searchScannerRef.current.buffer.length >= 2) {
-              const code = searchScannerRef.current.buffer.trim();
-              searchScannerRef.current.buffer = '';
-              searchScannerRef.current.isScanning = false;
-              handleSearchScan(code);
-              return;
+            if (searchScannerRef.current.timer) {
+              clearTimeout(searchScannerRef.current.timer);
+              searchScannerRef.current.timer = null;
             }
-            if (e.target.value.trim()) {
-              handleSearchScan(e.target.value.trim());
+
+            const bufferCode = searchScannerRef.current.buffer.trim();
+            const inputCode = e.target.value.trim();
+            resetScanner();
+
+            // Usar el buffer acumulado si tiene al menos 2 caracteres, o el contenido del input
+            const finalCode = bufferCode.length >= 2 ? bufferCode : inputCode;
+            if (finalCode) {
+              handleSearchScan(finalCode);
             }
             return;
           }
 
+          // 2. Manejo de caracteres alfanuméricos
           if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            if (diff < 50) {
-              // Ráfaga detectada de escáner en el buscador
-              if (!searchScannerRef.current.isScanning) {
-                searchScannerRef.current.isScanning = true;
-                // Borrar texto previo del input de búsqueda
-                setSearchTerm('');
-              }
-              searchScannerRef.current.buffer += e.key;
-            } else {
-              searchScannerRef.current.isScanning = false;
+            // Umbral entre caracteres: si pasaron más de 200ms, es una nueva secuencia o tipeo humano pausado
+            if (diff > 200 || !searchScannerRef.current.buffer) {
               searchScannerRef.current.buffer = e.key;
+              searchScannerRef.current.isScanning = false;
+            } else {
+              // Ráfaga consecutiva: acumular caracteres sin reiniciar el buffer
+              searchScannerRef.current.buffer += e.key;
+              // Si la velocidad es menor a 80ms entre teclas, activar modo escaneo continuo
+              if (diff < 80) {
+                searchScannerRef.current.isScanning = true;
+              }
+            }
+
+            // Temporizador de respaldo por si el escáner no envía la tecla Enter al finalizar
+            if (searchScannerRef.current.timer) {
+              clearTimeout(searchScannerRef.current.timer);
+            }
+
+            if (searchScannerRef.current.isScanning) {
+              searchScannerRef.current.timer = setTimeout(() => {
+                const code = searchScannerRef.current.buffer.trim();
+                if (code.length >= 2) {
+                  handleSearchScan(code);
+                }
+                resetScanner();
+              }, 120);
             }
           }
         }}

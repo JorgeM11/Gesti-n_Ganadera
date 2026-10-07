@@ -151,10 +151,12 @@ flowchart TD
   - Verificación de compatibilidad con navegadores móviles y entorno PWA instalable en smartphones (Android / iOS).
   - Detección de estado de conexión, manejo de desconexión accidental y reconexión automática en campo (mangas y corrales).
 - [ ] **Modificación y Adaptación del Software (Frontend & UX)**:
-  - **Listener Global de Escaneo**: Receptor de eventos de lectura continua que capture el código del chip automáticamente sin obligar al operario a seleccionar manualmente un campo de texto en pantalla.
-  - **Identificación Instantánea en Inventario**: Apertura automática de la ficha técnica o resaltado del animal al recibir una lectura del escáner en la vista de inventario.
-  - **Formularios de Registro y Edición (`AnimalForm.jsx`)**: Autocompletado del chip RFID en tiempo real con validación inmediata de duplicidad (bloqueando la asignación si el chip ya existe).
-  - **Modo Manga / Lectura Rápida en Lote**: Flujo especializado para trabajo continuo en corral (conteo, pesaje rápido o registro secuencial sin tocar la pantalla).
+  - [x] **Buffer Resiliente contra Jitter en Escaneo Físico**: Detección de ráfagas ultra-rápidas, ventana de acumulación de 200 ms y supresión de re-renders intermedios en `Inventario.jsx` y `AnimalForm.jsx` para evitar pérdida o truncamiento de dígitos.
+  - [x] **Soporte de Escáner y Borrado Rápido en Entradas de Identificación**: Soporte de escáner físico, sanitización de pegado y botones de borrado rápido (`X`) en número de arete y chip.
+  - [ ] **Listener Global de Escaneo**: Receptor de eventos de lectura continua que capture el código del chip automáticamente sin obligar al operario a seleccionar manualmente un campo de texto en pantalla.
+  - [ ] **Identificación Instantánea en Inventario**: Apertura automática de la ficha técnica o resaltado del animal al recibir una lectura del escáner en la vista de inventario.
+  - [x] **Formularios de Registro y Edición (`AnimalForm.jsx`)**: Autocompletado del chip RFID en tiempo real con validación inmediata de duplicidad (bloqueando la asignación si el chip ya existe).
+  - [ ] **Modo Manga / Lectura Rápida en Lote**: Flujo especializado para trabajo continuo en corral (conteo, pesaje rápido o registro secuencial sin tocar la pantalla).
 - [ ] **Recepción de Especificaciones Técnicas Detalladas**: En espera del informe técnico con modelo específico, fabricante y protocolo del escáner RFID para afinar la integración final.
 - [ ] **Pruebas de Campo con el Escáner Físico**: Verificación de emparejamiento, latencia de lectura, alcance y fiabilidad bajo condiciones operativas reales.
 
@@ -171,5 +173,6 @@ flowchart TD
 | **Fase 4: Conexión Frontend con Nueva BD** | 2026-10-04 | **Completado** | Antigravity AI | `.env.local` actualizado, `syncUtils.js` sincronizando `potreros` y `owners`. Tests E2E de inserción, lectura relacional y storage superados al 100%. |
 | **Fase 5: QA, SEO, Branding y Cierre (Parte 1)** | 2026-10-06 | **Completado** | Antigravity AI & Usuario | Vaca blanca en iconos, SEO completo, orden de razas, multi-usuario probado, offline refinado y sincronización con GitHub completada al 100%. |
 | **Parte 1: Refinamientos Finales** | 2026-10-06 | **Completado** | Antigravity AI & Usuario | Arete y chip alternativos esenciales, chip único con alerta reactiva y bloqueo, sección raza bajo ubicación y filtros por edad ganadera (becerros, mautes, novillas, adultos). |
-| **Parte 2 de 3: Conexión con Escáner RFID** | 2026-10-07 | **En progreso** | Antigravity AI & Usuario | Iniciada la fase 2: planificación de compatibilidad del teléfono con el escáner y adaptación del software (en espera de informe técnico con especificaciones del dispositivo). |
+| **Parte 2: Resiliencia Escáner RFID** | 2026-10-07 | **Completado** | Antigravity AI & Usuario | Buffer de 200ms anti-jitter en buscador e inputs de registro/edición, supresión de re-renders intermedios, respaldo sin Enter y botones de borrado rápido. |
+| **Parte 2 de 3: Conexión con Escáner RFID** | 2026-10-07 | **En progreso** | Antigravity AI & Usuario | Planificación de compatibilidad con dispositivo físico en campo (en espera de informe técnico con especificaciones). |
 

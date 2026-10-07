@@ -210,6 +210,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
   const selectedPotreroId = watch('potrero_id');
   const selectedBreed = watch('breed');
   const chipNumberValue = watch('chip_number');
+  const numberValue = watch('number');
 
   // Detección en tiempo real de chip duplicado (excluyendo el animal en edición o el animal en proceso de guardado)
   const duplicateChipAnimal = useMemo(() => {
@@ -263,7 +264,58 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
     buffer: '',
     lastTime: 0,
     isScanning: false,
+    timer: null,
   });
+
+  const resetChipScanner = () => {
+    if (chipScannerRef.current.timer) {
+      clearTimeout(chipScannerRef.current.timer);
+      chipScannerRef.current.timer = null;
+    }
+    chipScannerRef.current.buffer = '';
+    chipScannerRef.current.isScanning = false;
+  };
+
+  const numberScannerRef = useRef({
+    buffer: '',
+    lastTime: 0,
+    isScanning: false,
+    timer: null,
+  });
+
+  const resetNumberScanner = () => {
+    if (numberScannerRef.current.timer) {
+      clearTimeout(numberScannerRef.current.timer);
+      numberScannerRef.current.timer = null;
+    }
+    numberScannerRef.current.buffer = '';
+    numberScannerRef.current.isScanning = false;
+  };
+
+  useEffect(() => {
+    return () => {
+      if (chipScannerRef.current.timer) {
+        clearTimeout(chipScannerRef.current.timer);
+      }
+      if (numberScannerRef.current.timer) {
+        clearTimeout(numberScannerRef.current.timer);
+      }
+    };
+  }, []);
+
+  // Manejo centralizado de escaneo y pegado de arete o lomo
+  const handleNumberInputScan = (codeToAssign) => {
+    const cleanCode = (codeToAssign || '').trim();
+    if (!cleanCode) return;
+
+    setValue('number', cleanCode, { shouldValidate: true, shouldDirty: true });
+    setToast({
+      show: true,
+      type: 'success',
+      message: `Arete asignado: ${cleanCode}`
+    });
+    setTimeout(() => setToast(p => ({ ...p, show: false })), 3000);
+  };
 
   // Manejo centralizado de escaneo y pegado de chip (físico, paste o cámara)
   const handleChipInputScan = (codeToAssign) => {
@@ -506,33 +558,110 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                 <span>1. Arete o Lomo</span>
                 
               </label>
-              <Controller
-                name="number"
-                control={control}
-                render={({ field }) => (
-                  <input
-                    type="text"
-                    ref={field.ref}
-                    value={field.value ?? ''}
-                    onChange={field.onChange}
-                    onBlur={field.onBlur}
-                    id="animal_tag_code"
-                    name="animal_tag_code"
-                    autoComplete="one-time-code"
-                    data-form-type="other"
-                    data-lpignore="true"
-                    data-1p-ignore="true"
-                    data-bwignore="true"
-                    spellCheck={false}
-                    autoCorrect="off"
-                    autoCapitalize="none"
-                    placeholder="Ej. 104"
-                    className={`w-full bg-neutral-50 border rounded-2xl px-4 py-3 text-sm font-bold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all ${
-                      errors.number ? 'border-red-400 bg-red-50/20' : 'border-neutral-200'
-                    }`}
-                  />
+              <div className="relative">
+                <Controller
+                  name="number"
+                  control={control}
+                  render={({ field }) => (
+                    <input
+                      type="text"
+                      ref={field.ref}
+                      value={field.value ?? ''}
+                      onChange={(e) => {
+                        if (!numberScannerRef.current.isScanning) {
+                          field.onChange(e);
+                        }
+                      }}
+                      onBlur={field.onBlur}
+                      onFocus={(e) => {
+                        e.target.select();
+                      }}
+                      onPaste={(e) => {
+                        e.preventDefault();
+                        const pasted = e.clipboardData.getData('text').trim();
+                        if (pasted) {
+                          handleNumberInputScan(pasted);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        const now = Date.now();
+                        const diff = now - numberScannerRef.current.lastTime;
+                        numberScannerRef.current.lastTime = now;
+
+                        // 1. Manejo de Enter
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (numberScannerRef.current.timer) {
+                            clearTimeout(numberScannerRef.current.timer);
+                            numberScannerRef.current.timer = null;
+                          }
+
+                          const bufferCode = numberScannerRef.current.buffer.trim();
+                          const inputCode = e.target.value.trim();
+                          resetNumberScanner();
+
+                          const finalCode = bufferCode.length >= 2 ? bufferCode : inputCode;
+                          if (finalCode) {
+                            handleNumberInputScan(finalCode);
+                          }
+                          return;
+                        }
+
+                        // 2. Teclas alfanuméricas
+                        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                          if (diff > 200 || !numberScannerRef.current.buffer) {
+                            numberScannerRef.current.buffer = e.key;
+                            numberScannerRef.current.isScanning = false;
+                          } else {
+                            numberScannerRef.current.buffer += e.key;
+                            if (diff < 80) {
+                              numberScannerRef.current.isScanning = true;
+                            }
+                          }
+
+                          if (numberScannerRef.current.timer) {
+                            clearTimeout(numberScannerRef.current.timer);
+                          }
+
+                          if (numberScannerRef.current.isScanning) {
+                            numberScannerRef.current.timer = setTimeout(() => {
+                              const code = numberScannerRef.current.buffer.trim();
+                              if (code.length >= 2) {
+                                handleNumberInputScan(code);
+                              }
+                              resetNumberScanner();
+                            }, 120);
+                          }
+                        }
+                      }}
+                      id="animal_tag_code"
+                      name="animal_tag_code"
+                      autoComplete="one-time-code"
+                      data-form-type="other"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-bwignore="true"
+                      spellCheck={false}
+                      autoCorrect="off"
+                      autoCapitalize="none"
+                      placeholder="Ej. 104"
+                      className={`w-full bg-neutral-50 border rounded-2xl pl-4 pr-10 py-3 text-sm font-bold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all ${
+                        errors.number ? 'border-red-400 bg-red-50/20' : 'border-neutral-200'
+                      }`}
+                    />
+                  )}
+                />
+                {numberValue && (
+                  <button
+                    type="button"
+                    onClick={() => setValue('number', '', { shouldValidate: true, shouldDirty: true })}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600 transition-colors cursor-pointer"
+                    title="Borrar número de arete"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                 )}
-              />
+              </div>
               {errors.number && (
                 <p className="text-[11px] text-red-500 font-semibold mt-1 ml-1 flex items-center gap-1">
                   <AlertCircle className="w-3.5 h-3.5 shrink-0" />
@@ -560,7 +689,11 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                       type="text"
                       ref={field.ref}
                       value={field.value ?? ''}
-                      onChange={field.onChange}
+                      onChange={(e) => {
+                        if (!chipScannerRef.current.isScanning) {
+                          field.onChange(e);
+                        }
+                      }}
                       onBlur={field.onBlur}
                       onFocus={(e) => {
                         e.target.select();
@@ -577,33 +710,49 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                         const diff = now - chipScannerRef.current.lastTime;
                         chipScannerRef.current.lastTime = now;
 
+                        // 1. Manejo de Enter
                         if (e.key === 'Enter') {
                           e.preventDefault();
-                          if (chipScannerRef.current.buffer.length >= 2) {
-                            const code = chipScannerRef.current.buffer.trim();
-                            chipScannerRef.current.buffer = '';
-                            chipScannerRef.current.isScanning = false;
-                            handleChipInputScan(code);
-                            return;
+                          if (chipScannerRef.current.timer) {
+                            clearTimeout(chipScannerRef.current.timer);
+                            chipScannerRef.current.timer = null;
                           }
-                          if (e.target.value.trim()) {
-                            handleChipInputScan(e.target.value.trim());
+
+                          const bufferCode = chipScannerRef.current.buffer.trim();
+                          const inputCode = e.target.value.trim();
+                          resetChipScanner();
+
+                          const finalCode = bufferCode.length >= 2 ? bufferCode : inputCode;
+                          if (finalCode) {
+                            handleChipInputScan(finalCode);
                           }
                           return;
                         }
 
+                        // 2. Teclas alfanuméricas
                         if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                          if (diff < 50) {
-                            // Ráfaga rápida detectada de escáner HID
-                            if (!chipScannerRef.current.isScanning) {
-                              chipScannerRef.current.isScanning = true;
-                              // Borrar cualquier texto previo para evitar concatenación
-                              setValue('chip_number', '');
-                            }
-                            chipScannerRef.current.buffer += e.key;
-                          } else {
-                            chipScannerRef.current.isScanning = false;
+                          if (diff > 200 || !chipScannerRef.current.buffer) {
                             chipScannerRef.current.buffer = e.key;
+                            chipScannerRef.current.isScanning = false;
+                          } else {
+                            chipScannerRef.current.buffer += e.key;
+                            if (diff < 80) {
+                              chipScannerRef.current.isScanning = true;
+                            }
+                          }
+
+                          if (chipScannerRef.current.timer) {
+                            clearTimeout(chipScannerRef.current.timer);
+                          }
+
+                          if (chipScannerRef.current.isScanning) {
+                            chipScannerRef.current.timer = setTimeout(() => {
+                              const code = chipScannerRef.current.buffer.trim();
+                              if (code.length >= 2) {
+                                handleChipInputScan(code);
+                              }
+                              resetChipScanner();
+                            }, 120);
                           }
                         }
                       }}
@@ -618,7 +767,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                       autoCorrect="off"
                       autoCapitalize="none"
                       placeholder="Ej. 982000345678901"
-                      className={`w-full bg-neutral-50 border rounded-2xl pl-4 pr-12 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 transition-all ${
+                      className={`w-full bg-neutral-50 border rounded-2xl pl-4 ${chipNumberValue ? 'pr-20' : 'pr-12'} py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 transition-all ${
                         (duplicateChipAnimal && !isSubmitting && !isSaved)
                           ? 'border-red-500 focus:ring-red-200 bg-red-50/30 text-red-950 font-bold'
                           : 'border-neutral-200 focus:ring-[#1B4820]/20'
@@ -626,14 +775,26 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                     />
                   )}
                 />
-                <button
-                  type="button"
-                  onClick={() => setIsBarcodeScannerOpen(true)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-100/90 hover:bg-emerald-200 active:bg-emerald-300 active:scale-95 text-[#1B4820] border border-emerald-300/90 shadow-2xs transition-all cursor-pointer"
-                  title="Escanear código de barras con la cámara"
-                >
-                  <ScanBarcode className="w-4 h-4 stroke-[2.2]" />
-                </button>
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  {chipNumberValue && (
+                    <button
+                      type="button"
+                      onClick={() => setValue('chip_number', '', { shouldValidate: true, shouldDirty: true })}
+                      className="p-1 text-neutral-400 hover:text-neutral-600 transition-colors cursor-pointer"
+                      title="Borrar número de chip"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setIsBarcodeScannerOpen(true)}
+                    className="flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-100/90 hover:bg-emerald-200 active:bg-emerald-300 active:scale-95 text-[#1B4820] border border-emerald-300/90 shadow-2xs transition-all cursor-pointer"
+                    title="Escanear código de barras con la cámara"
+                  >
+                    <ScanBarcode className="w-4 h-4 stroke-[2.2]" />
+                  </button>
+                </div>
               </div>
 
               {duplicateChipAnimal && !isSubmitting && !isSaved && (
