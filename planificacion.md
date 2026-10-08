@@ -159,34 +159,13 @@ flowchart TD
 
 ---
 
-### 🚀 Parte 3 de 3: Dashboard Ejecutivo, Eventos en Inventario, Módulo de Obreros y Despliegue (En Progreso / Planificación)
-> **Objetivo**: Desarrollar la pantalla principal de Dashboard con analíticas y KPIs globales del rebaño, incorporar la sección de Eventos en Inventario para consulta y auditoría cronológica, construir el sistema de gestión de obreros/asistentes con roles y permisos acotados, y ejecutar el despliegue final en producción.
+### 🚀 Parte 3 de 3: Dashboard, Eventos en Inventario, Módulo de Obreros y Despliegue (En Planificación)
+> **Objetivo**: Desarrollar los módulos acordados para la Parte 3 de 3 (en espera de las especificaciones y requerimientos detallados por parte del usuario).
 
-- [ ] **1. Dashboard Central Ganadero (Métricas & KPIs en Vivo)**:
-  - Vista general ejecutiva del rebaño con carga offline instantánea vía IndexedDB (Dexie).
-  - Tarjetas de resumen métrico: total de animales, distribución por sexo (machos/hembras), desglose por categorías ganaderas (becerros, mautes, novillas, adultos) y estado (activos/inactivos).
-  - Indicadores de peso promedio del rebaño y comparativas de ganancia de peso.
-  - Resumen de actividades recientes: nacimientos del mes, tratamientos sanitarios aplicados y alertas de animales pendientes por pesar o revisar.
-  - Accesos rápidos hacia Inventario, Eventos, Fincas y Registro de Animal.
-  - Enlace al Dashboard en la barra de navegación lateral (`NavigationDrawer.jsx`) y ruta `/dashboard`.
-- [ ] **2. Apartado de Eventos en Inventario (Historial & Trazabilidad)**:
-  - Vista o pestaña especializada en Inventario dedicada a la consulta y seguimiento de eventos (`growth_events`, nacimientos, destetes, pesajes y cambios de estatus).
-  - Línea de tiempo cronológica con filtros por rango de fecha, tipo de evento, finca, potrero y animal específico.
-  - Trazabilidad y auditoría: visualización de qué usuario (administrador u obrero) registró el evento, fecha exacta de captura y detalles asociados.
-- [ ] **3. Modelo de Datos y Permisos de Obreros (Supabase & Dexie)**:
-  - Estructura relacional con campo `admin_id` en tablas maestras (ya aprovisionada en Supabase y Dexie).
-  - Asignación de roles de usuario (`Administrador` vs `Obrero/Encargado`).
-  - Restricciones de acceso y Row Level Security (RLS) para que el obrero solo acceda a los animales y fincas asignados por su administrador.
-- [ ] **4. Módulo de Gestión de Obreros en Frontend**:
-  - Panel administrativo para dar de alta obreros, asignar fincas y gestionar credenciales/estados.
-  - Adaptación de la navegación lateral según el rol del usuario autenticado (ocultando gestión sensible a obreros).
-- [ ] **5. Flujo Operativo de Campo para Obreros**:
-  - Permisos estrictos: captura de pesajes, registro de tratamientos sanitarios y reporte de partos, sin permisos de borrado de fincas ni configuración global.
-  - Registro de auditoría de creador/modificador en eventos.
-- [ ] **6. QA Final, Sincronización Concurrente y Despliegue en Producción**:
-  - Pruebas de sincronización offline-online concurrente entre Administrador y Obrero.
-  - Puesta a punto de PWA y Service Worker para producción.
-  - Despliegue definitivo en hosting cloud (Vercel / Supabase).
+- [ ] **Dashboard**
+- [ ] **Apartado de Eventos en Inventario**
+- [ ] **Módulo de Obreros**
+- [ ] **Despliegue en Producción**
 
 ---
 

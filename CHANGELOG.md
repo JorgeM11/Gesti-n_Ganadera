@@ -11,12 +11,12 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
   - Toda la adaptación de software queda 100% completada y probada (buffer anti-jitter de 200 ms, modo ráfaga, prevención de submits involuntarios por Enter, auto-selección al enfocar, sanitización de pegado, botones de borrado rápido en arete y chip, y búsqueda reactiva instantánea).
   - Pruebas físicas de campo en manga y calibración de hardware en pausa natural a la espera de recepción del dispositivo e informe del cliente.
 
-### Planificado e Iniciado (Parte 3 de 3: Dashboard, Eventos, Obreros y Despliegue)
+### Planificado e Iniciado (Parte 3 de 3)
 - **Apertura de la Parte 3 de 3 en Planificación ([`planificacion.md`](file:///C:/Users/joses/appganadera/gestion-ganadera/planificacion.md))**:
-  - **Dashboard Central Ganadero**: Pantalla de analíticas y KPIs globales en tiempo real (distribución por género, categorías de edad, promedios de peso, nacimientos del mes, tratamientos médicos y accesos rápidos operativos).
-  - **Apartado de Eventos en Inventario**: Sección especializada para visualización y seguimiento cronológico de eventos de crecimiento, pesajes, destetes y salud con filtros avanzados y auditoría.
-  - **Módulo de Obreros y Permisos**: Roles de usuario (`Administrador` vs `Obrero/Encargado`), aprovechamiento de `admin_id` en Supabase y Dexie, y permisos acotados de campo.
-  - **QA y Despliegue**: Pruebas de sincronización offline-online concurrente y despliegue final en producción.
+  - Dashboard
+  - Apartado de Eventos en Inventario
+  - Módulo de Obreros
+  - Despliegue en Producción
 
 ---
 
