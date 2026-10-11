@@ -423,7 +423,8 @@ export default function InventarioPage() {
     sex: [],
     status: [],
     category: [],
-    breed: []
+    breed: [],
+    observations: []
   });
 
   const allAnimals = useLiveQuery(
@@ -456,7 +457,7 @@ export default function InventarioPage() {
   };
 
   const clearFilters = () => {
-    setFilters({ sex: [], status: [], category: [], breed: [] });
+    setFilters({ sex: [], status: [], category: [], breed: [], observations: [] });
     setSelectedFarmFilter('ALL');
     setSelectedPotreroFilter('ALL');
     setSelectedOwnerFilter('ALL');
@@ -467,6 +468,7 @@ export default function InventarioPage() {
     filters.status.length + 
     filters.category.length + 
     filters.breed.length + 
+    filters.observations.length + 
     (selectedFarmFilter !== 'ALL' ? 1 : 0) +
     (selectedPotreroFilter !== 'ALL' ? 1 : 0) +
     (selectedOwnerFilter !== 'ALL' ? 1 : 0);
@@ -525,7 +527,12 @@ export default function InventarioPage() {
       const category = getAnimalAgeCategory(a);
       const matchesCategory = filters.category.length === 0 || filters.category.includes(category);
 
-      return matchesSearch && matchesSex && matchesStatus && matchesCategory && matchesFarm && matchesPotrero && matchesOwner && matchesBreed;
+      const hasObs = Boolean(a.observations && a.observations.trim().length > 0);
+      const matchesObservations = filters.observations.length === 0 ||
+        (filters.observations.includes('with') && hasObs) ||
+        (filters.observations.includes('without') && !hasObs);
+
+      return matchesSearch && matchesSex && matchesStatus && matchesCategory && matchesFarm && matchesPotrero && matchesOwner && matchesBreed && matchesObservations;
     });
 
     // Ordenar: Los de 8 meses resaltados van de primeros
@@ -561,6 +568,11 @@ export default function InventarioPage() {
       if (type === 'category') {
         const cat = getAnimalAgeCategory(a);
         return cat === value;
+      }
+      if (type === 'observations') {
+        const hasObs = Boolean(a.observations && a.observations.trim().length > 0);
+        if (value === 'with') return hasObs;
+        if (value === 'without') return !hasObs;
       }
       return false;
     }).length;
@@ -908,6 +920,28 @@ export default function InventarioPage() {
                       onChange={() => toggleFilter('category', cat.id)} 
                     />
                   ))}
+                </div>
+              </div>
+
+              {/* 6. Observaciones */}
+              <div>
+                <h4 className="text-sm font-black text-neutral-900 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-amber-600 stroke-[2.5]" />
+                  <span>Observaciones</span>
+                </h4>
+                <div className="space-y-0.5">
+                  <FilterCheckbox 
+                    label="Con observaciones" 
+                    count={getCount('observations', 'with')} 
+                    checked={filters.observations.includes('with')} 
+                    onChange={() => toggleFilter('observations', 'with')} 
+                  />
+                  <FilterCheckbox 
+                    label="Sin observaciones" 
+                    count={getCount('observations', 'without')} 
+                    checked={filters.observations.includes('without')} 
+                    onChange={() => toggleFilter('observations', 'without')} 
+                  />
                 </div>
               </div>
             </div>
@@ -1291,6 +1325,14 @@ export default function InventarioPage() {
                               <span className="text-base font-black text-[#1B4820] truncate">
                                 {animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'Sin arete'))}
                               </span>
+                              {Boolean(animal.observations && animal.observations.trim()) && (
+                                <span 
+                                  title={`Observación: ${animal.observations}`} 
+                                  className="inline-flex items-center justify-center p-1 rounded-md bg-amber-50 text-amber-700 border border-amber-300/80 shadow-2xs shrink-0"
+                                >
+                                  <FileText className="w-3 h-3 text-amber-700 stroke-[2.5]" />
+                                </span>
+                              )}
                               {isHighlight && (
                                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase bg-amber-400 text-amber-950 shrink-0">
                                   <AlertCircle className="w-2.5 h-2.5" />
@@ -1372,6 +1414,14 @@ export default function InventarioPage() {
                               <span className="text-lg sm:text-xl font-black text-[#1B4820] truncate">
                                 {animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'Sin arete'))}
                               </span>
+                              {Boolean(animal.observations && animal.observations.trim()) && (
+                                <span 
+                                  title={`Observación: ${animal.observations}`} 
+                                  className="inline-flex items-center justify-center p-1 rounded-md bg-amber-50 text-amber-700 border border-amber-300/80 shadow-2xs shrink-0"
+                                >
+                                  <FileText className="w-3.5 h-3.5 text-amber-700 stroke-[2.5]" />
+                                </span>
+                              )}
                               {animal.name && animal.number && (
                                 <span className="text-xs sm:text-sm font-bold text-neutral-600 truncate">
                                   "{animal.name}"
