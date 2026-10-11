@@ -22,7 +22,8 @@ import {
   ScanBarcode,
   LayoutGrid,
   List,
-  ChevronRight
+  ChevronRight,
+  FileText
 } from 'lucide-react';
 import { FaMars, FaVenus } from 'react-icons/fa6';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -1186,11 +1187,22 @@ export default function InventarioPage() {
                           </div>
                         </div>
 
-                        {/* Fila Inferior: Peso (como estaba antes) */}
+                        {/* Fila Inferior: Peso y Observaciones */}
                         <div className="pt-2 sm:pt-3 border-t border-neutral-100 flex items-center justify-between gap-1 sm:gap-2">
-                          <div className="flex items-center text-neutral-800 bg-neutral-100/90 border border-neutral-200/70 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl">
-                            <Scale className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5 text-[#1B4820]" strokeWidth={2.5} />
-                            <span className="text-[11px] sm:text-xs font-black tracking-tight">{formatWeight(animal.last_weight_kg)}</span>
+                          <div className="flex items-center gap-1.5 sm:gap-2">
+                            <div className="flex items-center text-neutral-800 bg-neutral-100/90 border border-neutral-200/70 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl">
+                              <Scale className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5 text-[#1B4820]" strokeWidth={2.5} />
+                              <span className="text-[11px] sm:text-xs font-black tracking-tight">{formatWeight(animal.last_weight_kg)}</span>
+                            </div>
+
+                            {Boolean(animal.observations && animal.observations.trim()) && (
+                              <div 
+                                className="flex items-center justify-center p-1 sm:p-1.5 rounded-lg sm:rounded-xl bg-amber-50 text-amber-700 border border-amber-300/80 shadow-2xs shrink-0"
+                                title={`Observación: ${animal.observations}`}
+                              >
+                                <FileText className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-700 stroke-[2.5]" />
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

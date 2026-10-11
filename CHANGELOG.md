@@ -20,6 +20,8 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
   - En monitores de escritorio (`lg:`), la lista se alinea con una cabecera de 8 columnas optimizada: Arete / Nombre, Microchip, Sexo, Estado, Edad, Campo y Dueño.
 - **Estado de Carga Adaptativo ([`AnimalCardSkeleton.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalCardSkeleton.jsx))**:
   - Esqueleto de lista alineado a la estructura de 2 niveles compactos.
+- **Indicador de Observaciones en Vista Tarjetas ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - Incorporado un icono visual (`FileText` en tono ámbar) ubicado inmediatamente al lado de la píldora de peso en las tarjetas de inventario cuando el animal cuenta con observaciones o notas registradas, con tooltip accesible para consultar la observación al posar el cursor.
 - **Integridad Absoluta de Datos**:
   - La base de datos en Supabase y el almacenamiento IndexedDB local se mantienen 100% intactos y protegidos sin alteraciones.
 
