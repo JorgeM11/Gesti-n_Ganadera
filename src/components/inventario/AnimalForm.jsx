@@ -609,12 +609,13 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
 
                         // 2. Teclas alfanuméricas
                         if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                          if (diff > 200 || !numberScannerRef.current.buffer) {
+                          // Tolerancia de hasta 300ms entre caracteres para ráfagas Bluetooth
+                          if (diff > 300 || !numberScannerRef.current.buffer) {
                             numberScannerRef.current.buffer = e.key;
                             numberScannerRef.current.isScanning = false;
                           } else {
                             numberScannerRef.current.buffer += e.key;
-                            if (diff < 80) {
+                            if (diff < 100) {
                               numberScannerRef.current.isScanning = true;
                             }
                           }
@@ -624,13 +625,15 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                           }
 
                           if (numberScannerRef.current.isScanning) {
+                            // Timeout de 280ms de silencio total para no cortar transmisiones en curso
                             numberScannerRef.current.timer = setTimeout(() => {
                               const code = numberScannerRef.current.buffer.trim();
+                              // Protección: no despachar códigos truncados
                               if (code.length >= 2) {
                                 handleNumberInputScan(code);
                               }
                               resetNumberScanner();
-                            }, 120);
+                            }, 280);
                           }
                         }
                       }}
@@ -722,7 +725,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                           const inputCode = e.target.value.trim();
                           resetChipScanner();
 
-                          const finalCode = bufferCode.length >= 2 ? bufferCode : inputCode;
+                          const finalCode = bufferCode.length >= 3 ? bufferCode : inputCode;
                           if (finalCode) {
                             handleChipInputScan(finalCode);
                           }
@@ -731,12 +734,13 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
 
                         // 2. Teclas alfanuméricas
                         if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-                          if (diff > 200 || !chipScannerRef.current.buffer) {
+                          // Tolerancia de hasta 300ms entre caracteres para paquetes Bluetooth HID
+                          if (diff > 300 || !chipScannerRef.current.buffer) {
                             chipScannerRef.current.buffer = e.key;
                             chipScannerRef.current.isScanning = false;
                           } else {
                             chipScannerRef.current.buffer += e.key;
-                            if (diff < 80) {
+                            if (diff < 100) {
                               chipScannerRef.current.isScanning = true;
                             }
                           }
@@ -745,14 +749,27 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                             clearTimeout(chipScannerRef.current.timer);
                           }
 
+                          // Si detectamos los 15 dígitos completos del microchip ISO:
+                          const currentBuf = chipScannerRef.current.buffer.trim();
+                          if (/^\d{15}$/.test(currentBuf)) {
+                            // Breve ventana de 50ms por si el lector envía el Enter final
+                            chipScannerRef.current.timer = setTimeout(() => {
+                              handleChipInputScan(currentBuf);
+                              resetChipScanner();
+                            }, 50);
+                            return;
+                          }
+
+                          // Respaldo de silencio: 280ms para evitar cortar secuencias con latencia
                           if (chipScannerRef.current.isScanning) {
                             chipScannerRef.current.timer = setTimeout(() => {
                               const code = chipScannerRef.current.buffer.trim();
-                              if (code.length >= 2) {
+                              // Protección: no despachar códigos parciales o truncados
+                              if (code.length >= 4) {
                                 handleChipInputScan(code);
                               }
                               resetChipScanner();
-                            }, 120);
+                            }, 280);
                           }
                         }
                       }}

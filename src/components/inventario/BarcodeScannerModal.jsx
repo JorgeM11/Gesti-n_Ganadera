@@ -80,6 +80,14 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
     } catch (err) {
       console.warn('Error al detener escáner:', err);
     } finally {
+      if (candidateRef.current?.timer) {
+        clearTimeout(candidateRef.current.timer);
+        candidateRef.current.timer = null;
+      }
+      if (candidateRef.current) {
+        candidateRef.current.code = '';
+        candidateRef.current.count = 0;
+      }
       scannerRef.current = null;
       isStoppingRef.current = false;
       setIsTorchOn(false);
@@ -87,26 +95,128 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
     }
   }, []);
 
-  // Manejo de código detectado (estable, sin dependencias volátiles)
-  const handleDecoded = useCallback(async (decodedText) => {
-    if (!decodedText || isStoppingRef.current) return;
-    const cleanCode = decodedText.trim();
-    if (!cleanCode) return;
+  // Guard de integridad y confirmación multi-frame para evitar códigos parciales o incompletos
+  const candidateRef = useRef({
+    code: '',
+    count: 0,
+    firstSeen: 0,
+    timer: null
+  });
 
-    // Feedback inmediato
-    setLastScannedCode(cleanCode);
+  const resetCandidate = useCallback(() => {
+    if (candidateRef.current.timer) {
+      clearTimeout(candidateRef.current.timer);
+      candidateRef.current.timer = null;
+    }
+    candidateRef.current.code = '';
+    candidateRef.current.count = 0;
+    candidateRef.current.firstSeen = 0;
+  }, []);
+
+  const completeScanSuccess = useCallback(async (finalCode) => {
+    if (isStoppingRef.current) return;
+    resetCandidate();
+
+    setLastScannedCode(finalCode);
     playBeep();
     triggerVibrate();
 
-    // Detener escáner y entregar resultado
     await stopScanner();
     if (onScanSuccessRef.current) {
-      onScanSuccessRef.current(cleanCode);
+      onScanSuccessRef.current(finalCode);
     }
     if (onCloseRef.current) {
       onCloseRef.current();
     }
-  }, [playBeep, triggerVibrate, stopScanner]);
+  }, [playBeep, triggerVibrate, stopScanner, resetCandidate]);
+
+  // Manejo de código detectado con validación de estabilidad óptica y prevención de lecturas parciales
+  const handleDecoded = useCallback((decodedText) => {
+    if (!decodedText || isStoppingRef.current) return;
+    const cleanCode = decodedText.trim();
+
+    // 1. Descartar códigos de menos de 4 caracteres (ruido óptico o artefactos de enfoque)
+    if (cleanCode.length < 4) return;
+
+    const now = Date.now();
+    const isIso15 = /^\d{15}$/.test(cleanCode);
+    const candidate = candidateRef.current;
+
+    // 2. Si el código nuevo es un microchip ISO completo de 15 dígitos:
+    if (isIso15) {
+      // Si coincide con el fotograma anterior, confirmación inmediata
+      if (candidate.code === cleanCode) {
+        completeScanSuccess(cleanCode);
+        return;
+      }
+      // O si es la primera vez que detecta los 15 dígitos, le damos prioridad absoluta
+      candidate.code = cleanCode;
+      candidate.count = 1;
+      candidate.firstSeen = now;
+
+      if (candidate.timer) clearTimeout(candidate.timer);
+      candidate.timer = setTimeout(() => {
+        completeScanSuccess(cleanCode);
+      }, 70);
+      return;
+    }
+
+    // 3. Si el código actual es más largo y contiene/inicia con el candidato anterior
+    // (ejemplo: fotograma anterior leyó '98200' y este fotograma leyó '982000365829104')
+    if (candidate.code && cleanCode.startsWith(candidate.code) && cleanCode.length > candidate.code.length) {
+      // Actualizamos inmediatamente al código más completo (el anterior era parcial)
+      candidate.code = cleanCode;
+      candidate.count = 1;
+      candidate.firstSeen = now;
+      if (candidate.timer) clearTimeout(candidate.timer);
+
+      if (/^\d{15}$/.test(cleanCode)) {
+        candidate.timer = setTimeout(() => {
+          completeScanSuccess(cleanCode);
+        }, 70);
+      }
+      return;
+    }
+
+    // 4. Si el fotograma nuevo leyó algo más corto que nuestro candidato ya registrado,
+    // ignorarlo porque es una lectura parcial o desenfocada
+    if (candidate.code && candidate.code.startsWith(cleanCode) && cleanCode.length < candidate.code.length) {
+      return;
+    }
+
+    // 5. Si coincide exactamente con el candidato
+    if (candidate.code === cleanCode) {
+      candidate.count += 1;
+
+      // Si ya se ha confirmado en al menos 2 fotogramas consecutivos
+      if (candidate.count >= 2) {
+        // Si es puramente numérico pero con menos de 15 dígitos (ej. 8 a 14 dígitos),
+        // dar una breve ventana de 180ms por si el sensor enfoca el resto de un microchip de 15 dígitos
+        const isPartialNum = /^\d+$/.test(cleanCode) && cleanCode.length < 15;
+        if (isPartialNum && candidate.count < 4) {
+          if (!candidate.timer) {
+            candidate.timer = setTimeout(() => {
+              completeScanSuccess(cleanCode);
+            }, 180);
+          }
+          return;
+        }
+
+        // Confirmado y estable: despacho seguro
+        completeScanSuccess(cleanCode);
+        return;
+      }
+    } else {
+      // Código nuevo distinto: establecer como nuevo candidato a verificar
+      candidate.code = cleanCode;
+      candidate.count = 1;
+      candidate.firstSeen = now;
+      if (candidate.timer) {
+        clearTimeout(candidate.timer);
+        candidate.timer = null;
+      }
+    }
+  }, [completeScanSuccess]);
 
   // Inspeccionar capacidades de la cámara (linterna)
   const checkTorchCapability = useCallback(() => {

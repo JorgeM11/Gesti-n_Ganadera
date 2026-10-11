@@ -4,6 +4,24 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.5.2-anti-truncated-scan-protection] - 2026-10-11
+
+### Protegido y Blindado (Escaneo por Cámara y Escáner Físico / RFID)
+- **Protección Anti-Lectura Truncada en Escáner de Cámara ([`BarcodeScannerModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/BarcodeScannerModal.jsx))**:
+  - **Confirmación Multi-Fotograma**: Sustituido el despacho inmediato al primer fotograma por un sistema de compuerta y estabilidad óptica que exige concordancia y estabilidad antes de enviar el valor.
+  - **Detección Dinámica de Prefijos y Auto-Reemplazo**: Si la cámara empieza capturando una parte del código de barras al enfocar rápidamente y en el siguiente fotograma captura la cadena completa que contiene dicho prefijo (ej. de 6 dígitos a los 15 dígitos completos), el sistema promociona automáticamente la lectura más larga y completa.
+  - **Descarte de Fragmentos y Ruido Óptico**: Se rechazan lecturas espurias de menos de 4 caracteres y lecturas truncadas que sean subcadenas cortas de un código ya detectado.
+  - **Reconocimiento Prioritario de Microchips ISO**: Algoritmo optimizado para microchips ganaderos estándar de 15 dígitos numéricos (`/^\d{15}$/`), garantizando lectura íntegra y sin cortes.
+- **Blindaje de Buffer para Escáner Físico / Bluetooth HID ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx), [`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - **Tolerancia a Jitter Bluetooth Ampliada**: Se incrementó la tolerancia entre caracteres de 200 ms a 300 ms para absorber pausas entre paquetes HID en lectores inalámbricos sin reiniciar prematuramente el buffer.
+  - **Temporizador de Silencio Prolongado**: El tiempo de espera para escáneres que no envían la tecla `Enter` se amplió de 120 ms a 280 ms, impidiendo que el buffer se vacíe a mitad de una ráfaga.
+  - **Detección Directa de Ráfaga ISO de 15 Dígitos**: Al acumularse los 15 dígitos continuos de un microchip, se despacha tras una micro-ventana de 50 ms.
+  - **Filtro Mínimo de Caracteres**: Bloquea el procesamiento de fragmentos o pulsaciones accidentales incompletas.
+- **Integridad Absoluta de Datos**:
+  - Datos de Supabase y esquemas locales de Dexie preservados al 100% intactos.
+
+---
+
 ## [1.5.1-inventory-dual-view-cards-list] - 2026-10-11
 
 ### Añadido y Perfeccionado (Vistas de Inventario: Tarjetas y Lista)

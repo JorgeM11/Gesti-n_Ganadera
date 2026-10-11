@@ -186,15 +186,15 @@ const SearchInput = ({ isMobile = false, searchTerm, setSearchTerm, onOpenFilter
 
           // 2. Manejo de caracteres alfanuméricos
           if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-            // Umbral entre caracteres: si pasaron más de 200ms, es una nueva secuencia o tipeo humano pausado
-            if (diff > 200 || !searchScannerRef.current.buffer) {
+            // Tolerancia de hasta 300ms entre caracteres para ráfagas Bluetooth HID con fluctuaciones
+            if (diff > 300 || !searchScannerRef.current.buffer) {
               searchScannerRef.current.buffer = e.key;
               searchScannerRef.current.isScanning = false;
             } else {
               // Ráfaga consecutiva: acumular caracteres sin reiniciar el buffer
               searchScannerRef.current.buffer += e.key;
-              // Si la velocidad es menor a 80ms entre teclas, activar modo escaneo continuo
-              if (diff < 80) {
+              // Si la velocidad es menor a 100ms entre teclas, activar modo escaneo continuo
+              if (diff < 100) {
                 searchScannerRef.current.isScanning = true;
               }
             }
@@ -204,14 +204,26 @@ const SearchInput = ({ isMobile = false, searchTerm, setSearchTerm, onOpenFilter
               clearTimeout(searchScannerRef.current.timer);
             }
 
+            // Si detectamos los 15 dígitos completos del microchip ISO, finalizar inmediatamente con margen mínimo
+            const currentBuf = searchScannerRef.current.buffer.trim();
+            if (/^\d{15}$/.test(currentBuf)) {
+              searchScannerRef.current.timer = setTimeout(() => {
+                handleSearchScan(currentBuf);
+                resetScanner();
+              }, 50);
+              return;
+            }
+
+            // Respaldo de silencio de 280ms para evitar cortar secuencias con latencia de transmisión
             if (searchScannerRef.current.isScanning) {
               searchScannerRef.current.timer = setTimeout(() => {
                 const code = searchScannerRef.current.buffer.trim();
+                // Protección: descartar fragmentos o lecturas espurias de menos de 2 caracteres
                 if (code.length >= 2) {
                   handleSearchScan(code);
                 }
                 resetScanner();
-              }, 120);
+              }, 280);
             }
           }
         }}
