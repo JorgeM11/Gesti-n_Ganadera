@@ -1076,6 +1076,12 @@ export default function InventarioPage() {
                   </span>
                 );
               })}
+              {filters.observations.map(obs => (
+                <span key={obs} className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 shadow-2xs">
+                  <span>{obs === 'with' ? 'Con observaciones' : 'Sin observaciones'}</span>
+                  <button type="button" onClick={() => toggleFilter('observations', obs)} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
+                </span>
+              ))}
             </div>
           </div>
         )}

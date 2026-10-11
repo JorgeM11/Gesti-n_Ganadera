@@ -12,7 +12,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
   - Ofrece opciones con contadores en tiempo real:
     - **Con observaciones**: Filtra y visualiza exclusivamente los animales que tienen notas u observaciones registradas.
     - **Sin observaciones**: Muestra los animales sin observaciones pendientes.
-  - Integrado al contador dinámico de filtros activos (`activeFiltersCount`) y al botón de restablecer/borrar filtros (`clearFilters`).
+  - Integrado al contador dinámico de filtros activos (`activeFiltersCount`), a la barra de píldoras de filtros activos (`pills` con botón de eliminación rápida `×`) y al botón de restablecer/borrar filtros (`clearFilters`).
 - **Icono Visual de Observaciones Unificado en Vista Lista ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
   - Se replicó el distintivo visual `FileText` ámbar junto al identificador del animal tanto en la vista de escritorio como en la vista móvil de tipo lista, garantizando coherencia visual inmediata con la vista tarjetas.
 - **Integridad Absoluta de Datos**:
