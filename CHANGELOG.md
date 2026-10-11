@@ -4,6 +4,24 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.5.1-inventory-dual-view-cards-list] - 2026-10-11
+
+### Añadido y Perfeccionado (Vistas de Inventario: Tarjetas y Lista)
+- **Doble Modalidad de Vista en Catálogo de Inventario ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - Incorporada nueva **Vista Tipo Lista** sin imágenes, orientada a una navegación ultrarrápida, cómoda y enfocada en métricas esenciales.
+  - Añadido selector segmentado / conmutador con iconos `LayoutGrid` (Tarjetas) y `List` (Lista), acompañado del contador total y filtrado de animales.
+  - Persistencia permanente de la preferencia del usuario en `localStorage` (`ganadera_inventory_view_mode`), conservándose al recargar o cerrar la aplicación.
+- **Diseño Móvil Cómodo sin Desplazamiento Horizontal ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - En smartphones y tablets (`< lg`), la vista tipo lista se presenta como filas compactas estructuradas en 3 niveles (Arete/Nombre/Badges, métricas clave Chip/Raza/Edad/Peso en cuadrícula de 2 columnas, y Ubicación Finca•Potrero junto al Dueño), eliminando la necesidad de scroll horizontal y garantizando lectura 100% fluida en pantallas pequeñas.
+- **Visualización Tabular en Pantallas de Escritorio ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - En monitores de escritorio (`lg:`), la lista se alinea con una cabecera de columnas para escanear decenas de animales en un solo vistazo: Arete/Nombre, Microchip, Sexo, Estado, Raza, Edad, Peso, Finca/Potrero y Dueño.
+- **Estado de Carga Adaptativo ([`AnimalCardSkeleton.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalCardSkeleton.jsx))**:
+  - Soporte de esqueletos de carga diferenciados para vista de tarjetas y vista de lista.
+- **Integridad Absoluta de Datos**:
+  - La base de datos en Supabase y el almacenamiento IndexedDB local se mantienen 100% intactos y protegidos sin alteraciones.
+
+---
+
 ## [1.5.0-phase3-dashboard-events-obreros-planning] - 2026-10-07
 
 ### Culminado (Cierre de la Parte 2 de 3: Compatibilidad RFID en Software)

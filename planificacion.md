@@ -182,4 +182,5 @@ flowchart TD
 | **Parte 1: Refinamientos Finales** | 2026-10-06 | **Completado** | Antigravity AI & Usuario | Arete y chip alternativos esenciales, chip único con alerta reactiva y bloqueo, sección raza bajo ubicación y filtros por edad ganadera (becerros, mautes, novillas, adultos). |
 | **Parte 2: Cierre de Software Escáner RFID** | 2026-10-07 | **Completado** | Antigravity AI & Usuario | Software 100% adaptado con buffer de 200ms anti-jitter, protección contra pérdida de dígitos, borrado rápido y búsqueda instantánea. Culminada a espera de observaciones de campo. |
 | **Parte 3 de 3: Dashboard, Eventos, Obreros y Despliegue** | 2026-10-07 | **En progreso** | Antigravity AI & Usuario | Incorporados formalmente a la Parte 3: Dashboard central ganadero, apartado de eventos en inventario, módulo de obreros y despliegue a producción. |
+| **Corrección Visual: Vistas Tarjetas / Lista** | 2026-10-11 | **Completado** | Antigravity AI & Usuario | Incorporada vista tipo lista sin imágenes, responsive sin scroll horizontal en móvil, conmutador con persistencia en localStorage y esqueletos adaptados. |
 

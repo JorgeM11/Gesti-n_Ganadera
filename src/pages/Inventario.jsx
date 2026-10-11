@@ -19,7 +19,10 @@ import {
   Cpu,
   UserCheck,
   Info,
-  ScanBarcode
+  ScanBarcode,
+  LayoutGrid,
+  List,
+  ChevronRight
 } from 'lucide-react';
 import { FaMars, FaVenus } from 'react-icons/fa6';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -322,6 +325,24 @@ export default function InventarioPage() {
   const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
   const [isPotreroModalOpen, setIsPotreroModalOpen] = useState(false);
   const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
+
+  // --- MODO DE VISTA: TARJETAS (cards) O LISTA (list) CON PERSISTENCIA ---
+  const [viewMode, setViewMode] = useState(() => {
+    try {
+      return localStorage.getItem('ganadera_inventory_view_mode') || 'cards';
+    } catch {
+      return 'cards';
+    }
+  });
+
+  const handleViewModeChange = (mode) => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem('ganadera_inventory_view_mode', mode);
+    } catch (e) {
+      console.warn('No se pudo guardar la preferencia de vista en localStorage:', e);
+    }
+  };
 
   // --- ESTADO PARA NOTIFICACIONES DE CONFIRMACIÓN (TOAST) ---
   const [toast, setToast] = useState(null);
@@ -1014,144 +1035,418 @@ export default function InventarioPage() {
 
         {/* ESTADO DE CARGA: SKELETON */}
         {allAnimals === undefined ? (
-          <AnimalCardSkeleton count={8} />
+          <AnimalCardSkeleton count={8} viewMode={viewMode} />
         ) : paginatedAnimals.length > 0 ? (
           <>
-            {/* GRID DE CARDS ORDENADAS Y PROPORCIONADAS (2 COLUMNAS EN MÓVIL) */}
-            <motion.div
-              layout
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6"
-            >
-              {paginatedAnimals.map((animal) => {
-                const isHighlight = is8MonthsOld(animal);
+            {/* TOOLBAR SUPERIOR: CONTEO DE RESULTADOS Y SELECTOR DE VISTA */}
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xs sm:text-sm font-bold text-neutral-600">
+                  <span className="text-neutral-900 font-black">{filteredAnimals.length}</span> {filteredAnimals.length === 1 ? 'animal' : 'animales'}
+                  {allAnimals && filteredAnimals.length !== allAnimals.length && (
+                    <span className="text-neutral-400 font-medium ml-1">
+                      (de {allAnimals.length})
+                    </span>
+                  )}
+                </span>
+              </div>
 
-                const CardContent = (
-                  <motion.article 
-                    whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                    className={`relative bg-white rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full cursor-pointer group border-2 ${
-                      isHighlight 
-                        ? 'border-amber-400 shadow-amber-400/20 shadow-lg' 
-                        : 'border-neutral-200/80 hover:border-neutral-300'
-                    }`}
-                  >
-                    {/* Alerta Visual de 8 Meses */}
-                    {isHighlight && (
-                      <div className="w-full bg-amber-400 text-amber-950 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-center py-1 sm:py-1.5 z-20 flex items-center justify-center gap-1 sm:gap-1.5 shadow-xs">
-                        <AlertCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                        <span>8 Meses Cumplidos</span>
-                      </div>
-                    )}
+              {/* Selector de modo de vista: Tarjetas vs Lista */}
+              <div className="inline-flex items-center bg-white border border-neutral-200/90 rounded-2xl p-1 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange('cards')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    viewMode === 'cards'
+                      ? 'bg-[#1B4820] text-white shadow-xs'
+                      : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                  }`}
+                  title="Vista Cuadrícula / Tarjetas"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
+                  <span className="hidden sm:inline">Tarjetas</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleViewModeChange('list')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    viewMode === 'list'
+                      ? 'bg-[#1B4820] text-white shadow-xs'
+                      : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                  }`}
+                  title="Vista Lista (sin imágenes)"
+                >
+                  <List className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
+                  <span className="hidden sm:inline">Lista</span>
+                </button>
+              </div>
+            </div>
 
-                    {/* SECCIÓN DE IMAGEN */}
-                    <div className="relative aspect-[4/3] w-full bg-neutral-100 overflow-hidden">
-                      <AnimalImage
-                        photoPath={animal.photo_path}
-                        photoBlob={animal.photo_blob}
-                        alt={`Arete #${animal.number}`}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
+            {viewMode === 'cards' ? (
+              /* GRID DE CARDS ORDENADAS Y PROPORCIONADAS (2 COLUMNAS EN MÓVIL) */
+              <motion.div
+                layout
+                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6"
+              >
+                {paginatedAnimals.map((animal) => {
+                  const isHighlight = is8MonthsOld(animal);
 
-                      {/* Barra Superior de Badges Alineados (Género y Activo/Inactivo) */}
-                      <div className="absolute top-2 inset-x-2 sm:top-2.5 sm:inset-x-2.5 flex items-center justify-between z-10 pointer-events-none gap-1.5">
-                        {/* Pill de Género */}
-                        <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none ${
-                          animal.sex === 'Hembra' ? 'bg-pink-600/90' : 'bg-blue-700/90'
-                        }`}>
-                          {animal.sex === 'Hembra' ? (
-                            <FaVenus className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
-                          ) : (
-                            <FaMars className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
-                          )}
-                          <span>{animal.sex || 'Bovino'}</span>
-                        </span>
-
-                        {/* Pill de Status (Activo / Inactivo) */}
-                        <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none ${
-                          animal.status === 'Inactivo' ? 'bg-neutral-800/85' : 'bg-emerald-600/90'
-                        }`}>
-                          {animal.status === 'Inactivo' ? (
-                            <XCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-300 shrink-0" />
-                          ) : (
-                            <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-200 shrink-0" />
-                          )}
-                          <span>{animal.status || 'Activo'}</span>
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* SECCIÓN DE INFORMACIÓN */}
-                    <div className="p-3 sm:p-5 flex flex-col justify-between flex-1 gap-2 sm:gap-3">
-                      <div>
-                        {/* Código de Arete */}
-                        <div className="mb-1 sm:mb-1.5">
-                          <h2 
-                            className="text-base sm:text-lg font-black text-[#1B4820] leading-tight truncate"
-                          >
-                            {animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'Sin arete'))}
-                          </h2>
+                  const CardContent = (
+                    <motion.article 
+                      whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                      className={`relative bg-white rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full cursor-pointer group border-2 ${
+                        isHighlight 
+                          ? 'border-amber-400 shadow-amber-400/20 shadow-lg' 
+                          : 'border-neutral-200/80 hover:border-neutral-300'
+                      }`}
+                    >
+                      {/* Alerta Visual de 8 Meses */}
+                      {isHighlight && (
+                        <div className="w-full bg-amber-400 text-amber-950 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-center py-1 sm:py-1.5 z-20 flex items-center justify-center gap-1 sm:gap-1.5 shadow-xs">
+                          <AlertCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                          <span>8 Meses Cumplidos</span>
                         </div>
+                      )}
 
-                        {/* Chip (solo el dato) */}
-                        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-neutral-600 py-0.5 truncate">
-                          <Cpu className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                          <span className="truncate font-bold text-neutral-900">{animal.chip_number || 'Sin chip'}</span>
-                        </div>
+                      {/* SECCIÓN DE IMAGEN */}
+                      <div className="relative aspect-[4/3] w-full bg-neutral-100 overflow-hidden">
+                        <AnimalImage
+                          photoPath={animal.photo_path}
+                          photoBlob={animal.photo_blob}
+                          alt={`Arete #${animal.number}`}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
 
-                        {/* Raza (solo el dato) */}
-                        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-semibold text-neutral-700 py-0.5 truncate">
-                          <Dna className="w-3.5 h-3.5 text-[#1B4820] shrink-0" />
-                          <span className="truncate">{animal.breed || 'Sin raza'}</span>
-                        </div>
+                        {/* Barra Superior de Badges Alineados (Género y Activo/Inactivo) */}
+                        <div className="absolute top-2 inset-x-2 sm:top-2.5 sm:inset-x-2.5 flex items-center justify-between z-10 pointer-events-none gap-1.5">
+                          {/* Pill de Género */}
+                          <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none ${
+                            animal.sex === 'Hembra' ? 'bg-pink-600/90' : 'bg-blue-700/90'
+                          }`}>
+                            {animal.sex === 'Hembra' ? (
+                              <FaVenus className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+                            ) : (
+                              <FaMars className="w-2.5 h-2.5 sm:w-3 sm:h-3 shrink-0" />
+                            )}
+                            <span>{animal.sex || 'Bovino'}</span>
+                          </span>
 
-                        {/* Dueño */}
-                        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-neutral-600 py-0.5 truncate">
-                          <UserCheck className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                          <span className="truncate">
-                            Dueño: {animal.owner_id && ownerMap[animal.owner_id] ? ownerMap[animal.owner_id] : 'Sin dueño'}
+                          {/* Pill de Status (Activo / Inactivo) */}
+                          <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none ${
+                            animal.status === 'Inactivo' ? 'bg-neutral-800/85' : 'bg-emerald-600/90'
+                          }`}>
+                            {animal.status === 'Inactivo' ? (
+                              <XCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-300 shrink-0" />
+                            ) : (
+                              <CheckCircle2 className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-200 shrink-0" />
+                            )}
+                            <span>{animal.status || 'Activo'}</span>
                           </span>
                         </div>
-
-                        {/* Edad */}
-                        <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-neutral-600 py-0.5 truncate">
-                          <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                          <span className="truncate">
-                            Edad: {calculateAge(animal.birth_date)}
-                          </span>
-                        </div>
                       </div>
 
-                      {/* Fila Inferior: Peso (como estaba antes) */}
-                      <div className="pt-2 sm:pt-3 border-t border-neutral-100 flex items-center justify-between gap-1 sm:gap-2">
-                        <div className="flex items-center text-neutral-800 bg-neutral-100/90 border border-neutral-200/70 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl">
-                          <Scale className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5 text-[#1B4820]" strokeWidth={2.5} />
-                          <span className="text-[11px] sm:text-xs font-black tracking-tight">{formatWeight(animal.last_weight_kg)}</span>
+                      {/* SECCIÓN DE INFORMACIÓN */}
+                      <div className="p-3 sm:p-5 flex flex-col justify-between flex-1 gap-2 sm:gap-3">
+                        <div>
+                          {/* Código de Arete */}
+                          <div className="mb-1 sm:mb-1.5">
+                            <h2 
+                              className="text-base sm:text-lg font-black text-[#1B4820] leading-tight truncate"
+                            >
+                              {animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'Sin arete'))}
+                            </h2>
+                          </div>
+
+                          {/* Chip (solo el dato) */}
+                          <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-neutral-600 py-0.5 truncate">
+                            <Cpu className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            <span className="truncate font-bold text-neutral-900">{animal.chip_number || 'Sin chip'}</span>
+                          </div>
+
+                          {/* Raza (solo el dato) */}
+                          <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-semibold text-neutral-700 py-0.5 truncate">
+                            <Dna className="w-3.5 h-3.5 text-[#1B4820] shrink-0" />
+                            <span className="truncate">{animal.breed || 'Sin raza'}</span>
+                          </div>
+
+                          {/* Dueño */}
+                          <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-neutral-600 py-0.5 truncate">
+                            <UserCheck className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                            <span className="truncate">
+                              Dueño: {animal.owner_id && ownerMap[animal.owner_id] ? ownerMap[animal.owner_id] : 'Sin dueño'}
+                            </span>
+                          </div>
+
+                          {/* Edad */}
+                          <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-medium text-neutral-600 py-0.5 truncate">
+                            <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                            <span className="truncate">
+                              Edad: {calculateAge(animal.birth_date)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Fila Inferior: Peso (como estaba antes) */}
+                        <div className="pt-2 sm:pt-3 border-t border-neutral-100 flex items-center justify-between gap-1 sm:gap-2">
+                          <div className="flex items-center text-neutral-800 bg-neutral-100/90 border border-neutral-200/70 px-2 py-1 sm:px-2.5 sm:py-1.5 rounded-lg sm:rounded-xl">
+                            <Scale className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-1 sm:mr-1.5 text-[#1B4820]" strokeWidth={2.5} />
+                            <span className="text-[11px] sm:text-xs font-black tracking-tight">{formatWeight(animal.last_weight_kg)}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </motion.article>
-                );
+                    </motion.article>
+                  );
 
-                return (
-                  <motion.div
-                    layout
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    key={animal.id}
-                    onClick={() => {
-                      if (isHighlight) {
-                        const updated = [...viewedHighlights, animal.id];
-                        setViewedHighlights(updated);
-                        localStorage.setItem('viewed8Months', JSON.stringify(updated));
-                      }
-                    }}
-                  >
-                    <Link to={`/inventario/perfil?id=${animal.id}`} className="block h-full cursor-pointer">
-                      {CardContent}
-                    </Link>
-                  </motion.div>
-                );
-              })}
-            </motion.div>
+                  return (
+                    <motion.div
+                      layout
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      key={animal.id}
+                      onClick={() => {
+                        if (isHighlight) {
+                          const updated = [...viewedHighlights, animal.id];
+                          setViewedHighlights(updated);
+                          localStorage.setItem('viewed8Months', JSON.stringify(updated));
+                        }
+                      }}
+                    >
+                      <Link to={`/inventario/perfil?id=${animal.id}`} className="block h-full cursor-pointer">
+                        {CardContent}
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            ) : (
+              /* VISTA TIPO LISTA (SIN IMÁGENES, CÓMODA Y COMPACTA PARA MÓVIL Y ESCRITORIO) */
+              <div className="space-y-2.5">
+                {/* Cabecera de columnas exclusiva para Desktop */}
+                <div className="hidden lg:grid lg:grid-cols-[140px_130px_95px_95px_120px_95px_90px_1fr_120px_28px] gap-3 px-5 py-2.5 text-[11px] font-black uppercase tracking-wider text-neutral-500 bg-white/70 backdrop-blur-xs rounded-xl border border-neutral-200/60 select-none">
+                  <div>Arete / Nombre</div>
+                  <div>Microchip</div>
+                  <div>Sexo</div>
+                  <div>Estado</div>
+                  <div>Raza</div>
+                  <div>Edad</div>
+                  <div>Peso</div>
+                  <div>Finca / Potrero</div>
+                  <div>Dueño</div>
+                  <div></div>
+                </div>
+
+                {/* Filas de la Lista */}
+                {paginatedAnimals.map((animal) => {
+                  const isHighlight = is8MonthsOld(animal);
+
+                  return (
+                    <motion.div
+                      layout
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      key={animal.id}
+                      onClick={() => {
+                        if (isHighlight) {
+                          const updated = [...viewedHighlights, animal.id];
+                          setViewedHighlights(updated);
+                          localStorage.setItem('viewed8Months', JSON.stringify(updated));
+                        }
+                      }}
+                    >
+                      <Link
+                        to={`/inventario/perfil?id=${animal.id}`}
+                        className={`group block bg-white rounded-2xl border transition-all duration-200 shadow-2xs hover:shadow-md cursor-pointer ${
+                          isHighlight
+                            ? 'border-amber-400 bg-amber-50/20 hover:border-amber-500'
+                            : 'border-neutral-200/90 hover:border-[#1B4820]/40 hover:bg-neutral-50/60'
+                        } p-3.5 sm:p-4`}
+                      >
+                        {/* 1. Vista Desktop (Grid horizontal de columnas alineadas) */}
+                        <div className="hidden lg:grid lg:grid-cols-[140px_130px_95px_95px_120px_95px_90px_1fr_120px_28px] gap-3 items-center w-full">
+                          {/* Arete / Nombre */}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm font-black text-[#1B4820] truncate">
+                                {animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'Sin arete'))}
+                              </span>
+                              {isHighlight && (
+                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase bg-amber-400 text-amber-950 shrink-0">
+                                  <AlertCircle className="w-2.5 h-2.5" />
+                                  8M
+                                </span>
+                              )}
+                            </div>
+                            {animal.name && animal.number && (
+                              <span className="text-[11px] font-bold text-neutral-500 truncate block">
+                                {animal.name}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Microchip */}
+                          <div className="flex items-center gap-1.5 text-xs text-neutral-700 min-w-0">
+                            <Cpu className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                            <span className="font-semibold truncate text-[11px] text-neutral-900">
+                              {animal.chip_number || <span className="text-neutral-400 font-normal">Sin chip</span>}
+                            </span>
+                          </div>
+
+                          {/* Sexo */}
+                          <div>
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                              animal.sex === 'Hembra' ? 'bg-pink-100 text-pink-700 border border-pink-200' : 'bg-blue-100 text-blue-700 border border-blue-200'
+                            }`}>
+                              {animal.sex === 'Hembra' ? <FaVenus className="w-2.5 h-2.5" /> : <FaMars className="w-2.5 h-2.5" />}
+                              <span>{animal.sex || 'Bovino'}</span>
+                            </span>
+                          </div>
+
+                          {/* Estado */}
+                          <div>
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                              animal.status === 'Inactivo' ? 'bg-neutral-200 text-neutral-700 border border-neutral-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                            }`}>
+                              {animal.status === 'Inactivo' ? <XCircle className="w-2.5 h-2.5 text-red-500" /> : <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />}
+                              <span>{animal.status || 'Activo'}</span>
+                            </span>
+                          </div>
+
+                          {/* Raza */}
+                          <div className="flex items-center gap-1 text-xs text-neutral-700 min-w-0">
+                            <Dna className="w-3.5 h-3.5 text-[#1B4820] shrink-0" />
+                            <span className="truncate font-medium text-[11px]">{animal.breed || 'Sin raza'}</span>
+                          </div>
+
+                          {/* Edad */}
+                          <div className="flex items-center gap-1 text-xs text-neutral-600 min-w-0">
+                            <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                            <span className="truncate text-[11px]">{calculateAge(animal.birth_date)}</span>
+                          </div>
+
+                          {/* Peso */}
+                          <div className="flex items-center gap-1 text-xs font-black text-neutral-900 min-w-0">
+                            <Scale className="w-3.5 h-3.5 text-[#1B4820] stroke-[2.5] shrink-0" />
+                            <span className="text-[11px]">{formatWeight(animal.last_weight_kg)}</span>
+                          </div>
+
+                          {/* Finca / Potrero */}
+                          <div className="flex items-center gap-1 text-xs text-neutral-600 min-w-0">
+                            <Building2 className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                            <span className="truncate text-[11px]">
+                              {animal.farm_id && farmMap[animal.farm_id] ? farmMap[animal.farm_id] : 'Sin finca'}
+                              {animal.potrero_id && potreroMap[animal.potrero_id] && (
+                                <span className="text-neutral-400 font-normal"> • {potreroMap[animal.potrero_id]}</span>
+                              )}
+                            </span>
+                          </div>
+
+                          {/* Dueño */}
+                          <div className="flex items-center gap-1 text-xs text-neutral-600 min-w-0">
+                            <UserCheck className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                            <span className="truncate text-[11px]">
+                              {animal.owner_id && ownerMap[animal.owner_id] ? ownerMap[animal.owner_id] : 'Sin dueño'}
+                            </span>
+                          </div>
+
+                          {/* Flecha Chevron */}
+                          <div className="flex justify-end">
+                            <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-[#1B4820] group-hover:translate-x-0.5 transition-all" />
+                          </div>
+                        </div>
+
+                        {/* 2. Vista Móvil y Tablet (Fila compacta con 3 sub-filas sin scroll horizontal) */}
+                        <div className="lg:hidden flex flex-col gap-2 w-full">
+                          {/* Fila A: Arete, Nombre, 8M alert y Badges */}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-base sm:text-lg font-black text-[#1B4820] truncate">
+                                {animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'Sin arete'))}
+                              </span>
+                              {animal.name && animal.number && (
+                                <span className="text-xs sm:text-sm font-bold text-neutral-600 truncate">
+                                  "{animal.name}"
+                                </span>
+                              )}
+                              {isHighlight && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-400 text-amber-950 shrink-0">
+                                  <AlertCircle className="w-3 h-3" />
+                                  <span>8 Meses</span>
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                animal.sex === 'Hembra' ? 'bg-pink-100 text-pink-700 border border-pink-200' : 'bg-blue-100 text-blue-700 border border-blue-200'
+                              }`}>
+                                {animal.sex === 'Hembra' ? <FaVenus className="w-2.5 h-2.5" /> : <FaMars className="w-2.5 h-2.5" />}
+                                <span>{animal.sex || 'Bovino'}</span>
+                              </span>
+
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                                animal.status === 'Inactivo' ? 'bg-neutral-200 text-neutral-700 border border-neutral-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              }`}>
+                                {animal.status === 'Inactivo' ? <XCircle className="w-2.5 h-2.5 text-red-500" /> : <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />}
+                                <span>{animal.status || 'Activo'}</span>
+                              </span>
+
+                              <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-[#1B4820] group-hover:translate-x-0.5 transition-all ml-0.5" />
+                            </div>
+                          </div>
+
+                          {/* Fila B: Grid 2 columnas de datos clave (Chip, Raza, Edad, Peso) */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-1.5 text-xs text-neutral-600 pt-2 border-t border-neutral-100">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <Cpu className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                              <span className="font-semibold text-neutral-900 truncate text-[11px] sm:text-xs">
+                                {animal.chip_number || <span className="text-neutral-400 font-normal">Sin chip</span>}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <Dna className="w-3.5 h-3.5 text-[#1B4820] shrink-0" />
+                              <span className="font-medium text-neutral-700 truncate text-[11px] sm:text-xs">
+                                {animal.breed || 'Sin raza'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                              <span className="truncate text-[11px] sm:text-xs">
+                                {calculateAge(animal.birth_date)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <Scale className="w-3.5 h-3.5 text-[#1B4820] stroke-[2.5] shrink-0" />
+                              <span className="font-black text-neutral-900 truncate text-[11px] sm:text-xs">
+                                {formatWeight(animal.last_weight_kg)}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Fila C: Ubicación y Dueño */}
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-neutral-100/80 text-[11px] text-neutral-500">
+                            <div className="flex items-center gap-1.5 min-w-0 max-w-[60%]">
+                              <Building2 className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                              <span className="truncate">
+                                {animal.farm_id && farmMap[animal.farm_id] ? farmMap[animal.farm_id] : 'Sin finca'}
+                                {animal.potrero_id && potreroMap[animal.potrero_id] && (
+                                  <span className="text-neutral-400"> • {potreroMap[animal.potrero_id]}</span>
+                                )}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 min-w-0 max-w-[40%] justify-end">
+                              <UserCheck className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
+                              <span className="truncate">
+                                {animal.owner_id && ownerMap[animal.owner_id] ? ownerMap[animal.owner_id] : 'Sin dueño'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* --- CONTROLES DE PAGINACIÓN --- */}
             {totalPages > 1 && (

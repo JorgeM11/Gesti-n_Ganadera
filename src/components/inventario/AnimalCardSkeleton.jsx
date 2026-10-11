@@ -1,6 +1,37 @@
 import React from 'react';
 
-export default function AnimalCardSkeleton({ count = 8 }) {
+export default function AnimalCardSkeleton({ count = 8, viewMode = 'cards' }) {
+  if (viewMode === 'list') {
+    return (
+      <div className="space-y-2.5">
+        {Array.from({ length: count }).map((_, index) => (
+          <div
+            key={index}
+            className="bg-white rounded-2xl border border-neutral-200/80 p-3.5 sm:p-4 animate-pulse flex flex-col gap-2.5 shadow-2xs"
+          >
+            <div className="flex items-center justify-between">
+              <div className="h-5 bg-neutral-200 rounded-lg w-28" />
+              <div className="flex gap-2">
+                <div className="h-4 bg-neutral-200 rounded-full w-14" />
+                <div className="h-4 bg-neutral-200 rounded-full w-14" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-neutral-100">
+              <div className="h-3.5 bg-neutral-200 rounded w-20" />
+              <div className="h-3.5 bg-neutral-200 rounded w-20" />
+              <div className="h-3.5 bg-neutral-200 rounded w-20" />
+              <div className="h-3.5 bg-neutral-200 rounded w-20" />
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-neutral-100/70">
+              <div className="h-3 bg-neutral-200 rounded w-32" />
+              <div className="h-3 bg-neutral-200 rounded w-24" />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 min-[460px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
       {Array.from({ length: count }).map((_, index) => (
