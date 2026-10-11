@@ -11,12 +11,15 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
   - Incorporada nueva **Vista Tipo Lista** sin imágenes, orientada a una navegación ultrarrápida, cómoda y enfocada en métricas esenciales.
   - Añadido selector segmentado / conmutador con iconos `LayoutGrid` (Tarjetas) y `List` (Lista), acompañado del contador total y filtrado de animales.
   - Persistencia permanente de la preferencia del usuario en `localStorage` (`ganadera_inventory_view_mode`), conservándose al recargar o cerrar la aplicación.
-- **Diseño Móvil Cómodo sin Desplazamiento Horizontal ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
-  - En smartphones y tablets (`< lg`), la vista tipo lista se presenta como filas compactas estructuradas en 3 niveles (Arete/Nombre/Badges, métricas clave Chip/Raza/Edad/Peso en cuadrícula de 2 columnas, y Ubicación Finca•Potrero junto al Dueño), eliminando la necesidad de scroll horizontal y garantizando lectura 100% fluida en pantallas pequeñas.
+- **Refinamiento de Datos en Vista Lista ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - **Identificadores Destacados**: Número de arete ampliado a `text-lg sm:text-xl font-black` y número de microchip a `text-xs sm:text-sm font-bold`.
+  - **Depuración de Métricas**: Retiradas la Raza y el Peso de la vista tipo lista, focalizando la atención en los datos críticos de control ganadero.
+  - **Badges Minimalistas en Móvil**: En pantallas móviles, el Género y el Estatus se muestran exclusivamente con icono y color en formato circular (`w-6 h-6 rounded-full`), ahorrando espacio horizontal y evitando saltos de línea.
+  - **Reubicación de Campo y Dueño**: Finca/Potrero y Dueño se posicionan directamente en la cuadrícula de datos clave en el lugar que ocupaban raza y peso, unificando el elemento en 2 niveles limpios y ultracompactos.
 - **Visualización Tabular en Pantallas de Escritorio ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
-  - En monitores de escritorio (`lg:`), la lista se alinea con una cabecera de columnas para escanear decenas de animales en un solo vistazo: Arete/Nombre, Microchip, Sexo, Estado, Raza, Edad, Peso, Finca/Potrero y Dueño.
+  - En monitores de escritorio (`lg:`), la lista se alinea con una cabecera de 8 columnas optimizada: Arete / Nombre, Microchip, Sexo, Estado, Edad, Campo y Dueño.
 - **Estado de Carga Adaptativo ([`AnimalCardSkeleton.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalCardSkeleton.jsx))**:
-  - Soporte de esqueletos de carga diferenciados para vista de tarjetas y vista de lista.
+  - Esqueleto de lista alineado a la estructura de 2 niveles compactos.
 - **Integridad Absoluta de Datos**:
   - La base de datos en Supabase y el almacenamiento IndexedDB local se mantienen 100% intactos y protegidos sin alteraciones.
 
