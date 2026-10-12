@@ -165,21 +165,21 @@ flowchart TD
 #### 1. Apartado 1: Dashboard (Vista General Ejecutiva del Sistema) ✅
 - [x] **Vista General de Datos Esenciales**:
   - Población total de animales con desglose de activos e inactivos.
-  - Distribución sexual (hembras vs machos, porcentajes y ratio de cría).
-  - Control de biomasa y peso: peso promedio general y por finca, biomasa total en pie (toneladas) y cobertura de pesaje.
-  - Alertas y control: animales con observaciones clínicas/de manejo, animales cumpliendo 8 meses (edad de destete), y cobertura de microchips RFID.
+  - Distribución sexual simplificada (conteo directo de Hembras y Machos con iconos respectivos).
+  - Alertas y control: animales con observaciones clínicas/de manejo y cobertura de microchips RFID (alerta de 8 meses eliminada del sistema a solicitud).
   - Estructura etaria del rebaño (pirámide biológica por etapas productivas con barras de progreso).
-  - Distribución por fincas (carga animal, potreros y peso promedio).
-  - Ocupación de potreros de la finca seleccionada.
-  - Tenencia de rebaño por dueño / propietario.
+  - Distribución por fincas (carga animal, potreros y desglose de hembras/machos).
+  - Ocupación de potreros de la finca seleccionada (modo informativo).
+  - Tenencia de rebaño por dueño / propietario (modo informativo).
   - Composición racial del rebaño.
   - Acceso directo a fichas técnicas de los últimos animales registrados/modificados.
 - [x] **Segmentación por Fincas y Filtros Dinámicos**:
   - Selector horizontal tipo carousel/pills de fincas ("Todas las Fincas", fincas individuales y "Sin Finca").
-  - Subfiltros reactivos por potrero (contextual a la finca), dueño y estatus (Todos / Activos / Inactivos), con botón de restablecimiento rápido.
+  - Subfiltros reactivos estilizados (`CustomSelect`) por potrero (contextual a la finca), dueño y estatus (Todos / Activos / Inactivos), con botón de restablecimiento rápido.
 - [x] **Navegación y UX**:
   - Primera opción en el menú lateral (`NavigationDrawer.jsx`) con icono `LayoutDashboard`.
   - Primer apartado al que se entra al abrir la aplicación o iniciar sesión (ruta por defecto `/dashboard` en `App.jsx` y `Login.jsx`).
+  - Header minimalista sin botón redundante de ver inventario.
   - 100% responsive (diseño adaptativo optimizado para smartphones y monitores de escritorio).
   - Funcionamiento 100% offline-first mediante `useLiveQuery` conectado a IndexedDB (Dexie).
 
@@ -205,4 +205,5 @@ flowchart TD
 | **Parte 2: Cierre de Software Escáner RFID** | 2026-10-07 | **Completado** | Antigravity AI & Usuario | Software 100% adaptado con buffer de 200ms anti-jitter, protección contra pérdida de dígitos, borrado rápido y búsqueda instantánea. Culminada a espera de observaciones de campo. |
 | **Correcciones Visuales, Escáner y Filtros** | 2026-10-11 | **Completado** | Antigravity AI & Usuario | Vistas duales (tarjetas y lista compacta sin imágenes), icono de observaciones unificado, protección anti-lecturas incompletas en cámara y escáner físico, y filtro de observaciones con pills. |
 | **Parte 3 - Apartado 1: Dashboard (v1)** | 2026-10-12 | **Completado** | Antigravity AI & Usuario | Primera versión del Dashboard ganadero: vista general, selector por fincas, subfiltros dinámicos, pirámide de edad, biomasa, primera opción en sidebar y ruta de entrada inicial. |
+| **Refinamientos Dashboard y Remoción Alerta 8M** | 2026-10-12 | **Completado** | Antigravity AI & Usuario | Aplicadas las 7 correcciones al Dashboard (header limpio, CustomSelect, distribución numérica de sexo, remoción de cards de peso) y retirada definitiva de la alerta de 8 meses en inventario. |
 

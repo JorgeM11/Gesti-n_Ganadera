@@ -4,6 +4,24 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.6.1-dashboard-refinements] - 2026-10-12
+
+### Perfeccionado y Depurado (Fase 3 - Dashboard y Remoción de Alerta de 8 Meses)
+- **Refinamientos del Dashboard ([`Dashboard.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Dashboard.jsx))**:
+  - **Header Limpio**: Eliminado el botón "Ver Inventario" del encabezado superior para una vista más minimalista y enfocada.
+  - **Selectores Estéticos y Consistentes**: Sustituidos los selects nativos por el componente [`CustomSelect.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/ui/CustomSelect.jsx) para los filtros de Potrero, Dueño y Estatus, manteniendo coherencia visual con los modales y formularios de la aplicación.
+  - **Distribución por Sexo Directa**: Rediseñada la tarjeta de sexo para mostrar 2 números limpios e independientes (Hembras y Machos) con sus iconos respectivos, suprimiendo la barra bicolor.
+  - **Remoción de KPI de Peso**: Eliminada la tarjeta de "Peso Promedio & Biomasa" de la cuadrícula superior de KPIs.
+  - **Resumen por Fincas sin Peso**: Retirado el promedio de peso (`Prom: ... kg`) de la lista de fincas para mantener el resumen centrado en cabezas, potreros y desglose de hembras/machos.
+  - **Tarjetas Informativas No Clickeables**: Retirada la interactividad y cursores clickeables en los módulos de "Rebaño por Dueño" y "Ocupación de Potreros", consolidándolos como paneles puramente informativos.
+- **Eliminación Total de la Alerta de 8 Meses del Sistema ([`Dashboard.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Dashboard.jsx), [`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - En Dashboard: Removida la métrica de alerta de destete de 8 meses del KPI de control y de los cálculos estadísticos.
+  - En Inventario: Suprimido el helper de detección `is8MonthsOld`, el estado persistente `viewedHighlights`, la alteración de prioridad de ordenamiento en `filteredAnimals`, la banda amarilla superior en vista de tarjetas y las insignias `8M` en la vista lista (tanto en escritorio como en móvil).
+- **Integridad Absoluta de Datos**:
+  - Supabase e IndexedDB 100% preservados sin alteración ni pérdida de información.
+
+---
+
 ## [1.6.0-phase3-dashboard-v1] - 2026-10-12
 
 ### Añadido y Lanzado (Fase 3 - Apartado 1: Dashboard General Ganadero)

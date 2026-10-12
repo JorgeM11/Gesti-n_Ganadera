@@ -1,38 +1,26 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
-  Layers,
   Building2,
   Fence,
   UserCheck,
-  Scale,
   FileText,
-  AlertCircle,
   Cpu,
   ChevronRight,
   ArrowRight,
   Filter,
   RotateCcw,
   Menu,
-  Plus,
-  Calendar,
   Dna,
-  TrendingUp,
-  Activity,
-  X,
-  CheckCircle2,
-  XCircle,
-  HelpCircle,
-  Eye
+  CheckCircle2
 } from 'lucide-react';
 import { FaMars, FaVenus } from 'react-icons/fa6';
 import { GiCow } from 'react-icons/gi';
 
 import { db, clearLocalData } from '@/lib/db';
-import { calculateAge, formatWeight, parseLocalDate } from '@/lib/dateUtils';
+import { parseLocalDate } from '@/lib/dateUtils';
 import { logoutUser } from '@/lib/authService';
 import { useForceResync } from '@/hooks/useForceResync';
 
@@ -43,6 +31,7 @@ import PotreroModal from '@/components/inventario/PotreroModal';
 import OwnerModal from '@/components/inventario/OwnerModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Toast from '@/components/ui/Toast';
+import CustomSelect from '@/components/ui/CustomSelect';
 
 // Categorías ganaderas por edad
 const AGE_CATEGORIES = [
@@ -76,14 +65,6 @@ function getAnimalAgeCategory(animal) {
 
   if (months <= 36) return 'Maute Macho';
   return 'Adulto';
-}
-
-function is8MonthsOld(animal) {
-  if (!animal?.birth_date) return false;
-  const birth = parseLocalDate(animal.birth_date);
-  if (!birth || isNaN(birth.getTime())) return false;
-  const months = (new Date() - birth) / (1000 * 60 * 60 * 24 * 30.44);
-  return Math.floor(months) === 8;
 }
 
 export default function DashboardPage() {
@@ -163,6 +144,37 @@ export default function DashboardPage() {
     return potreros.filter(p => p.farm_id === selectedFarmId);
   }, [potreros, selectedFarmId]);
 
+  // Opciones estilizadas para CustomSelect
+  const potreroOptions = useMemo(() => {
+    const list = [
+      {
+        value: 'ALL',
+        label: selectedFarmId === 'ALL' ? 'Todos los Potreros' : `Todos los Potreros (${farmMap[selectedFarmId] || 'Finca'})`
+      }
+    ];
+    currentFarmPotreros.forEach(p => {
+      list.push({ value: p.id, label: p.name });
+    });
+    return list;
+  }, [selectedFarmId, farmMap, currentFarmPotreros]);
+
+  const ownerOptions = useMemo(() => {
+    const list = [
+      { value: 'ALL', label: 'Todos los Dueños' }
+    ];
+    owners.forEach(o => {
+      list.push({ value: o.id, label: o.name });
+    });
+    list.push({ value: 'NONE', label: 'Sin Dueño asignado' });
+    return list;
+  }, [owners]);
+
+  const statusOptions = [
+    { value: 'ALL', label: 'Todos los Estatus' },
+    { value: 'Activo', label: 'Solo Activos' },
+    { value: 'Inactivo', label: 'Solo Inactivos (Bajas)' }
+  ];
+
   // Flujo de cierre de sesión
   const executeLogout = async () => {
     try {
@@ -240,20 +252,10 @@ export default function DashboardPage() {
         inactivos: 0,
         hembras: 0,
         machos: 0,
-        hembrasPct: 0,
-        machosPct: 0,
-        ratioSexo: '0 : 0',
-        conPeso: 0,
-        sinPeso: 0,
-        pesoPromedio: 0,
-        biomasaTotalKg: 0,
-        biomasaToneladas: 0,
-        coberturaPesoPct: 0,
         conChip: 0,
         conChipPct: 0,
         conObservaciones: 0,
         conObservacionesPct: 0,
-        ochoMeses: 0,
         categorias: AGE_CATEGORIES.map(c => ({ ...c, count: 0, pct: 0 })),
         razas: [],
         porFinca: [],
@@ -267,11 +269,8 @@ export default function DashboardPage() {
     let inactivos = 0;
     let hembras = 0;
     let machos = 0;
-    let conPeso = 0;
-    let sumaPesoKg = 0;
     let conChip = 0;
     let conObservaciones = 0;
-    let ochoMeses = 0;
 
     const catCounts = {
       'Becerro': 0,
@@ -295,20 +294,11 @@ export default function DashboardPage() {
       if (a.sex === 'Hembra') hembras++;
       else machos++;
 
-      // Peso
-      if (a.last_weight_kg && Number(a.last_weight_kg) > 0) {
-        conPeso++;
-        sumaPesoKg += Number(a.last_weight_kg);
-      }
-
       // Chip
       if (a.chip_number && a.chip_number.trim()) conChip++;
 
       // Observaciones
       if (a.observations && a.observations.trim()) conObservaciones++;
-
-      // 8 Meses
-      if (is8MonthsOld(a)) ochoMeses++;
 
       // Categoría
       const cat = getAnimalAgeCategory(a);
@@ -329,13 +319,6 @@ export default function DashboardPage() {
       }
     });
 
-    const hembrasPct = Math.round((hembras / total) * 100);
-    const machosPct = 100 - hembrasPct;
-    const ratioSexo = machos > 0 ? `${(hembras / machos).toFixed(1)} : 1` : `${hembras} : 0`;
-    const pesoPromedio = conPeso > 0 ? Math.round(sumaPesoKg / conPeso) : 0;
-    const biomasaTotalKg = Math.round(sumaPesoKg);
-    const biomasaToneladas = (sumaPesoKg / 1000).toFixed(2);
-    const coberturaPesoPct = Math.round((conPeso / total) * 100);
     const conChipPct = Math.round((conChip / total) * 100);
     const conObservacionesPct = Math.round((conObservaciones / total) * 100);
 
@@ -354,14 +337,11 @@ export default function DashboardPage() {
       }))
       .sort((a, b) => b.count - a.count);
 
-    // Resumen de Fincas (cuando se ven todas o global)
+    // Resumen de Fincas (sin promedio de peso)
     const porFinca = farms.map(f => {
       const fincaAnimals = allAnimals.filter(a => a.farm_id === f.id);
       const fincaHembras = fincaAnimals.filter(a => a.sex === 'Hembra').length;
       const fincaMachos = fincaAnimals.length - fincaHembras;
-      const fincaConPeso = fincaAnimals.filter(a => a.last_weight_kg > 0);
-      const fincaSumaPeso = fincaConPeso.reduce((acc, curr) => acc + Number(curr.last_weight_kg), 0);
-      const fincaPesoProm = fincaConPeso.length > 0 ? Math.round(fincaSumaPeso / fincaConPeso.length) : 0;
       const fincaPotrerosCount = potreros.filter(p => p.farm_id === f.id).length;
 
       return {
@@ -372,7 +352,6 @@ export default function DashboardPage() {
         pct: allAnimals.length > 0 ? Math.round((fincaAnimals.length / allAnimals.length) * 100) : 0,
         hembras: fincaHembras,
         machos: fincaMachos,
-        pesoPromedio: fincaPesoProm,
         potrerosCount: fincaPotrerosCount
       };
     }).sort((a, b) => b.count - a.count);
@@ -409,20 +388,10 @@ export default function DashboardPage() {
       inactivos,
       hembras,
       machos,
-      hembrasPct,
-      machosPct,
-      ratioSexo,
-      conPeso,
-      sinPeso: total - conPeso,
-      pesoPromedio,
-      biomasaTotalKg,
-      biomasaToneladas,
-      coberturaPesoPct,
       conChip,
       conChipPct,
       conObservaciones,
       conObservacionesPct,
-      ochoMeses,
       categorias,
       razas,
       porFinca,
@@ -437,13 +406,6 @@ export default function DashboardPage() {
     (selectedPotreroId !== 'ALL' ? 1 : 0) +
     (selectedOwnerId !== 'ALL' ? 1 : 0) +
     (selectedStatus !== 'ALL' ? 1 : 0);
-
-  const resetAllFilters = () => {
-    setSelectedFarmId('ALL');
-    setSelectedPotreroId('ALL');
-    setSelectedOwnerId('ALL');
-    setSelectedStatus('ALL');
-  };
 
   // Conteo de animales sin finca asignada
   const sinFincaCount = useMemo(() => {
@@ -468,58 +430,37 @@ export default function DashboardPage() {
         onLogout={handleLogoutFlow}
       />
 
-      {/* HEADER PRINCIPAL DEL DASHBOARD */}
+      {/* HEADER PRINCIPAL DEL DASHBOARD (Sin botón 'Ver Inventario') */}
       <header className="bg-white md:bg-[#1B4820] w-full px-4 pt-4 pb-4 md:py-4 md:px-8 sticky top-0 z-30 shadow-md transition-colors duration-300">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
-          {/* Fila Superior / Identificación */}
-          <div className="flex items-center justify-between w-full md:w-auto gap-3">
-            <div className="flex items-center gap-2.5">
-              <button
-                type="button"
-                onClick={() => setIsDrawerOpen(true)}
-                className="p-2.5 rounded-2xl text-[#1B4820] md:text-white hover:bg-[#1B4820]/10 md:hover:bg-white/15 active:scale-95 transition-all cursor-pointer"
-                title="Abrir menú de navegación"
-              >
-                <Menu className="w-6 h-6 text-[#1B4820] md:text-white" />
-              </button>
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-2xl bg-emerald-100 md:bg-white/15 text-[#1B4820] md:text-white flex items-center justify-center shadow-xs">
-                  <LayoutDashboard className="w-5 h-5 stroke-[2.2]" />
-                </div>
-                <div>
-                  <h1 className="text-xl md:text-2xl font-black text-[#1B4820] md:text-white tracking-tight leading-none">
-                    Dashboard
-                  </h1>
-                  <p className="text-[10px] md:text-[11px] font-bold text-neutral-500 md:text-emerald-200 uppercase tracking-wider mt-0.5">
-                    Resumen General del Rebaño
-                  </p>
-                </div>
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+          {/* Identificación y Título */}
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={() => setIsDrawerOpen(true)}
+              className="p-2.5 rounded-2xl text-[#1B4820] md:text-white hover:bg-[#1B4820]/10 md:hover:bg-white/15 active:scale-95 transition-all cursor-pointer"
+              title="Abrir menú de navegación"
+            >
+              <Menu className="w-6 h-6 text-[#1B4820] md:text-white" />
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-2xl bg-emerald-100 md:bg-white/15 text-[#1B4820] md:text-white flex items-center justify-center shadow-xs">
+                <LayoutDashboard className="w-5 h-5 stroke-[2.2]" />
               </div>
-            </div>
-
-            {/* SyncStatus en Móvil */}
-            <div className="md:hidden">
-              <SyncStatus />
+              <div>
+                <h1 className="text-xl md:text-2xl font-black text-[#1B4820] md:text-white tracking-tight leading-none">
+                  Dashboard
+                </h1>
+                <p className="text-[10px] md:text-[11px] font-bold text-neutral-500 md:text-emerald-200 uppercase tracking-wider mt-0.5">
+                  Resumen General del Rebaño
+                </p>
+              </div>
             </div>
           </div>
 
-          {/* Acciones de Cabecera (Desktop y Móvil) */}
-          <div className="flex items-center justify-between md:justify-end gap-2.5 w-full md:w-auto">
-            {/* SyncStatus en Desktop */}
-            <div className="hidden md:flex">
-              <SyncStatus />
-            </div>
-
-            {/* Acceso Rápido a Inventario */}
-            <button
-              type="button"
-              onClick={() => navigate('/inventario')}
-              className="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#1B4820] md:bg-white text-white md:text-[#1B4820] hover:bg-[#143719] md:hover:bg-emerald-50 text-xs font-black shadow-xs active:scale-95 transition-all cursor-pointer"
-            >
-              <Layers className="w-4 h-4 stroke-[2.2]" />
-              <span>Ver Inventario</span>
-              <ArrowRight className="w-3.5 h-3.5 opacity-70" />
-            </button>
+          {/* SyncStatus */}
+          <div>
+            <SyncStatus />
           </div>
         </div>
       </header>
@@ -620,79 +561,62 @@ export default function DashboardPage() {
         </section>
 
         {/* ========================================================================= */}
-        {/* 2. BARRA DE SUB-FILTROS (POTRERO, DUEÑO, ESTATUS)                         */}
+        {/* 2. SUB-FILTROS ESTILIZADOS (CON CustomSelect)                             */}
         {/* ========================================================================= */}
-        <section className="bg-white rounded-2xl p-3.5 sm:p-4 border border-neutral-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 flex-wrap text-xs">
-            <span className="text-[11px] font-black uppercase text-neutral-400 mr-1 flex items-center gap-1">
-              <Filter className="w-3.5 h-3.5 text-neutral-500" />
-              <span>Filtrar por:</span>
+        <section className="bg-white rounded-3xl p-4 sm:p-5 border border-neutral-200/80 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black uppercase tracking-wider text-neutral-900 flex items-center gap-1.5">
+              <Filter className="w-3.5 h-3.5 text-[#1B4820]" />
+              <span>Filtros Secundarios</span>
             </span>
-
-            {/* Filtro por Potrero (solo si hay finca seleccionada o potreros disponibles) */}
-            <select
-              value={selectedPotreroId}
-              onChange={(e) => setSelectedPotreroId(e.target.value)}
-              className="bg-neutral-100 hover:bg-neutral-200/80 font-bold text-neutral-800 rounded-xl px-3 py-1.5 outline-none text-xs border-none cursor-pointer transition-colors"
-            >
-              <option value="ALL">
-                {selectedFarmId === 'ALL' ? 'Todos los Potreros' : `Potreros de ${farmMap[selectedFarmId] || 'Finca'}`}
-              </option>
-              {currentFarmPotreros.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-
-            {/* Filtro por Dueño */}
-            <select
-              value={selectedOwnerId}
-              onChange={(e) => setSelectedOwnerId(e.target.value)}
-              className="bg-neutral-100 hover:bg-neutral-200/80 font-bold text-neutral-800 rounded-xl px-3 py-1.5 outline-none text-xs border-none cursor-pointer transition-colors"
-            >
-              <option value="ALL">Todos los Dueños</option>
-              {owners.map(o => (
-                <option key={o.id} value={o.id}>
-                  {o.name}
-                </option>
-              ))}
-              <option value="NONE">Sin Dueño asignado</option>
-            </select>
-
-            {/* Filtro por Estatus */}
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="bg-neutral-100 hover:bg-neutral-200/80 font-bold text-neutral-800 rounded-xl px-3 py-1.5 outline-none text-xs border-none cursor-pointer transition-colors"
-            >
-              <option value="ALL">Todos los Estatus</option>
-              <option value="Activo">Solo Activos</option>
-              <option value="Inactivo">Solo Inactivos (Vendidos/Bajas)</option>
-            </select>
+            {activeSecondaryFiltersCount > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedPotreroId('ALL');
+                  setSelectedOwnerId('ALL');
+                  setSelectedStatus('ALL');
+                }}
+                className="text-[11px] font-black text-emerald-800 hover:text-emerald-950 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200/80 cursor-pointer flex items-center gap-1 transition-colors"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Restablecer ({activeSecondaryFiltersCount})</span>
+              </button>
+            )}
           </div>
 
-          {/* Botón de Limpiar Subfiltros si hay alguno activo */}
-          {activeSecondaryFiltersCount > 0 && (
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedPotreroId('ALL');
-                setSelectedOwnerId('ALL');
-                setSelectedStatus('ALL');
-              }}
-              className="text-[11px] font-black text-emerald-800 hover:text-emerald-950 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/80 cursor-pointer flex items-center gap-1 transition-colors"
-            >
-              <RotateCcw className="w-3 h-3" />
-              <span>Restablecer sub-filtros ({activeSecondaryFiltersCount})</span>
-            </button>
-          )}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <CustomSelect
+              value={selectedPotreroId}
+              onChange={setSelectedPotreroId}
+              options={potreroOptions}
+              placeholder="Seleccionar Potrero"
+              label="Potrero"
+              bgClass="bg-neutral-50"
+            />
+            <CustomSelect
+              value={selectedOwnerId}
+              onChange={setSelectedOwnerId}
+              options={ownerOptions}
+              placeholder="Seleccionar Dueño"
+              label="Dueño / Propietario"
+              bgClass="bg-neutral-50"
+            />
+            <CustomSelect
+              value={selectedStatus}
+              onChange={setSelectedStatus}
+              options={statusOptions}
+              placeholder="Seleccionar Estatus"
+              label="Estatus"
+              bgClass="bg-neutral-50"
+            />
+          </div>
         </section>
 
         {/* ========================================================================= */}
-        {/* 3. BLOQUE DE MÉTRICAS CLAVE (KPI CARDS EN GRID RESPONSIVE)               */}
+        {/* 3. BLOQUE DE MÉTRICAS CLAVE (3 KPI CARDS: POBLACIÓN, SEXO, CONTROL)       */}
         {/* ========================================================================= */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
           {/* KPI 1: TOTAL DE CABEZAS */}
           <div className="bg-white rounded-3xl p-4 sm:p-5 border border-neutral-200/80 shadow-xs flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all">
             <div className="flex items-center justify-between mb-2">
@@ -721,99 +645,77 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* KPI 2: COMPOSICIÓN SEXUAL (HEMBRAS VS MACHOS) */}
+          {/* KPI 2: DISTRIBUCIÓN POR SEXO (SOLO 2 NÚMEROS: HEMBRAS Y MACHOS) */}
           <div className="bg-white rounded-3xl p-4 sm:p-5 border border-neutral-200/80 shadow-xs flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-black uppercase tracking-wider text-neutral-500">
-                Distribución Sexo
+                Distribución por Sexo
               </span>
-              <div className="w-8 h-8 rounded-xl bg-pink-50 text-pink-700 flex items-center justify-center">
-                <FaVenus className="w-4 h-4" />
+              <div className="flex items-center -space-x-1">
+                <div className="w-6 h-6 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center text-xs">
+                  <FaVenus />
+                </div>
+                <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs">
+                  <FaMars />
+                </div>
               </div>
             </div>
-            <div>
-              <div className="flex items-baseline justify-between">
-                <span className="text-2xl sm:text-3xl font-black text-pink-700">
-                  {metrics.hembras} <span className="text-xs font-bold text-pink-500">({metrics.hembrasPct}%)</span>
-                </span>
-                <span className="text-2xl sm:text-3xl font-black text-blue-700">
-                  {metrics.machos} <span className="text-xs font-bold text-blue-500">({metrics.machosPct}%)</span>
-                </span>
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              {/* Hembras */}
+              <div className="bg-pink-50/70 border border-pink-100 rounded-2xl p-2.5 text-center">
+                <div className="flex items-center justify-center gap-1 text-[11px] font-black uppercase text-pink-700 tracking-wider">
+                  <FaVenus className="w-3 h-3" />
+                  <span>Hembras</span>
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-pink-900 mt-0.5">
+                  {metrics.hembras}
+                </div>
               </div>
-              {/* Barra bicolor de proporción */}
-              <div className="w-full h-2.5 bg-neutral-100 rounded-full overflow-hidden flex mt-2.5">
-                <div style={{ width: `${metrics.hembrasPct}%` }} className="bg-pink-500 h-full transition-all duration-500" />
-                <div style={{ width: `${metrics.machosPct}%` }} className="bg-blue-600 h-full transition-all duration-500" />
-              </div>
-              <div className="flex items-center justify-between mt-1.5 text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
-                <span>Hembras</span>
-                <span>Ratio: {metrics.ratioSexo}</span>
-                <span>Machos</span>
+
+              {/* Machos */}
+              <div className="bg-blue-50/70 border border-blue-100 rounded-2xl p-2.5 text-center">
+                <div className="flex items-center justify-center gap-1 text-[11px] font-black uppercase text-blue-700 tracking-wider">
+                  <FaMars className="w-3 h-3" />
+                  <span>Machos</span>
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-blue-900 mt-0.5">
+                  {metrics.machos}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* KPI 3: PESO PROMEDIO & BIOMASA */}
-          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-neutral-200/80 shadow-xs flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all">
+          {/* KPI 3: IDENTIFICACIÓN Y OBSERVACIONES (Sin alerta de 8 meses) */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-neutral-200/80 shadow-xs flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all sm:col-span-2 lg:col-span-1">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[11px] font-black uppercase tracking-wider text-neutral-500">
-                Peso Promedio
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-                <Scale className="w-4 h-4 stroke-[2.2]" />
-              </div>
-            </div>
-            <div>
-              <div className="text-3xl sm:text-4xl font-black text-neutral-900 tracking-tight">
-                {metrics.pesoPromedio > 0 ? `${metrics.pesoPromedio} kg` : '---'}
-              </div>
-              <div className="flex items-center justify-between mt-2 text-[11px] font-bold text-neutral-500">
-                <span>Biomasa: {metrics.biomasaToneladas} Ton</span>
-                <span className="text-emerald-700">
-                  {metrics.coberturaPesoPct}% pesados
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* KPI 4: IDENTIFICACIÓN Y ALERTAS */}
-          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-neutral-200/80 shadow-xs flex flex-col justify-between relative overflow-hidden group hover:shadow-md transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-black uppercase tracking-wider text-neutral-500">
-                Control & Alertas
+                Control & Identificación
               </span>
               <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
                 <Cpu className="w-4 h-4" />
               </div>
             </div>
-            <div className="space-y-1.5">
+            <div className="grid grid-cols-2 gap-3 pt-1">
               {/* Con Chip */}
-              <div className="flex items-center justify-between text-xs font-bold text-neutral-700">
-                <span className="flex items-center gap-1.5">
-                  <Cpu className="w-3.5 h-3.5 text-blue-600" />
-                  Con Chip RFID:
-                </span>
-                <span className="text-neutral-900 font-black">{metrics.conChip} ({metrics.conChipPct}%)</span>
+              <div className="bg-blue-50/70 border border-blue-100 rounded-2xl p-2.5 text-center">
+                <div className="flex items-center justify-center gap-1 text-[11px] font-black uppercase text-blue-700 tracking-wider">
+                  <Cpu className="w-3 h-3" />
+                  <span>Con Chip</span>
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-blue-900 mt-0.5">
+                  {metrics.conChip}
+                </div>
               </div>
 
-              {/* Con Observaciones */}
-              <div className="flex items-center justify-between text-xs font-bold text-amber-800">
-                <span className="flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-amber-600" />
-                  Con Observación:
-                </span>
-                <span className="font-black">{metrics.conObservaciones}</span>
-              </div>
-
-              {/* 8 Meses cumplidos */}
-              <div className="flex items-center justify-between text-xs font-bold text-amber-900">
-                <span className="flex items-center gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
-                  Alerta 8 Meses:
-                </span>
-                <span className="font-black bg-amber-100 text-amber-950 px-1.5 py-0.2 rounded text-[10px]">
-                  {metrics.ochoMeses}
-                </span>
+              {/* Con Observación */}
+              <div className="bg-amber-50/70 border border-amber-100 rounded-2xl p-2.5 text-center">
+                <div className="flex items-center justify-center gap-1 text-[11px] font-black uppercase text-amber-700 tracking-wider">
+                  <FileText className="w-3 h-3" />
+                  <span>Observaciones</span>
+                </div>
+                <div className="text-2xl sm:text-3xl font-black text-amber-900 mt-0.5">
+                  {metrics.conObservaciones}
+                </div>
               </div>
             </div>
           </div>
@@ -832,14 +734,6 @@ export default function DashboardPage() {
                 Distribución por etapas productivas y categorías biológicas
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => navigate('/inventario')}
-              className="text-xs font-bold text-[#1B4820] hover:underline flex items-center gap-1"
-            >
-              <span>Ver en Inventario</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -879,11 +773,11 @@ export default function DashboardPage() {
         </section>
 
         {/* ========================================================================= */}
-        {/* 5. RESUMEN POR FINCAS Y POTREROS                                          */}
+        {/* 5. RESUMEN POR FINCAS Y OCUPACIÓN DE POTREROS                             */}
         {/* ========================================================================= */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-          {/* 5A. Tarjeta: Distribución por Fincas */}
+          {/* 5A. Tarjeta: Distribución por Fincas (Sin promedio de peso) */}
           <section className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200/80 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
               <div className="flex items-center gap-2">
@@ -893,7 +787,7 @@ export default function DashboardPage() {
                     Resumen por Fincas ({farms.length})
                   </h3>
                   <p className="text-[11px] font-medium text-neutral-400">
-                    Carga animal y métricas por propiedad
+                    Carga animal por propiedad
                   </p>
                 </div>
               </div>
@@ -934,8 +828,6 @@ export default function DashboardPage() {
                           <span className="text-pink-700">{f.hembras} H</span>
                           <span>/</span>
                           <span className="text-blue-700">{f.machos} M</span>
-                          <span>•</span>
-                          <span>Prom: {f.pesoPromedio > 0 ? `${f.pesoPromedio} kg` : '---'}</span>
                         </div>
                       </div>
 
@@ -954,7 +846,7 @@ export default function DashboardPage() {
             )}
           </section>
 
-          {/* 5B. Tarjeta: Ocupación de Potreros */}
+          {/* 5B. Tarjeta: Ocupación de Potreros (No clickeable) */}
           <section className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200/80 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
               <div className="flex items-center gap-2">
@@ -965,7 +857,7 @@ export default function DashboardPage() {
                   </h3>
                   <p className="text-[11px] font-medium text-neutral-400">
                     {selectedFarmId === 'ALL'
-                      ? 'Animales distribuidos en todos los potreros'
+                      ? 'Animales distribuidos en potreros'
                       : `Potreros pertenecientes a ${farmMap[selectedFarmId] || 'la finca'}`}
                   </p>
                 </div>
@@ -978,49 +870,41 @@ export default function DashboardPage() {
               </p>
             ) : (
               <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
-                {metrics.porPotrero.map(p => {
-                  const isSelected = selectedPotreroId === p.id;
-                  return (
-                    <div
-                      key={p.id}
-                      onClick={() => setSelectedPotreroId(isSelected ? 'ALL' : p.id)}
-                      className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                        isSelected
-                          ? 'border-[#1B4820] bg-emerald-50/50 shadow-xs'
-                          : 'border-neutral-200/70 hover:border-neutral-300 bg-neutral-50/40'
-                      }`}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-black text-xs text-neutral-900 truncate">
-                            {p.name}
+                {metrics.porPotrero.map(p => (
+                  <div
+                    key={p.id}
+                    className="p-3 rounded-2xl border border-neutral-200/70 bg-neutral-50/40 flex items-center justify-between gap-3 select-none"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-black text-xs text-neutral-900 truncate">
+                          {p.name}
+                        </span>
+                        {selectedFarmId === 'ALL' && (
+                          <span className="text-[10px] text-neutral-400 font-bold truncate">
+                            ({p.farmName})
                           </span>
-                          {selectedFarmId === 'ALL' && (
-                            <span className="text-[10px] text-neutral-400 font-bold truncate">
-                              ({p.farmName})
-                            </span>
-                          )}
-                        </div>
-                        {/* Barra de proporción */}
-                        <div className="w-full bg-neutral-200/70 h-1.5 rounded-full overflow-hidden mt-1.5">
-                          <div
-                            style={{ width: `${p.pct}%` }}
-                            className="h-full bg-[#1B4820] rounded-full"
-                          />
-                        </div>
+                        )}
                       </div>
-
-                      <div className="text-right shrink-0">
-                        <span className="text-sm font-black text-neutral-900">
-                          {p.count} cabezas
-                        </span>
-                        <span className="text-[10px] text-neutral-400 block font-bold">
-                          {p.pct}%
-                        </span>
+                      {/* Barra de proporción */}
+                      <div className="w-full bg-neutral-200/70 h-1.5 rounded-full overflow-hidden mt-1.5">
+                        <div
+                          style={{ width: `${p.pct}%` }}
+                          className="h-full bg-[#1B4820] rounded-full"
+                        />
                       </div>
                     </div>
-                  );
-                })}
+
+                    <div className="text-right shrink-0">
+                      <span className="text-sm font-black text-neutral-900">
+                        {p.count} cabezas
+                      </span>
+                      <span className="text-[10px] text-neutral-400 block font-bold">
+                        {p.pct}%
+                      </span>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </section>
@@ -1031,7 +915,7 @@ export default function DashboardPage() {
         {/* ========================================================================= */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-          {/* 6A. Dueños / Propietarios */}
+          {/* 6A. Dueños / Propietarios (No clickeable) */}
           <section className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200/80 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
               <div className="flex items-center gap-2">
@@ -1056,12 +940,7 @@ export default function DashboardPage() {
                 {metrics.porDueno.map(d => (
                   <div
                     key={d.id}
-                    onClick={() => setSelectedOwnerId(selectedOwnerId === d.id ? 'ALL' : d.id)}
-                    className={`p-3 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
-                      selectedOwnerId === d.id
-                        ? 'border-[#1B4820] bg-emerald-50/50 shadow-xs'
-                        : 'border-neutral-200/70 hover:border-neutral-300 bg-neutral-50/40'
-                    }`}
+                    className="p-3 rounded-2xl border border-neutral-200/70 bg-neutral-50/40 flex items-center justify-between gap-3 select-none"
                   >
                     <div className="min-w-0 flex-1">
                       <span className="font-black text-xs text-neutral-900 truncate block">
@@ -1076,7 +955,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-right shrink-0">
                       <span className="text-sm font-black text-neutral-900">
-                        {d.count}
+                        {d.count} cabezas
                       </span>
                       <span className="text-[10px] text-neutral-400 block font-bold">
                         {d.pct}%
@@ -1128,7 +1007,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-right shrink-0">
                       <span className="text-sm font-black text-neutral-900">
-                        {r.count}
+                        {r.count} cabezas
                       </span>
                       <span className="text-[10px] text-neutral-400 block font-bold">
                         {r.pct}%
@@ -1247,7 +1126,7 @@ export default function DashboardPage() {
       <OwnerModal
         isOpen={isOwnerModalOpen}
         onClose={() => setIsOwnerModalOpen(false)}
-        onOwnerCreated={(owner) => {
+        onFarmCreated={(owner) => {
           showToast('¡Dueño creado con éxito!', `"${owner.name}" fue registrado.`);
         }}
         onOwnerUpdated={(owner) => {

@@ -9,7 +9,6 @@ import {
   CheckCircle2, 
   XCircle, 
   Check, 
-  AlertCircle, 
   Building2, 
   Dna, 
   Calendar, 
@@ -321,12 +320,6 @@ export default function InventarioPage() {
     if (document.body) document.body.scrollTop = 0;
   }, [currentPage]);
 
-  // --- ESTADO PARA RESALTAR 8 MESES ---
-  const [viewedHighlights, setViewedHighlights] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('viewed8Months') || '[]'); }
-    catch { return []; }
-  });
-
   // --- ESTADOS PARA CIERRE DE SESIÓN ---
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [pendingLogoutCount, setPendingLogoutCount] = useState(0);
@@ -473,20 +466,10 @@ export default function InventarioPage() {
     (selectedPotreroFilter !== 'ALL' ? 1 : 0) +
     (selectedOwnerFilter !== 'ALL' ? 1 : 0);
 
-  // Lógica para detectar exactamente los 8 meses
-  const is8MonthsOld = (animal) => {
-    if (!animal.birth_date) return false;
-    if (viewedHighlights.includes(animal.id)) return false;
-    
-    const birth = parseLocalDate(animal.birth_date);
-    const months = (new Date() - birth) / (1000 * 60 * 60 * 24 * 30.44);
-    return Math.floor(months) === 8;
-  };
-
   const filteredAnimals = useMemo(() => {
     if (!allAnimals) return [];
 
-    const filtered = allAnimals.filter(a => {
+    return allAnimals.filter(a => {
       const term = searchTerm.toLowerCase().trim();
       const termClean = term.replace(/[\s-]/g, '');
       const animalName = (a.name || '').toLowerCase().trim();
@@ -534,18 +517,7 @@ export default function InventarioPage() {
 
       return matchesSearch && matchesSex && matchesStatus && matchesCategory && matchesFarm && matchesPotrero && matchesOwner && matchesBreed && matchesObservations;
     });
-
-    // Ordenar: Los de 8 meses resaltados van de primeros
-    const highlighted = [];
-    const normal = [];
-    
-    filtered.forEach(a => {
-      if (is8MonthsOld(a)) highlighted.push(a);
-      else normal.push(a);
-    });
-
-    return [...highlighted, ...normal];
-  }, [allAnimals, searchTerm, filters, selectedFarmFilter, selectedPotreroFilter, selectedOwnerFilter, viewedHighlights, ownerMap]);
+  }, [allAnimals, searchTerm, filters, selectedFarmFilter, selectedPotreroFilter, selectedOwnerFilter, ownerMap]);
 
   // --- REINICIAR PAGINACION AL FILTRAR O BUSCAR ---
   useEffect(() => {
@@ -1142,24 +1114,11 @@ export default function InventarioPage() {
                 className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6"
               >
                 {paginatedAnimals.map((animal) => {
-                  const isHighlight = is8MonthsOld(animal);
-
                   const CardContent = (
                     <motion.article 
                       whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                      className={`relative bg-white rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full cursor-pointer group border-2 ${
-                        isHighlight 
-                          ? 'border-amber-400 shadow-amber-400/20 shadow-lg' 
-                          : 'border-neutral-200/80 hover:border-neutral-300'
-                      }`}
+                      className="relative bg-white rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full cursor-pointer group border-2 border-neutral-200/80 hover:border-neutral-300"
                     >
-                      {/* Alerta Visual de 8 Meses */}
-                      {isHighlight && (
-                        <div className="w-full bg-amber-400 text-amber-950 text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-center py-1 sm:py-1.5 z-20 flex items-center justify-center gap-1 sm:gap-1.5 shadow-xs">
-                          <AlertCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                          <span>8 Meses Cumplidos</span>
-                        </div>
-                      )}
 
                       {/* SECCIÓN DE IMAGEN */}
                       <div className="relative aspect-[4/3] w-full bg-neutral-100 overflow-hidden">
@@ -1267,13 +1226,6 @@ export default function InventarioPage() {
                       initial={{ opacity: 0, y: 15 }}
                       animate={{ opacity: 1, y: 0 }}
                       key={animal.id}
-                      onClick={() => {
-                        if (isHighlight) {
-                          const updated = [...viewedHighlights, animal.id];
-                          setViewedHighlights(updated);
-                          localStorage.setItem('viewed8Months', JSON.stringify(updated));
-                        }
-                      }}
                     >
                       <Link to={`/inventario/perfil?id=${animal.id}`} className="block h-full cursor-pointer">
                         {CardContent}
@@ -1299,29 +1251,16 @@ export default function InventarioPage() {
 
                 {/* Filas de la Lista */}
                 {paginatedAnimals.map((animal) => {
-                  const isHighlight = is8MonthsOld(animal);
-
                   return (
                     <motion.div
                       layout
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       key={animal.id}
-                      onClick={() => {
-                        if (isHighlight) {
-                          const updated = [...viewedHighlights, animal.id];
-                          setViewedHighlights(updated);
-                          localStorage.setItem('viewed8Months', JSON.stringify(updated));
-                        }
-                      }}
                     >
                       <Link
                         to={`/inventario/perfil?id=${animal.id}`}
-                        className={`group block bg-white rounded-2xl border transition-all duration-200 shadow-2xs hover:shadow-md cursor-pointer ${
-                          isHighlight
-                            ? 'border-amber-400 bg-amber-50/20 hover:border-amber-500'
-                            : 'border-neutral-200/90 hover:border-[#1B4820]/40 hover:bg-neutral-50/60'
-                        } p-3.5 sm:p-4`}
+                        className="group block bg-white rounded-2xl border border-neutral-200/90 hover:border-[#1B4820]/40 hover:bg-neutral-50/60 transition-all duration-200 shadow-2xs hover:shadow-md cursor-pointer p-3.5 sm:p-4"
                       >
                         {/* 1. Vista Desktop (Grid horizontal de columnas alineadas) */}
                         <div className="hidden lg:grid lg:grid-cols-[170px_150px_85px_90px_110px_1fr_140px_28px] gap-3 items-center w-full">
@@ -1337,12 +1276,6 @@ export default function InventarioPage() {
                                   className="inline-flex items-center justify-center p-1 rounded-md bg-amber-50 text-amber-700 border border-amber-300/80 shadow-2xs shrink-0"
                                 >
                                   <FileText className="w-3 h-3 text-amber-700 stroke-[2.5]" />
-                                </span>
-                              )}
-                              {isHighlight && (
-                                <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase bg-amber-400 text-amber-950 shrink-0">
-                                  <AlertCircle className="w-2.5 h-2.5" />
-                                  8M
                                 </span>
                               )}
                             </div>
@@ -1431,12 +1364,6 @@ export default function InventarioPage() {
                               {animal.name && animal.number && (
                                 <span className="text-xs sm:text-sm font-bold text-neutral-600 truncate">
                                   "{animal.name}"
-                                </span>
-                              )}
-                              {isHighlight && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-400 text-amber-950 shrink-0">
-                                  <AlertCircle className="w-3 h-3" />
-                                  <span>8M</span>
                                 </span>
                               )}
                             </div>
