@@ -209,9 +209,11 @@ export default function DashboardSkeleton() {
                 key={i}
                 className="h-11 bg-neutral-50/70 rounded-xl border border-neutral-100 flex items-center justify-between px-3.5"
               >
-                <div className="h-4 bg-neutral-200 rounded w-20" />
+                <div className="space-y-1">
+                  <div className="h-4 bg-neutral-200 rounded w-16" />
+                  <div className="h-2.5 bg-neutral-200/60 rounded w-20" />
+                </div>
                 <div className="h-3.5 bg-neutral-200/80 rounded w-28" />
-                <div className="h-3.5 bg-neutral-200/80 rounded w-24" />
                 <div className="h-3.5 bg-neutral-200/80 rounded w-32" />
                 <div className="h-3.5 bg-neutral-200/80 rounded w-24" />
                 <div className="h-3.5 bg-neutral-200 rounded w-12" />

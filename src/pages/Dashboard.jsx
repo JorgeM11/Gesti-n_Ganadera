@@ -1148,9 +1148,8 @@ export default function DashboardPage() {
               <table className="w-full text-left border-collapse min-w-[680px]">
                 <thead>
                   <tr className="border-b border-neutral-200/80 text-[11px] font-black uppercase tracking-wider text-neutral-500 bg-neutral-50/70 select-none">
-                    <th className="py-3 px-3.5 rounded-l-xl">Arete / Número</th>
+                    <th className="py-3 px-3.5 rounded-l-xl">Número / Nombre</th>
                     <th className="py-3 px-3.5">Microchip</th>
-                    <th className="py-3 px-3.5">Nombre</th>
                     <th className="py-3 px-3.5">Modificado Por</th>
                     <th className="py-3 px-3.5">Fecha y Hora</th>
                     <th className="py-3 px-3.5 text-right rounded-r-xl">Acción</th>
@@ -1165,21 +1164,16 @@ export default function DashboardPage() {
                         onClick={() => navigate(`/inventario/perfil?id=${animal.id}`)}
                         className="hover:bg-emerald-50/40 transition-colors cursor-pointer group"
                       >
-                        {/* 1. Arete / Número */}
-                        <td className="py-3 px-3.5 font-black text-[#1B4820]">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">
-                              {animal.number ? `#${animal.number}` : 'Sin arete'}
+                        {/* 1. Número y Nombre debajo (sin icono de género) */}
+                        <td className="py-3 px-3.5">
+                          <span className="font-black text-sm text-[#1B4820] block leading-snug">
+                            {animal.number ? `#${animal.number}` : (animal.name || 'Sin arete')}
+                          </span>
+                          {animal.name && animal.number && (
+                            <span className="text-[11px] font-bold text-neutral-500 truncate block leading-tight">
+                              {animal.name}
                             </span>
-                            <span
-                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${
-                                animal.sex === 'Hembra' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'
-                              }`}
-                              title={animal.sex}
-                            >
-                              {animal.sex === 'Hembra' ? <FaVenus /> : <FaMars />}
-                            </span>
-                          </div>
+                          )}
                         </td>
 
                         {/* 2. Microchip */}
@@ -1187,19 +1181,14 @@ export default function DashboardPage() {
                           {animal.chip_number ? (
                             <div className="flex items-center gap-1.5 font-bold text-neutral-900">
                               <Cpu className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                              <span className="font-mono">{animal.chip_number}</span>
+                              <span className="font-mono text-xs">{animal.chip_number}</span>
                             </div>
                           ) : (
                             <span className="text-neutral-400 font-normal italic">Sin chip</span>
                           )}
                         </td>
 
-                        {/* 3. Nombre */}
-                        <td className="py-3 px-3.5 font-bold text-neutral-800">
-                          {animal.name ? animal.name : <span className="text-neutral-400 font-normal italic">---</span>}
-                        </td>
-
-                        {/* 4. Quién hizo el cambio */}
+                        {/* 3. Quién hizo el cambio */}
                         <td className="py-3 px-3.5">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="font-bold text-neutral-900">
@@ -1219,12 +1208,12 @@ export default function DashboardPage() {
                           </div>
                         </td>
 
-                        {/* 5. Fecha y Hora */}
+                        {/* 4. Fecha y Hora */}
                         <td className="py-3 px-3.5 text-neutral-500 whitespace-nowrap">
                           {formatDateTime(animal.updated_at || animal.created_at)}
                         </td>
 
-                        {/* 6. Acción */}
+                        {/* 5. Acción */}
                         <td className="py-3 px-3.5 text-right">
                           <span className="inline-flex items-center gap-1 text-[11px] font-black text-[#1B4820] group-hover:translate-x-0.5 transition-transform">
                             <span>Ficha</span>
