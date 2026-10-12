@@ -1,8 +1,7 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
-  LayoutDashboard,
   Building2,
   Fence,
   UserCheck,
@@ -126,21 +125,36 @@ export default function DashboardPage() {
     return map;
   }, [owners]);
 
-  // Si cambia la finca seleccionada, resetear el potrero si ya no pertenece
+  // Si cambia la finca seleccionada, resetear el potrero si no pertenece a la nueva finca
+  const prevFarmIdRef = useRef(selectedFarmId);
   useEffect(() => {
-    if (selectedFarmId === 'ALL' || selectedFarmId === 'NONE') {
-      setSelectedPotreroId('ALL');
-    } else {
-      const potreroExists = potreros.some(p => p.id === selectedPotreroId && p.farm_id === selectedFarmId);
-      if (!potreroExists) {
+    if (prevFarmIdRef.current !== selectedFarmId) {
+      prevFarmIdRef.current = selectedFarmId;
+      if (selectedFarmId === 'NONE') {
+        setSelectedPotreroId('ALL');
+      } else if (selectedFarmId !== 'ALL' && selectedPotreroId !== 'ALL') {
+        const potreroBelongsToFarm = potreros.some(p => p.id === selectedPotreroId && p.farm_id === selectedFarmId);
+        if (!potreroBelongsToFarm) {
+          setSelectedPotreroId('ALL');
+        }
+      }
+    }
+  }, [selectedFarmId, selectedPotreroId, potreros]);
+
+  // Si se elimina el potrero seleccionado de la base de datos local
+  useEffect(() => {
+    if (selectedPotreroId !== 'ALL') {
+      const exists = potreros.some(p => p.id === selectedPotreroId);
+      if (!exists) {
         setSelectedPotreroId('ALL');
       }
     }
-  }, [selectedFarmId, potreros, selectedPotreroId]);
+  }, [potreros, selectedPotreroId]);
 
   // Potreros filtrados por la finca actual
   const currentFarmPotreros = useMemo(() => {
     if (selectedFarmId === 'ALL') return potreros;
+    if (selectedFarmId === 'NONE') return [];
     return potreros.filter(p => p.farm_id === selectedFarmId);
   }, [potreros, selectedFarmId]);
 
@@ -149,11 +163,19 @@ export default function DashboardPage() {
     const list = [
       {
         value: 'ALL',
-        label: selectedFarmId === 'ALL' ? 'Todos los Potreros' : `Todos los Potreros (${farmMap[selectedFarmId] || 'Finca'})`
+        label: selectedFarmId === 'ALL' 
+          ? 'Todos los Potreros' 
+          : selectedFarmId === 'NONE'
+            ? 'Sin Potreros'
+            : `Todos los Potreros (${farmMap[selectedFarmId] || 'Finca'})`
       }
     ];
     currentFarmPotreros.forEach(p => {
-      list.push({ value: p.id, label: p.name });
+      const farmName = farmMap[p.farm_id];
+      const label = selectedFarmId === 'ALL' && farmName 
+        ? `${p.name} (${farmName})`
+        : p.name;
+      list.push({ value: p.id, label });
     });
     return list;
   }, [selectedFarmId, farmMap, currentFarmPotreros]);
@@ -254,6 +276,8 @@ export default function DashboardPage() {
         machos: 0,
         conChip: 0,
         conChipPct: 0,
+        sinChip: 0,
+        sinChipPct: 0,
         conObservaciones: 0,
         conObservacionesPct: 0,
         categorias: AGE_CATEGORIES.map(c => ({ ...c, count: 0, pct: 0 })),
@@ -320,6 +344,8 @@ export default function DashboardPage() {
     });
 
     const conChipPct = Math.round((conChip / total) * 100);
+    const sinChip = total - conChip;
+    const sinChipPct = Math.round((sinChip / total) * 100);
     const conObservacionesPct = Math.round((conObservaciones / total) * 100);
 
     const categorias = AGE_CATEGORIES.map(c => {
@@ -390,6 +416,8 @@ export default function DashboardPage() {
       machos,
       conChip,
       conChipPct,
+      sinChip,
+      sinChipPct,
       conObservaciones,
       conObservacionesPct,
       categorias,
@@ -443,19 +471,9 @@ export default function DashboardPage() {
             >
               <Menu className="w-6 h-6 text-[#1B4820] md:text-white" />
             </button>
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-2xl bg-emerald-100 md:bg-white/15 text-[#1B4820] md:text-white flex items-center justify-center shadow-xs">
-                <LayoutDashboard className="w-5 h-5 stroke-[2.2]" />
-              </div>
-              <div>
-                <h1 className="text-xl md:text-2xl font-black text-[#1B4820] md:text-white tracking-tight leading-none">
-                  Dashboard
-                </h1>
-                <p className="text-[10px] md:text-[11px] font-bold text-neutral-500 md:text-emerald-200 uppercase tracking-wider mt-0.5">
-                  Resumen General del Rebaño
-                </p>
-              </div>
-            </div>
+            <h1 className="text-xl md:text-2xl font-black text-[#1B4820] md:text-white tracking-tight leading-none">
+              Dashboard
+            </h1>
           </div>
 
           {/* SyncStatus */}
@@ -695,25 +713,36 @@ export default function DashboardPage() {
                 <Cpu className="w-4 h-4" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="grid grid-cols-3 gap-2 sm:gap-2.5 pt-1">
               {/* Con Chip */}
-              <div className="bg-blue-50/70 border border-blue-100 rounded-2xl p-2.5 text-center">
-                <div className="flex items-center justify-center gap-1 text-[11px] font-black uppercase text-blue-700 tracking-wider">
-                  <Cpu className="w-3 h-3" />
-                  <span>Con Chip</span>
+              <div className="bg-blue-50/70 border border-blue-100 rounded-2xl p-2 sm:p-2.5 text-center">
+                <div className="flex items-center justify-center gap-1 text-[10px] sm:text-[11px] font-black uppercase text-blue-700 tracking-wider truncate">
+                  <Cpu className="w-3 h-3 shrink-0" />
+                  <span className="truncate">Con Chip</span>
                 </div>
-                <div className="text-2xl sm:text-3xl font-black text-blue-900 mt-0.5">
+                <div className="text-xl sm:text-2xl font-black text-blue-900 mt-0.5">
                   {metrics.conChip}
                 </div>
               </div>
 
-              {/* Con Observación */}
-              <div className="bg-amber-50/70 border border-amber-100 rounded-2xl p-2.5 text-center">
-                <div className="flex items-center justify-center gap-1 text-[11px] font-black uppercase text-amber-700 tracking-wider">
-                  <FileText className="w-3 h-3" />
-                  <span>Observaciones</span>
+              {/* Sin Chip */}
+              <div className="bg-neutral-50 border border-neutral-200/80 rounded-2xl p-2 sm:p-2.5 text-center">
+                <div className="flex items-center justify-center gap-1 text-[10px] sm:text-[11px] font-black uppercase text-neutral-600 tracking-wider truncate">
+                  <Cpu className="w-3 h-3 text-neutral-400 shrink-0" />
+                  <span className="truncate">Sin Chip</span>
                 </div>
-                <div className="text-2xl sm:text-3xl font-black text-amber-900 mt-0.5">
+                <div className="text-xl sm:text-2xl font-black text-neutral-800 mt-0.5">
+                  {metrics.sinChip}
+                </div>
+              </div>
+
+              {/* Con Observación */}
+              <div className="bg-amber-50/70 border border-amber-100 rounded-2xl p-2 sm:p-2.5 text-center">
+                <div className="flex items-center justify-center gap-1 text-[10px] sm:text-[11px] font-black uppercase text-amber-700 tracking-wider truncate">
+                  <FileText className="w-3 h-3 shrink-0" />
+                  <span className="truncate">Observaciones</span>
+                </div>
+                <div className="text-xl sm:text-2xl font-black text-amber-900 mt-0.5">
                   {metrics.conObservaciones}
                 </div>
               </div>

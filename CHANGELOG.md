@@ -8,7 +8,9 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 
 ### Perfeccionado y Depurado (Fase 3 - Dashboard y Remoción de Alerta de 8 Meses)
 - **Refinamientos del Dashboard ([`Dashboard.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Dashboard.jsx))**:
-  - **Header Limpio**: Eliminado el botón "Ver Inventario" del encabezado superior para una vista más minimalista y enfocada.
+  - **Header Minimalista**: Removido el botón "Ver Inventario", el icono ilustrativo junto a "Dashboard" y el subtítulo inferior ("Resumen General del Rebaño") para un diseño más limpio y directo.
+  - **Control e Identificación con Animales Sin Chip**: Incorporado el conteo de animales no identificados ("Sin Chip") en la tarjeta de KPI de Control & Identificación, junto a los animales con chip RFID y con observaciones registradas.
+  - **Selección Libre de Potreros**: Corregido el reseteo anticipado de potreros al no tener finca seleccionada (`Todas las Fincas`), permitiendo ahora seleccionar libremente cualquier potrero individual (mostrando el nombre del potrero y su finca entre paréntesis) sin forzar la elección previa de una finca.
   - **Selectores Estéticos y Consistentes**: Sustituidos los selects nativos por el componente [`CustomSelect.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/ui/CustomSelect.jsx) para los filtros de Potrero, Dueño y Estatus, manteniendo coherencia visual con los modales y formularios de la aplicación.
   - **Distribución por Sexo Directa**: Rediseñada la tarjeta de sexo para mostrar 2 números limpios e independientes (Hembras y Machos) con sus iconos respectivos, suprimiendo la barra bicolor.
   - **Remoción de KPI de Peso**: Eliminada la tarjeta de "Peso Promedio & Biomasa" de la cuadrícula superior de KPIs.

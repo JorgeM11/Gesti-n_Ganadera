@@ -166,7 +166,7 @@ flowchart TD
 - [x] **Vista General de Datos Esenciales**:
   - Población total de animales con desglose de activos e inactivos.
   - Distribución sexual simplificada (conteo directo de Hembras y Machos con iconos respectivos).
-  - Alertas y control: animales con observaciones clínicas/de manejo y cobertura de microchips RFID (alerta de 8 meses eliminada del sistema a solicitud).
+  - Alertas y control: animales con observaciones clínicas/de manejo, animales con chip y conteo de animales sin chip (alerta de 8 meses eliminada del sistema a solicitud).
   - Estructura etaria del rebaño (pirámide biológica por etapas productivas con barras de progreso).
   - Distribución por fincas (carga animal, potreros y desglose de hembras/machos).
   - Ocupación de potreros de la finca seleccionada (modo informativo).
@@ -175,11 +175,11 @@ flowchart TD
   - Acceso directo a fichas técnicas de los últimos animales registrados/modificados.
 - [x] **Segmentación por Fincas y Filtros Dinámicos**:
   - Selector horizontal tipo carousel/pills de fincas ("Todas las Fincas", fincas individuales y "Sin Finca").
-  - Subfiltros reactivos estilizados (`CustomSelect`) por potrero (contextual a la finca), dueño y estatus (Todos / Activos / Inactivos), con botón de restablecimiento rápido.
+  - Subfiltros reactivos estilizados (`CustomSelect`) por potrero (con selección libre multificina o contextual a la finca), dueño y estatus (Todos / Activos / Inactivos), con botón de restablecimiento rápido.
 - [x] **Navegación y UX**:
   - Primera opción en el menú lateral (`NavigationDrawer.jsx`) con icono `LayoutDashboard`.
   - Primer apartado al que se entra al abrir la aplicación o iniciar sesión (ruta por defecto `/dashboard` en `App.jsx` y `Login.jsx`).
-  - Header minimalista sin botón redundante de ver inventario.
+  - Header minimalista sin botón redundante de ver inventario, sin iconos innecesarios y sin subtítulos en la cabecera.
   - 100% responsive (diseño adaptativo optimizado para smartphones y monitores de escritorio).
   - Funcionamiento 100% offline-first mediante `useLiveQuery` conectado a IndexedDB (Dexie).
 
