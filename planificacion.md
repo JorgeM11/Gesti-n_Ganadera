@@ -25,7 +25,7 @@ flowchart TD
     end
 
     P1 --> P2["📡 PARTE 2 DE 3: Compatibilidad Escáner RFID (Culminada en Software ✅ - Espera de Campo)"]
-    P2 --> P3["📊 PARTE 3 DE 3: Dashboard, Eventos, Obreros y Despliegue (En Planificación 🚀)"]
+    P2 --> P3["📊 PARTE 3 DE 3: Dashboard, Vaquería y Sistema de Roles (Iniciada 🚀)"]
 
     style P1 fill:#f1f8e9,stroke:#33691e,stroke-width:2px
     style P2 fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
@@ -159,13 +159,35 @@ flowchart TD
 
 ---
 
-### 🚀 Parte 3 de 3: Dashboard, Eventos en Inventario, Módulo de Obreros y Despliegue (En Planificación)
-> **Objetivo**: Desarrollar los módulos acordados para la Parte 3 de 3 (en espera de las especificaciones y requerimientos detallados por parte del usuario).
+### 🚀 Parte 3 de 3: Dashboard, Vaquería y Sistema de Roles (En Desarrollo)
+> **Estructura definida**: Dividida formalmente en 3 apartados operativos clave.
 
-- [ ] **Dashboard**
-- [ ] **Apartado de Eventos en Inventario**
-- [ ] **Módulo de Obreros**
-- [ ] **Despliegue en Producción**
+#### 1. Apartado 1: Dashboard (Vista General Ejecutiva del Sistema) ✅
+- [x] **Vista General de Datos Esenciales**:
+  - Población total de animales con desglose de activos e inactivos.
+  - Distribución sexual (hembras vs machos, porcentajes y ratio de cría).
+  - Control de biomasa y peso: peso promedio general y por finca, biomasa total en pie (toneladas) y cobertura de pesaje.
+  - Alertas y control: animales con observaciones clínicas/de manejo, animales cumpliendo 8 meses (edad de destete), y cobertura de microchips RFID.
+  - Estructura etaria del rebaño (pirámide biológica por etapas productivas con barras de progreso).
+  - Distribución por fincas (carga animal, potreros y peso promedio).
+  - Ocupación de potreros de la finca seleccionada.
+  - Tenencia de rebaño por dueño / propietario.
+  - Composición racial del rebaño.
+  - Acceso directo a fichas técnicas de los últimos animales registrados/modificados.
+- [x] **Segmentación por Fincas y Filtros Dinámicos**:
+  - Selector horizontal tipo carousel/pills de fincas ("Todas las Fincas", fincas individuales y "Sin Finca").
+  - Subfiltros reactivos por potrero (contextual a la finca), dueño y estatus (Todos / Activos / Inactivos), con botón de restablecimiento rápido.
+- [x] **Navegación y UX**:
+  - Primera opción en el menú lateral (`NavigationDrawer.jsx`) con icono `LayoutDashboard`.
+  - Primer apartado al que se entra al abrir la aplicación o iniciar sesión (ruta por defecto `/dashboard` en `App.jsx` y `Login.jsx`).
+  - 100% responsive (diseño adaptativo optimizado para smartphones y monitores de escritorio).
+  - Funcionamiento 100% offline-first mediante `useLiveQuery` conectado a IndexedDB (Dexie).
+
+#### 2. Apartado 2: Vaquería ⏳
+- [ ] En espera de especificaciones y requerimientos detallados del usuario.
+
+#### 3. Apartado 3: Sistema de Roles ⏳
+- [ ] En espera de especificaciones y requerimientos detallados del usuario.
 
 ---
 
@@ -181,7 +203,6 @@ flowchart TD
 | **Fase 5: QA, SEO, Branding y Cierre (Parte 1)** | 2026-10-06 | **Completado** | Antigravity AI & Usuario | Vaca blanca en iconos, SEO completo, orden de razas, multi-usuario probado, offline refinado y sincronización con GitHub completada al 100%. |
 | **Parte 1: Refinamientos Finales** | 2026-10-06 | **Completado** | Antigravity AI & Usuario | Arete y chip alternativos esenciales, chip único con alerta reactiva y bloqueo, sección raza bajo ubicación y filtros por edad ganadera (becerros, mautes, novillas, adultos). |
 | **Parte 2: Cierre de Software Escáner RFID** | 2026-10-07 | **Completado** | Antigravity AI & Usuario | Software 100% adaptado con buffer de 200ms anti-jitter, protección contra pérdida de dígitos, borrado rápido y búsqueda instantánea. Culminada a espera de observaciones de campo. |
-| **Parte 3 de 3: Dashboard, Eventos, Obreros y Despliegue** | 2026-10-07 | **En progreso** | Antigravity AI & Usuario | Incorporados formalmente a la Parte 3: Dashboard central ganadero, apartado de eventos en inventario, módulo de obreros y despliegue a producción. |
-| **Corrección Visual: Vistas Tarjetas / Lista** | 2026-10-11 | **Completado** | Antigravity AI & Usuario | Incorporada vista tipo lista sin imágenes, responsive sin scroll horizontal en móvil, conmutador con persistencia en localStorage y esqueletos adaptados. |
-| **Refinamientos Visuales, Escáner y Filtros** | 2026-10-11 | **Completado** | Antigravity AI & Usuario | Vista lista optimizada (arete/chip grandes, badges circulares móvil, campo/dueño), icono de observaciones unificado en tarjetas/lista, blindaje multi-fotograma contra lecturas incompletas en cámara/físico, y nuevo filtro de observaciones con píldoras reactivas. |
+| **Correcciones Visuales, Escáner y Filtros** | 2026-10-11 | **Completado** | Antigravity AI & Usuario | Vistas duales (tarjetas y lista compacta sin imágenes), icono de observaciones unificado, protección anti-lecturas incompletas en cámara y escáner físico, y filtro de observaciones con pills. |
+| **Parte 3 - Apartado 1: Dashboard (v1)** | 2026-10-12 | **Completado** | Antigravity AI & Usuario | Primera versión del Dashboard ganadero: vista general, selector por fincas, subfiltros dinámicos, pirámide de edad, biomasa, primera opción en sidebar y ruta de entrada inicial. |
 

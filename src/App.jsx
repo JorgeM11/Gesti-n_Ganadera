@@ -4,6 +4,7 @@ import ScrollToTop from '@/components/providers/ScrollToTop';
 
 // Importaremos las páginas
 import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 import Inventario from './pages/Inventario';
 import NuevoAnimal from './pages/NuevoAnimal';
 import PerfilAnimal from './pages/PerfilAnimal';
@@ -28,21 +29,22 @@ export default function App() {
       <SyncManager />
 
       <Routes>
-        {/* Redirección por defecto: Si entras a la raíz, vas al Login */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        {/* Redirección por defecto: Si entras a la raíz, vas al Dashboard (protegido) */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
         {/* Rutas públicas */}
         <Route path="/login" element={<Login />} />
 
         {/* Rutas protegidas */}
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/inventario" element={<ProtectedRoute><Inventario /></ProtectedRoute>} />
         <Route path="/inventario/nuevo" element={<ProtectedRoute><NuevoAnimal /></ProtectedRoute>} />
         <Route path="/inventario/perfil" element={<ProtectedRoute><PerfilAnimal /></ProtectedRoute>} />
         <Route path="/inventario/perfil/evento" element={<ProtectedRoute><PerfilEvento /></ProtectedRoute>} />
         <Route path="/inventario/perfil/tratamiento" element={<ProtectedRoute><PerfilTratamiento /></ProtectedRoute>} />
 
-        {/* Ruta 404: Por seguridad, redirigimos al login */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* Ruta 404: Redirigir al dashboard por defecto */}
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
   );

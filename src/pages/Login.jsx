@@ -34,7 +34,7 @@ export default function LoginPage() {
 
     const userId = localStorage.getItem("ganadera_user_id");
     if (userId) {
-      navigate("/inventario");
+      navigate("/dashboard");
     }
   }, [navigate]);
 
@@ -53,7 +53,7 @@ export default function LoginPage() {
         return;
       }
 
-      navigate("/inventario");
+      navigate("/dashboard");
     } catch (error) {
       setServerError(error?.message || "Error al iniciar sesión.");
     } finally {

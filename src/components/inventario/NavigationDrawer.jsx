@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 const MotionDiv = motion.div;
 import { 
   X, 
+  LayoutDashboard,
   Layers, 
   Building2, 
   UserCheck,
@@ -82,7 +83,27 @@ export default function NavigationDrawer({
 
               {/* Lista de Enlaces de Navegación */}
               <nav className="p-4 space-y-2">
-                {/* 1. Inventario */}
+                {/* 1. Dashboard (Primera opción del sidebar) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/dashboard');
+                    onClose();
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold transition-all cursor-pointer ${
+                    isCurrentRoute('/dashboard')
+                      ? 'bg-[#1B4820] text-white shadow-lg shadow-[#1B4820]/20'
+                      : 'text-neutral-700 hover:bg-neutral-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <LayoutDashboard className={`w-5 h-5 ${isCurrentRoute('/dashboard') ? 'text-white' : 'text-[#1B4820]'}`} />
+                    <span>Dashboard</span>
+                  </div>
+                  <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/dashboard') ? 'text-white' : 'text-neutral-400'}`} />
+                </button>
+
+                {/* 2. Inventario */}
                 <button
                   type="button"
                   onClick={() => {

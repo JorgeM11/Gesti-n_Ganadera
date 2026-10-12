@@ -4,6 +4,30 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.6.0-phase3-dashboard-v1] - 2026-10-12
+
+### Añadido y Lanzado (Fase 3 - Apartado 1: Dashboard General Ganadero)
+- **Nueva Página de Dashboard General ([`Dashboard.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Dashboard.jsx))**:
+  - **Vista General Ejecutiva**: Presentación consolidada de todos los datos esenciales del rebaño mediante consultas reactivas 100% offline-first con IndexedDB (`Dexie.js`).
+  - **Selector Prominente de Fincas**: Selector tipo carrusel horizontal interactivo que permite conmutar entre "Todas las Fincas", fincas individuales y animales "Sin Finca".
+  - **Subfiltros Dinámicos**: Filtro de potrero contextual a la finca seleccionada, filtro por dueño/propietario y filtro por estatus (Todos / Activos / Inactivos) con botón para restablecer filtros secundarios.
+  - **Tarjetas de KPIs Principales**:
+    - **Población Total**: Conteo general de animales con desglose de activos e inactivos.
+    - **Distribución de Sexo**: Cantidad y porcentaje de Hembras vs Machos, con barra visual bicolor y ratio de cría.
+    - **Peso y Biomasa**: Peso promedio del lote, biomasa total en toneladas métricas y porcentaje de cobertura de pesaje.
+    - **Control y Alertas**: Conteo y porcentaje de animales identificados con chip RFID, animales con observaciones registradas y alerta de 8 meses (edad de destete).
+  - **Estructura Etaria del Rebaño**: Pirámide biológica por categorías ganaderas (Becerros, Mautes Macho, Mautes Hembra, Novillas, Adultos y Desconocida) con barras de progreso visuales y porcentajes relativos.
+  - **Resumen por Fincas y Ocupación de Potreros**: Desglose de carga animal por propiedad y distribución porcentual por potreros.
+  - **Tenencia y Genética**: Métricas del rebaño agrupadas por propietario y composición racial del ganado.
+  - **Actividad Reciente**: Accesos directos a las fichas técnicas de los últimos animales registrados o actualizados.
+- **Integración de Navegación y Rutas ([`App.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/App.jsx), [`Login.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Login.jsx), [`NavigationDrawer.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/NavigationDrawer.jsx))**:
+  - **Primera Opción en la Barra Lateral**: Dashboard posicionado en el tope de la navegación con icono `LayoutDashboard`.
+  - **Apartado de Entrada Inicial**: Configurada la ruta `/dashboard` como destino predeterminado al ingresar al sistema, abrir la aplicación con sesión iniciada o redirigir desde la raíz `/`.
+- **Integridad Absoluta de Datos**:
+  - Supabase e IndexedDB 100% preservados sin alteración ni pérdida de datos.
+
+---
+
 ## [1.5.3-filter-observations] - 2026-10-11
 
 ### Añadido y Perfeccionado (Filtros de Inventario: Observaciones)
