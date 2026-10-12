@@ -822,11 +822,8 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
             <div>
               <h2 className="text-base font-black text-neutral-900">
-                Estructura Etaria del Rebaño
+                Estructura por Edad
               </h2>
-              <p className="text-[11px] font-medium text-neutral-400">
-                Distribución por etapas productivas y categorías biológicas
-              </p>
             </div>
           </div>
 
@@ -880,9 +877,7 @@ export default function DashboardPage() {
                   <h3 className="text-base font-black text-neutral-900">
                     Resumen por Fincas ({farms.length})
                   </h3>
-                  <p className="text-[11px] font-medium text-neutral-400">
-                    Carga animal por propiedad
-                  </p>
+                 
                 </div>
               </div>
             </div>
@@ -1016,11 +1011,9 @@ export default function DashboardPage() {
                 <UserCheck className="w-5 h-5 text-[#1B4820]" />
                 <div>
                   <h3 className="text-base font-black text-neutral-900">
-                    Rebaño por Dueño / Propietario
+                    Rebaño por Dueño
                   </h3>
-                  <p className="text-[11px] font-medium text-neutral-400">
-                    Tenencia y propiedad del ganado
-                  </p>
+                  
                 </div>
               </div>
             </div>
@@ -1068,11 +1061,9 @@ export default function DashboardPage() {
                 <Dna className="w-5 h-5 text-[#1B4820]" />
                 <div>
                   <h3 className="text-base font-black text-neutral-900">
-                    Composición Racial del Rebaño
+                    Genética del Rebaño
                   </h3>
-                  <p className="text-[11px] font-medium text-neutral-400">
-                    Genética y linajes presentes en el lote
-                  </p>
+                  
                 </div>
               </div>
             </div>
@@ -1123,18 +1114,15 @@ export default function DashboardPage() {
               <div className="flex items-center gap-2">
                 <History className="w-5 h-5 text-[#1B4820]" />
                 <h3 className="text-base font-black text-neutral-900">
-                  Historial de Cambios Recientes (Últimos 10)
+                  Historial de Cambios
                 </h3>
               </div>
-              <p className="text-[11px] font-medium text-neutral-400 mt-0.5">
-                Auditoría técnica de registros y modificaciones realizadas por el administrador y obreros
-              </p>
             </div>
             <Link
               to="/inventario"
               className="text-xs font-black text-[#1B4820] hover:underline flex items-center gap-1 self-start sm:self-auto shrink-0"
             >
-              <span>Ver Catálogo Completo</span>
+              <span>Ver Catálogo</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
