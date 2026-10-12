@@ -192,34 +192,32 @@ export default function DashboardSkeleton() {
         </section>
       </div>
 
-      {/* 7. SKELETON: ACTIVIDAD RECIENTE */}
+      {/* 7. SKELETON: ACTIVIDAD RECIENTE (TABLA ÚLTIMOS 10) */}
       <section className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200/80 shadow-xs space-y-4">
         <div className="border-b border-neutral-100 pb-3 flex justify-between items-center">
           <div className="space-y-1.5">
-            <div className="h-4 bg-neutral-200 rounded-md w-48" />
-            <div className="h-3 bg-neutral-100 rounded-md w-56" />
+            <div className="h-4 bg-neutral-200 rounded-md w-56" />
+            <div className="h-3 bg-neutral-100 rounded-md w-72" />
           </div>
           <div className="h-3.5 bg-neutral-200 rounded w-28" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="p-3.5 rounded-2xl border border-neutral-200/80 bg-neutral-50/60 space-y-3"
-            >
-              <div className="flex justify-between items-center">
-                <div className="h-4 bg-neutral-200 rounded w-14" />
-                <div className="w-5 h-5 bg-neutral-200 rounded-full" />
+        <div className="overflow-x-auto -mx-2 sm:mx-0">
+          <div className="min-w-[680px] space-y-2">
+            <div className="h-10 bg-neutral-100 rounded-xl" />
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-11 bg-neutral-50/70 rounded-xl border border-neutral-100 flex items-center justify-between px-3.5"
+              >
+                <div className="h-4 bg-neutral-200 rounded w-20" />
+                <div className="h-3.5 bg-neutral-200/80 rounded w-28" />
+                <div className="h-3.5 bg-neutral-200/80 rounded w-24" />
+                <div className="h-3.5 bg-neutral-200/80 rounded w-32" />
+                <div className="h-3.5 bg-neutral-200/80 rounded w-24" />
+                <div className="h-3.5 bg-neutral-200 rounded w-12" />
               </div>
-              <div className="space-y-1.5">
-                <div className="h-3 bg-neutral-100 rounded w-20" />
-                <div className="h-3 bg-neutral-100 rounded w-16" />
-              </div>
-              <div className="pt-2 border-t border-neutral-200/60 flex justify-between items-center">
-                <div className="h-2.5 bg-neutral-200 rounded w-16" />
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
     </div>

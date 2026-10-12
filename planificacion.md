@@ -172,7 +172,7 @@ flowchart TD
   - Ocupación de potreros de la finca seleccionada (modo informativo).
   - Tenencia de rebaño por dueño / propietario (modo informativo).
   - Composición racial del rebaño.
-  - Acceso directo a fichas técnicas de los últimos animales registrados/modificados.
+  - Tabla de auditoría histórica con los últimos 10 animales registrados o modificados (número, chip, nombre, usuario responsable con rol, fecha/hora y acceso a ficha).
 - [x] **Segmentación por Fincas y Filtros Dinámicos**:
   - Selector horizontal tipo carousel/pills de fincas ("Todas las Fincas", fincas individuales y "Sin Finca").
   - Subfiltros reactivos estilizados (`CustomSelect`) por potrero (con selección libre multificina o contextual a la finca), dueño y estatus (Todos / Activos / Inactivos), con botón de restablecimiento rápido.

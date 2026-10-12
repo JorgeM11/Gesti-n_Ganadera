@@ -13,15 +13,33 @@ import {
   RotateCcw,
   Menu,
   Dna,
-  CheckCircle2
+  CheckCircle2,
+  History
 } from 'lucide-react';
 import { FaMars, FaVenus } from 'react-icons/fa6';
 import { GiCow } from 'react-icons/gi';
 
 import { db, clearLocalData } from '@/lib/db';
 import { parseLocalDate } from '@/lib/dateUtils';
-import { logoutUser } from '@/lib/authService';
+import { logoutUser, getCurrentUser } from '@/lib/authService';
 import { useForceResync } from '@/hooks/useForceResync';
+
+function formatDateTime(isoString) {
+  if (!isoString) return '---';
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return '---';
+    return d.toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch {
+    return '---';
+  }
+}
 
 import SyncStatus from '@/components/ui/SyncStatus';
 import NavigationDrawer from '@/components/inventario/NavigationDrawer';
@@ -130,6 +148,44 @@ export default function DashboardPage() {
     owners.forEach(o => { map[o.id] = o.name; });
     return map;
   }, [owners]);
+
+  // Auditoría de usuarios y roles
+  const rawUsuarios = useLiveQuery(() => db.usuarios.filter(u => !u.deleted_at).toArray()) || [];
+  const currentUser = useMemo(() => getCurrentUser(), []);
+
+  const usersMap = useMemo(() => {
+    const map = {};
+    rawUsuarios.forEach(u => {
+      map[u.id] = {
+        name: u.name || u.email?.split('@')[0] || 'Usuario',
+        email: u.email || '',
+        role: u.role || 'operador'
+      };
+    });
+    return map;
+  }, [rawUsuarios]);
+
+  const getUserInfo = (userId) => {
+    if (!userId) {
+      return {
+        name: currentUser?.name || currentUser?.email?.split('@')[0] || 'Administrador',
+        role: currentUser?.role || 'admin'
+      };
+    }
+    if (usersMap[userId]) {
+      return usersMap[userId];
+    }
+    if (currentUser && currentUser.id === userId) {
+      return {
+        name: currentUser.name || currentUser.email?.split('@')[0] || 'Administrador',
+        role: currentUser.role || 'admin'
+      };
+    }
+    return {
+      name: `Usuario #${userId.slice(0, 6)}`,
+      role: 'operador'
+    };
+  };
 
   // Si cambia la finca seleccionada, resetear el potrero si no pertenece a la nueva finca
   const prevFarmIdRef = useRef(selectedFarmId);
@@ -411,8 +467,8 @@ export default function DashboardPage() {
       }))
       .sort((a, b) => b.count - a.count);
 
-    // Animales recientes (últimos 5 modificados)
-    const recientes = filteredAnimals.slice(0, 5);
+    // Animales recientes (últimos 10 registrados o modificados)
+    const recientes = filteredAnimals.slice(0, 10);
 
     return {
       total,
@@ -1059,21 +1115,24 @@ export default function DashboardPage() {
         </div>
 
         {/* ========================================================================= */}
-        {/* 7. ACTIVIDAD RECIENTE (ÚLTIMOS ANIMALES REGISTRADOS O MODIFICADOS)        */}
+        {/* 7. ACTIVIDAD RECIENTE: HISTORIAL DE MODIFICACIONES (TABLA ÚLTIMOS 10)     */}
         {/* ========================================================================= */}
         <section className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200/80 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-neutral-100 pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-100 pb-3">
             <div>
-              <h3 className="text-base font-black text-neutral-900">
-                Últimos Animales Registrados o Modificados
-              </h3>
-              <p className="text-[11px] font-medium text-neutral-400">
-                Acceso directo a las fichas técnicas más recientes
+              <div className="flex items-center gap-2">
+                <History className="w-5 h-5 text-[#1B4820]" />
+                <h3 className="text-base font-black text-neutral-900">
+                  Historial de Cambios Recientes (Últimos 10)
+                </h3>
+              </div>
+              <p className="text-[11px] font-medium text-neutral-400 mt-0.5">
+                Auditoría técnica de registros y modificaciones realizadas por el administrador y obreros
               </p>
             </div>
             <Link
               to="/inventario"
-              className="text-xs font-black text-[#1B4820] hover:underline flex items-center gap-1"
+              className="text-xs font-black text-[#1B4820] hover:underline flex items-center gap-1 self-start sm:self-auto shrink-0"
             >
               <span>Ver Catálogo Completo</span>
               <ArrowRight className="w-3.5 h-3.5" />
@@ -1081,50 +1140,102 @@ export default function DashboardPage() {
           </div>
 
           {metrics.recientes.length === 0 ? (
-            <p className="text-xs text-neutral-400 italic py-4 text-center">
+            <p className="text-xs text-neutral-400 italic py-6 text-center">
               No hay animales registrados.
             </p>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-              {metrics.recientes.map(animal => (
-                <Link
-                  key={animal.id}
-                  to={`/inventario/perfil?id=${animal.id}`}
-                  className="p-3.5 rounded-2xl border border-neutral-200/80 hover:border-[#1B4820] bg-neutral-50/60 hover:bg-neutral-50 transition-all flex flex-col justify-between space-y-2 group"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-base font-black text-[#1B4820] truncate">
-                      {animal.number ? `#${animal.number}` : (animal.name || 'Sin arete')}
-                    </span>
-                    <span
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
-                        animal.sex === 'Hembra' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'
-                      }`}
-                    >
-                      {animal.sex === 'Hembra' ? <FaVenus /> : <FaMars />}
-                    </span>
-                  </div>
+            <div className="overflow-x-auto -mx-2 sm:mx-0">
+              <table className="w-full text-left border-collapse min-w-[680px]">
+                <thead>
+                  <tr className="border-b border-neutral-200/80 text-[11px] font-black uppercase tracking-wider text-neutral-500 bg-neutral-50/70 select-none">
+                    <th className="py-3 px-3.5 rounded-l-xl">Arete / Número</th>
+                    <th className="py-3 px-3.5">Microchip</th>
+                    <th className="py-3 px-3.5">Nombre</th>
+                    <th className="py-3 px-3.5">Modificado Por</th>
+                    <th className="py-3 px-3.5">Fecha y Hora</th>
+                    <th className="py-3 px-3.5 text-right rounded-r-xl">Acción</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-neutral-100 text-xs font-medium text-neutral-700">
+                  {metrics.recientes.map((animal) => {
+                    const userInfo = getUserInfo(animal.user_id);
+                    return (
+                      <tr
+                        key={animal.id}
+                        onClick={() => navigate(`/inventario/perfil?id=${animal.id}`)}
+                        className="hover:bg-emerald-50/40 transition-colors cursor-pointer group"
+                      >
+                        {/* 1. Arete / Número */}
+                        <td className="py-3 px-3.5 font-black text-[#1B4820]">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm">
+                              {animal.number ? `#${animal.number}` : 'Sin arete'}
+                            </span>
+                            <span
+                              className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] shrink-0 ${
+                                animal.sex === 'Hembra' ? 'bg-pink-100 text-pink-700' : 'bg-blue-100 text-blue-700'
+                              }`}
+                              title={animal.sex}
+                            >
+                              {animal.sex === 'Hembra' ? <FaVenus /> : <FaMars />}
+                            </span>
+                          </div>
+                        </td>
 
-                  <div className="text-xs text-neutral-600 space-y-0.5">
-                    {animal.name && animal.number && (
-                      <p className="font-bold text-neutral-700 truncate">
-                        "{animal.name}"
-                      </p>
-                    )}
-                    <p className="text-[11px] font-medium text-neutral-500 truncate">
-                      {animal.farm_id && farmMap[animal.farm_id] ? farmMap[animal.farm_id] : 'Sin finca'}
-                    </p>
-                    <p className="text-[11px] font-bold text-neutral-700">
-                      {animal.last_weight_kg ? `${animal.last_weight_kg} kg` : 'Sin peso'}
-                    </p>
-                  </div>
+                        {/* 2. Microchip */}
+                        <td className="py-3 px-3.5">
+                          {animal.chip_number ? (
+                            <div className="flex items-center gap-1.5 font-bold text-neutral-900">
+                              <Cpu className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                              <span className="font-mono">{animal.chip_number}</span>
+                            </div>
+                          ) : (
+                            <span className="text-neutral-400 font-normal italic">Sin chip</span>
+                          )}
+                        </td>
 
-                  <div className="pt-2 border-t border-neutral-200/60 flex items-center justify-between text-[10px] font-bold text-neutral-400 group-hover:text-[#1B4820]">
-                    <span>Ficha técnica</span>
-                    <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                  </div>
-                </Link>
-              ))}
+                        {/* 3. Nombre */}
+                        <td className="py-3 px-3.5 font-bold text-neutral-800">
+                          {animal.name ? animal.name : <span className="text-neutral-400 font-normal italic">---</span>}
+                        </td>
+
+                        {/* 4. Quién hizo el cambio */}
+                        <td className="py-3 px-3.5">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="font-bold text-neutral-900">
+                              {userInfo.name}
+                            </span>
+                            <span
+                              className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full leading-none ${
+                                userInfo.role === 'admin'
+                                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                  : userInfo.role === 'obrero'
+                                    ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                    : 'bg-blue-100 text-blue-800 border border-blue-200'
+                              }`}
+                            >
+                              {userInfo.role}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* 5. Fecha y Hora */}
+                        <td className="py-3 px-3.5 text-neutral-500 whitespace-nowrap">
+                          {formatDateTime(animal.updated_at || animal.created_at)}
+                        </td>
+
+                        {/* 6. Acción */}
+                        <td className="py-3 px-3.5 text-right">
+                          <span className="inline-flex items-center gap-1 text-[11px] font-black text-[#1B4820] group-hover:translate-x-0.5 transition-transform">
+                            <span>Ficha</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </section>
