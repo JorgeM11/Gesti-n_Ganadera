@@ -182,6 +182,7 @@ flowchart TD
   - Header minimalista sin botón redundante de ver inventario, sin iconos innecesarios y sin subtítulos en la cabecera.
   - 100% responsive (diseño adaptativo optimizado para smartphones y monitores de escritorio).
   - Funcionamiento 100% offline-first mediante `useLiveQuery` conectado a IndexedDB (Dexie).
+  - Skeleton loader adaptativo (`DashboardSkeleton.jsx`) con animación `animate-pulse` que sostiene la estructura visual mientras cargan los datos, funcionando idénticamente con o sin internet.
 
 #### 2. Apartado 2: Vaquería ⏳
 - [ ] En espera de especificaciones y requerimientos detallados del usuario.

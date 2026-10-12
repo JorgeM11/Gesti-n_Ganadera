@@ -31,6 +31,7 @@ import OwnerModal from '@/components/inventario/OwnerModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Toast from '@/components/ui/Toast';
 import CustomSelect from '@/components/ui/CustomSelect';
+import DashboardSkeleton from '@/components/dashboard/DashboardSkeleton';
 
 // Categorías ganaderas por edad
 const AGE_CATEGORIES = [
@@ -94,17 +95,22 @@ export default function DashboardPage() {
   };
 
   // Consultas reactivas Dexie (100% offline-first)
-  const farms = useLiveQuery(() => db.farms.filter(f => !f.deleted_at).toArray()) || [];
-  const potreros = useLiveQuery(() => db.potreros.filter(p => !p.deleted_at).toArray()) || [];
-  const owners = useLiveQuery(() => db.owners.filter(o => !o.deleted_at).toArray()) || [];
-  const allAnimals = useLiveQuery(
+  const rawFarms = useLiveQuery(() => db.farms.filter(f => !f.deleted_at).toArray());
+  const rawPotreros = useLiveQuery(() => db.potreros.filter(p => !p.deleted_at).toArray());
+  const rawOwners = useLiveQuery(() => db.owners.filter(o => !o.deleted_at).toArray());
+  const rawAnimals = useLiveQuery(
     () => db.animals
       .orderBy('updated_at')
       .reverse()
       .filter(a => !a.deleted_at)
-      .toArray(),
-    []
-  ) || [];
+      .toArray()
+  );
+
+  const isLoading = rawAnimals === undefined || rawFarms === undefined;
+  const farms = rawFarms || [];
+  const potreros = rawPotreros || [];
+  const owners = rawOwners || [];
+  const allAnimals = rawAnimals || [];
 
   // Mapeos rápidos para nombres
   const farmMap = useMemo(() => {
@@ -485,10 +491,13 @@ export default function DashboardPage() {
 
       {/* CONTENEDOR PRINCIPAL */}
       <div className="max-w-7xl mx-auto px-4 md:px-8 mt-5 md:mt-6 space-y-6">
-
-        {/* ========================================================================= */}
-        {/* 1. SELECTOR PROMINENTE DE FINCA (CAROUSEL / TABS HORIZONTALES)            */}
-        {/* ========================================================================= */}
+        {isLoading ? (
+          <DashboardSkeleton />
+        ) : (
+          <>
+            {/* ========================================================================= */}
+            {/* 1. SELECTOR PROMINENTE DE FINCA (CAROUSEL / TABS HORIZONTALES)            */}
+            {/* ========================================================================= */}
         <section className="bg-white rounded-3xl p-4 sm:p-5 border border-neutral-200/80 shadow-xs space-y-3">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
@@ -1119,7 +1128,8 @@ export default function DashboardPage() {
             </div>
           )}
         </section>
-
+          </>
+        )}
       </div>
 
       {/* ========================================================================= */}

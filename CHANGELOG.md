@@ -8,6 +8,7 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
 
 ### Perfeccionado y Depurado (Fase 3 - Dashboard y Remoción de Alerta de 8 Meses)
 - **Refinamientos del Dashboard ([`Dashboard.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Dashboard.jsx))**:
+  - **Skeleton Loader Offline/Online ([`DashboardSkeleton.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/dashboard/DashboardSkeleton.jsx))**: Creado componente de skeleton con animación `animate-pulse` que replica la geometría exacta del Dashboard (fincas, subfiltros, KPIs, pirámide de edad, fincas/potreros, dueños/razas y actividad reciente) mientras se leen los datos desde IndexedDB (`useLiveQuery`), funcionando fluidamente con y sin conexión a internet.
   - **Header Minimalista**: Removido el botón "Ver Inventario", el icono ilustrativo junto a "Dashboard" y el subtítulo inferior ("Resumen General del Rebaño") para un diseño más limpio y directo.
   - **Control e Identificación con Animales Sin Chip**: Incorporado el conteo de animales no identificados ("Sin Chip") en la tarjeta de KPI de Control & Identificación, junto a los animales con chip RFID y con observaciones registradas.
   - **Selección Libre de Potreros**: Corregido el reseteo anticipado de potreros al no tener finca seleccionada (`Todas las Fincas`), permitiendo ahora seleccionar libremente cualquier potrero individual (mostrando el nombre del potrero y su finca entre paréntesis) sin forzar la elección previa de una finca.
