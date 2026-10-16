@@ -270,6 +270,18 @@ export function calculateVaqueriaAnalysis({
     });
   });
 
+  // Ordenar lista de presentes: Siempre de primero los nuevos no registrados
+  classifiedPresent.sort((a, b) => {
+    const aIsUnreg = a.classification === 'UNREGISTERED_IN_SYSTEM' ? 1 : 0;
+    const bIsUnreg = b.classification === 'UNREGISTERED_IN_SYSTEM' ? 1 : 0;
+    if (aIsUnreg !== bIsUnreg) {
+      return bIsUnreg - aIsUnreg; // Nuevos no registrados de primero
+    }
+    const timeA = new Date(a.record?.created_at || 0).getTime();
+    const timeB = new Date(b.record?.created_at || 0).getTime();
+    return timeB - timeA;
+  });
+
   // 3. Procesar Animales FALTANTES (esperados que NO estuvieron presentes)
   const missingAnimals = [];
   let missingActiveCount = 0;

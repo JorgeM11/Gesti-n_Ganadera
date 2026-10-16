@@ -4,6 +4,17 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.6-vaqueria-tabs-and-priority] - 2026-10-16
+
+### Perfeccionado y Optimizado (Prioridad de Nuevos No Registrados y Pestañas Minimalistas)
+- **Prioridad de Nuevos No Registrados en Lista de Presentes ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx), [`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js))**:
+  - En la lista de presentes (y en búsquedas filtradas), los animales nuevos no registrados en el sistema (`UNREGISTERED_IN_SYSTEM`) siempre se posicionan de primero en la parte superior, garantizando su rápida visualización y completado de datos.
+- **Pestañas Minimalistas y Responsive Móvil ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - Se removieron los iconos de las tres pestañas (Presentes, Faltantes, Nuevos) para una apariencia más limpia y enfocada.
+  - La tipografía en móviles se ajustó a `text-[11px]` con espaciado y márgenes optimizados para que las pestañas se muestren en una sola línea sin desbordamientos.
+
+---
+
 ## [1.7.5-vaqueria-loading-fix] - 2026-10-16
 
 ### Corregido (Eliminación de Parpadeo y Falso Aviso de "Vaquería no encontrada")

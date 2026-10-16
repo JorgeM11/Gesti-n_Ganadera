@@ -341,25 +341,40 @@ export default function VaqueriaDetallePage() {
 
   const { classifiedPresent = [], missingAnimals = [], kpis = {} } = analysis || {};
 
-  // Filtrar presentes por término de búsqueda
-  const filteredPresent = classifiedPresent.filter(item => {
-    if (!searchTerm.trim()) return true;
-    const q = searchTerm.trim().toLowerCase();
-    const matchNumber = (item.displayNumber || '').toLowerCase().includes(q);
-    const matchChip = (item.displayChip || '').toLowerCase().includes(q);
-    const matchName = (item.displayName || '').toLowerCase().includes(q);
-    return matchNumber || matchChip || matchName;
-  });
+  // Filtrar presentes por término de búsqueda (siempre de primero los nuevos no registrados)
+  const filteredPresent = useMemo(() => {
+    return classifiedPresent
+      .filter(item => {
+        if (!searchTerm.trim()) return true;
+        const q = searchTerm.trim().toLowerCase();
+        const matchNumber = (item.displayNumber || '').toLowerCase().includes(q);
+        const matchChip = (item.displayChip || '').toLowerCase().includes(q);
+        const matchName = (item.displayName || '').toLowerCase().includes(q);
+        return matchNumber || matchChip || matchName;
+      })
+      .sort((a, b) => {
+        const aIsUnreg = a.classification === 'UNREGISTERED_IN_SYSTEM' ? 1 : 0;
+        const bIsUnreg = b.classification === 'UNREGISTERED_IN_SYSTEM' ? 1 : 0;
+        if (aIsUnreg !== bIsUnreg) {
+          return bIsUnreg - aIsUnreg; // Nuevos no registrados siempre primero
+        }
+        const timeA = new Date(a.record?.created_at || 0).getTime();
+        const timeB = new Date(b.record?.created_at || 0).getTime();
+        return timeB - timeA;
+      });
+  }, [classifiedPresent, searchTerm]);
 
   // Filtrar faltantes por término de búsqueda
-  const filteredMissing = missingAnimals.filter(item => {
-    if (!searchTerm.trim()) return true;
-    const q = searchTerm.trim().toLowerCase();
-    const matchNumber = (item.displayNumber || '').toLowerCase().includes(q);
-    const matchChip = (item.displayChip || '').toLowerCase().includes(q);
-    const matchName = (item.displayName || '').toLowerCase().includes(q);
-    return matchNumber || matchChip || matchName;
-  });
+  const filteredMissing = useMemo(() => {
+    return missingAnimals.filter(item => {
+      if (!searchTerm.trim()) return true;
+      const q = searchTerm.trim().toLowerCase();
+      const matchNumber = (item.displayNumber || '').toLowerCase().includes(q);
+      const matchChip = (item.displayChip || '').toLowerCase().includes(q);
+      const matchName = (item.displayName || '').toLowerCase().includes(q);
+      return matchNumber || matchChip || matchName;
+    });
+  }, [missingAnimals, searchTerm]);
 
   // Lista de no registrados para pestaña dedicada
   const uncompletedList = classifiedPresent.filter(i => i.classification === 'UNREGISTERED_IN_SYSTEM');
@@ -582,31 +597,29 @@ export default function VaqueriaDetallePage() {
           </div>
         </div>
 
-        {/* Pestañas de Navegación del Detalle */}
-        <div className="bg-white rounded-3xl p-2 border border-neutral-200/80 shadow-xs flex items-center gap-2">
+        {/* Pestañas de Navegación del Detalle (Sin iconos, letras más compactas en móvil) */}
+        <div className="bg-white rounded-2xl sm:rounded-3xl p-1.5 sm:p-2 border border-neutral-200/80 shadow-xs flex items-center gap-1.5 sm:gap-2">
           <button
             type="button"
             onClick={() => setActiveTab('presentes')}
-            className={`flex-1 py-2.5 px-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-2 ${
+            className={`flex-1 py-2 sm:py-2.5 px-1.5 sm:px-3 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-black tracking-tight sm:tracking-normal transition-all cursor-pointer text-center ${
               activeTab === 'presentes'
                 ? 'bg-[#1B4820] text-white shadow-sm'
                 : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
             }`}
           >
-            <CheckCircle2 className="w-4 h-4" />
             <span>Presentes ({classifiedPresent.length})</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('faltantes')}
-            className={`flex-1 py-2.5 px-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-2 ${
+            className={`flex-1 py-2 sm:py-2.5 px-1.5 sm:px-3 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-black tracking-tight sm:tracking-normal transition-all cursor-pointer text-center ${
               activeTab === 'faltantes'
                 ? 'bg-[#1B4820] text-white shadow-sm'
                 : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
             }`}
           >
-            <AlertTriangle className="w-4 h-4" />
             <span>Faltantes ({missingAnimals.length})</span>
           </button>
 
@@ -614,13 +627,12 @@ export default function VaqueriaDetallePage() {
             <button
               type="button"
               onClick={() => setActiveTab('por_completar')}
-              className={`flex-1 py-2.5 px-3 rounded-2xl text-xs font-black transition-all cursor-pointer flex items-center justify-center gap-2 ${
+              className={`flex-1 py-2 sm:py-2.5 px-1.5 sm:px-3 rounded-xl sm:rounded-2xl text-[11px] sm:text-xs font-black tracking-tight sm:tracking-normal transition-all cursor-pointer text-center ${
                 activeTab === 'por_completar'
                   ? 'bg-rose-700 text-white shadow-sm'
                   : 'bg-rose-50 text-rose-700 hover:bg-rose-100'
               }`}
             >
-              <ClipboardPlus className="w-4 h-4" />
               <span>Nuevos ({uncompletedList.length})</span>
             </button>
           )}
