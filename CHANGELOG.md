@@ -4,6 +4,17 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.8-vaqueria-pagination] - 2026-10-16
+
+### Añadido y Optimizado (Paginación Ligera y Rendimiento para Grandes Rebaños)
+- **Paginación Reactiva en Detalle de Vaquería ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - Se implementó paginación configurable (25, 50, 100 animales por página, por defecto 25) para las listas de Presentes, Faltantes y Nuevos por completar.
+  - Diseñado específicamente para rebaños grandes (ej. 600+ cabezas), evitando la saturación del DOM y garantizando una navegación ágil y sin tirones en móviles y tablets.
+  - La barra de paginación incluye botones de navegación rápida ("Anterior" / "Siguiente"), indicador de página actual y total de registros mostrados.
+  - Al cambiar de pestaña, realizar una búsqueda o registrar un nuevo animal escaneado, la vista se reinicia automáticamente a la página 1 para mantener la visibilidad inmediata de los registros recién ingresados.
+
+---
+
 ## [1.7.7-vaqueria-badge-simplification] - 2026-10-16
 
 ### Perfeccionado (Etiqueta de Animal Nuevo)

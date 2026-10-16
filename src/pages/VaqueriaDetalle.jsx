@@ -58,6 +58,8 @@ export default function VaqueriaDetallePage() {
   // Estados de interfaz y pestañas
   const [activeTab, setActiveTab] = useState('presentes'); // 'presentes' | 'faltantes' | 'por_completar'
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
   const [isBarcodeOpen, setIsBarcodeOpen] = useState(false);
   const [isManualAddOpen, setIsManualAddOpen] = useState(false);
   const [isEditVaqueriaOpen, setIsEditVaqueriaOpen] = useState(false);
@@ -65,6 +67,11 @@ export default function VaqueriaDetallePage() {
   const [completingAnimalRecord, setCompletingAnimalRecord] = useState(null);
   const [deletingRecord, setDeletingRecord] = useState(null);
   const [toast, setToast] = useState(null);
+
+  // Resetear paginación cuando cambia la pestaña o el término de búsqueda
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchTerm]);
 
   // Estado para Banner de Feedback Instantáneo (Audio + Visual)
   const [scanFeedback, setScanFeedback] = useState(null); // { type: 'success'|'duplicate'|'error', message, icon }
@@ -202,6 +209,7 @@ export default function VaqueriaDetallePage() {
     if (result.success) {
       triggerScanFeedback('success', result.message);
       setScanInputValue('');
+      setCurrentPage(1);
     } else {
       if (result.reason === 'DUPLICATE') {
         triggerScanFeedback('duplicate', result.message);
@@ -377,7 +385,46 @@ export default function VaqueriaDetallePage() {
   }, [missingAnimals, searchTerm]);
 
   // Lista de no registrados para pestaña dedicada
-  const uncompletedList = classifiedPresent.filter(i => i.classification === 'UNREGISTERED_IN_SYSTEM');
+  const uncompletedList = useMemo(() => {
+    return classifiedPresent.filter(i => i.classification === 'UNREGISTERED_IN_SYSTEM');
+  }, [classifiedPresent]);
+
+  // Filtrar no registrados por término de búsqueda
+  const filteredUncompleted = useMemo(() => {
+    return uncompletedList.filter(item => {
+      if (!searchTerm.trim()) return true;
+      const q = searchTerm.trim().toLowerCase();
+      const matchNumber = (item.record?.number || '').toLowerCase().includes(q);
+      const matchChip = (item.record?.chip_number || '').toLowerCase().includes(q);
+      const matchName = (item.record?.name || '').toLowerCase().includes(q);
+      return matchNumber || matchChip || matchName;
+    });
+  }, [uncompletedList, searchTerm]);
+
+  // Cálculos de Paginación para la pestaña activa
+  const totalItems = activeTab === 'presentes'
+    ? filteredPresent.length
+    : activeTab === 'faltantes'
+      ? filteredMissing.length
+      : filteredUncompleted.length;
+
+  const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+  const validPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const paginatedPresent = useMemo(() => {
+    const start = (validPage - 1) * itemsPerPage;
+    return filteredPresent.slice(start, start + itemsPerPage);
+  }, [filteredPresent, validPage, itemsPerPage]);
+
+  const paginatedMissing = useMemo(() => {
+    const start = (validPage - 1) * itemsPerPage;
+    return filteredMissing.slice(start, start + itemsPerPage);
+  }, [filteredMissing, validPage, itemsPerPage]);
+
+  const paginatedUncompleted = useMemo(() => {
+    const start = (validPage - 1) * itemsPerPage;
+    return filteredUncompleted.slice(start, start + itemsPerPage);
+  }, [filteredUncompleted, validPage, itemsPerPage]);
 
   return (
     <div className="min-h-screen bg-[#F0F2EB] flex flex-col font-sans select-none pb-28 md:pb-14">
@@ -665,7 +712,7 @@ export default function VaqueriaDetallePage() {
               </div>
             ) : (
               <div className="divide-y divide-neutral-100">
-                {filteredPresent.map(item => {
+                {paginatedPresent.map(item => {
                   const isUnregistered = item.classification === 'UNREGISTERED_IN_SYSTEM';
                   return (
                     <div
@@ -757,7 +804,7 @@ export default function VaqueriaDetallePage() {
               </div>
             ) : (
               <div className="divide-y divide-neutral-100">
-                {filteredMissing.map(item => {
+                {paginatedMissing.map(item => {
                   const isInactive = item.isAlreadyInactive;
                   return (
                     <div
@@ -829,36 +876,104 @@ export default function VaqueriaDetallePage() {
               </div>
             </div>
 
-            <div className="divide-y divide-neutral-100">
-              {uncompletedList.map(item => (
-                <div
-                  key={item.record.id}
-                  className="px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2 border-l-4 border-rose-500 bg-rose-50/20 hover:bg-rose-50/40 transition-colors"
-                >
-                  <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
-                    <span className="text-xs sm:text-sm font-black text-neutral-900 min-w-[80px] sm:min-w-[120px] shrink-0 truncate">
-                      {item.record.name 
-                        ? item.record.name 
-                        : (item.record.number ? `Arete #${item.record.number}` : (item.record.chip_number ? `Chip ${item.record.chip_number}` : 'Sin identificar'))}
-                    </span>
-
-                    {item.record.chip_number && (
-                      <span className="inline-block text-[10px] sm:text-xs font-mono font-bold text-neutral-600 bg-neutral-100 px-1.5 sm:px-2 py-0.5 rounded-lg shrink-0">
-                        {item.record.chip_number}
-                      </span>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setCompletingAnimalRecord(item.record)}
-                    className="py-1 px-3 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-black shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+            {filteredUncompleted.length === 0 ? (
+              <div className="p-8 text-center text-xs font-bold text-neutral-400">
+                No se encontraron animales nuevos con el término de búsqueda.
+              </div>
+            ) : (
+              <div className="divide-y divide-neutral-100">
+                {paginatedUncompleted.map(item => (
+                  <div
+                    key={item.record.id}
+                    className="px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2 border-l-4 border-rose-500 bg-rose-50/20 hover:bg-rose-50/40 transition-colors"
                   >
-                    <ClipboardPlus className="w-3.5 h-3.5" />
-                    <span>Completar</span>
+                    <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
+                      <span className="text-xs sm:text-sm font-black text-neutral-900 min-w-[80px] sm:min-w-[120px] shrink-0 truncate">
+                        {item.record.name 
+                          ? item.record.name 
+                          : (item.record.number ? `Arete #${item.record.number}` : (item.record.chip_number ? `Chip ${item.record.chip_number}` : 'Sin identificar'))}
+                      </span>
+
+                      {item.record.chip_number && (
+                        <span className="inline-block text-[10px] sm:text-xs font-mono font-bold text-neutral-600 bg-neutral-100 px-1.5 sm:px-2 py-0.5 rounded-lg shrink-0">
+                          {item.record.chip_number}
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setCompletingAnimalRecord(item.record)}
+                      className="py-1 px-3 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-black shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                    >
+                      <ClipboardPlus className="w-3.5 h-3.5" />
+                      <span>Completar</span>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Controles de Paginación */}
+        {totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between bg-white px-4 py-3 sm:px-6 sm:py-3.5 rounded-2xl sm:rounded-3xl border border-neutral-200/80 shadow-xs gap-3">
+            <div className="flex items-center justify-between w-full sm:w-auto gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentPage(p => Math.max(1, p - 1));
+                  window.scrollTo({ top: 280, behavior: 'smooth' });
+                }}
+                disabled={validPage === 1}
+                className="px-4 py-2 sm:px-5 sm:py-2.5 bg-neutral-100 text-neutral-700 font-black text-xs rounded-xl disabled:opacity-40 transition-colors hover:bg-neutral-200 cursor-pointer disabled:cursor-not-allowed"
+              >
+                Anterior
+              </button>
+
+              <span className="text-xs font-black text-neutral-600 sm:hidden">
+                Pág. {validPage} / {totalPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCurrentPage(p => Math.min(totalPages, p + 1));
+                  window.scrollTo({ top: 280, behavior: 'smooth' });
+                }}
+                disabled={validPage === totalPages}
+                className="px-4 py-2 sm:px-5 sm:py-2.5 bg-[#1B4820] text-white font-black text-xs rounded-xl disabled:opacity-40 transition-colors hover:bg-[#143618] cursor-pointer disabled:cursor-not-allowed"
+              >
+                Siguiente
+              </button>
+            </div>
+
+            <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-4">
+              <div className="text-[11px] sm:text-xs font-bold text-neutral-500">
+                Mostrando <span className="font-black text-neutral-800">{Math.min((validPage - 1) * itemsPerPage + 1, totalItems)}</span> - <span className="font-black text-neutral-800">{Math.min(validPage * itemsPerPage, totalItems)}</span> de <span className="font-black text-neutral-800">{totalItems}</span>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-500">
+                <span className="hidden md:inline">Ver:</span>
+                {[25, 50, 100].map(size => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => {
+                      setItemsPerPage(size);
+                      setCurrentPage(1);
+                    }}
+                    className={`px-2 py-1 rounded-lg text-xs font-black transition-colors cursor-pointer ${
+                      itemsPerPage === size
+                        ? 'bg-[#1B4820] text-white'
+                        : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                    }`}
+                  >
+                    {size}
                   </button>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         )}
