@@ -2,8 +2,6 @@
 -- PROYECTO: GESTIÓN GANADERA
 -- ESQUEMA DE BASE DE DATOS: MÓDULO DE VAQUERÍA (ASISTENCIA Y CONTROL DE CAMPO)
 -- Tablas nuevas: vaquerias, vaqueria_animals
--- NOTA DE SEGURIDAD: Este script es 100% ADITIVO. NO borra ni altera ninguna
--- de las tablas ni datos existentes (animals, farms, potreros, owners, etc.).
 -- ==============================================================================
 
 -- 1. TABLA: vaquerias (Sesión de asistencia por Finca)
@@ -21,7 +19,6 @@ CREATE TABLE IF NOT EXISTS vaquerias (
     deleted_at TIMESTAMPTZ NULL
 );
 
-DROP TRIGGER IF EXISTS trg_vaquerias_updated_at ON vaquerias;
 CREATE TRIGGER trg_vaquerias_updated_at
 BEFORE UPDATE ON vaquerias
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -49,7 +46,6 @@ CREATE TABLE IF NOT EXISTS vaqueria_animals (
     deleted_at TIMESTAMPTZ NULL
 );
 
-DROP TRIGGER IF EXISTS trg_vaqueria_animals_updated_at ON vaqueria_animals;
 CREATE TRIGGER trg_vaqueria_animals_updated_at
 BEFORE UPDATE ON vaqueria_animals
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -65,8 +61,5 @@ CREATE INDEX IF NOT EXISTS idx_vaqueria_animals_updated_at ON vaqueria_animals(u
 ALTER TABLE vaquerias ENABLE ROW LEVEL SECURITY;
 ALTER TABLE vaqueria_animals ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Permitir todo en vaquerias" ON vaquerias;
 CREATE POLICY "Permitir todo en vaquerias" ON vaquerias FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
-
-DROP POLICY IF EXISTS "Permitir todo en vaqueria_animals" ON vaqueria_animals;
 CREATE POLICY "Permitir todo en vaqueria_animals" ON vaqueria_animals FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
