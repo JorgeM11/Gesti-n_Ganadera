@@ -4,6 +4,41 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.0-phase3-vaqueria-attendance] - 2026-10-16
+
+### Añadido y Lanzado (Fase 3 - Apartado 2: Módulo de Vaquería y Asistencia de Campo)
+- **Nuevo Módulo de Vaquería ([`Vaquerias.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Vaquerias.jsx), [`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - **Concepto y Propósito**: Sistema integral de pase de asistencia periódica para verificar la presencia física de los animales en cada finca de manera independiente, 100% funcional con o sin conexión a internet (Offline-First).
+  - **Comparación Inteligente de Rebaño**:
+    - Si no existe una vaquería previa para la finca, se compara automáticamente contra los animales activos de dicha propiedad en el inventario.
+    - Si ya existen sesiones de vaquería previas, la sesión actual se compara contra la vaquería inmediatamente anterior de esa misma finca.
+  - **Clasificación Automática de Animales Presentes**:
+    - **Esperados**: Animales que estaban en la línea base y confirmaron asistencia.
+    - **Nuevos en Vaquería**: Animales ya existentes en el inventario pero que no estuvieron en la vaquería anterior.
+    - **No Registrados en Sistema (Crítico / Resaltado Principal)**: Animales cuyo arete o microchip RFID no existe en la base de datos, resaltados con distintivo especial y permitiendo completar sus datos al finalizar para ingresarlos directamente al inventario.
+  - **Gestión de Animales Faltantes**:
+    - **Faltantes Ya Inactivos**: Animales de la vaquería anterior que fueron desactivados previamente (por muerte, venta, etc.), informados pero sin alarma activa.
+    - **Faltantes Activos**: Animales que debían presentarse y no aparecieron, con opción directa para inactivarlos con su motivo ('Muerte', 'Venta', 'Descarte', 'Pérdida/Extravío', 'Otro') o dejarlos como ausencia simple conservando su estado activo.
+  - **Experiencia de Captura Ultrarrápida y Ergonómica en Campo**:
+    - **Foco Continuo para RFID**: Entrada de escaneo siempre enfocada para disparar ráfagas con bastón lector físico sin requerir toques en pantalla.
+    - **Buffer Anti-Jitter y Detección ISO de 15 Dígitos**: Soporte para lectores Bluetooth HID y USB-OTG emulando teclado con tolerancia de 300 ms y despachado instantáneo al acumular 15 cifras.
+    - **Entrada Manual Multifacética ([`ManualAddModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/ManualAddModal.jsx))**: Selección segmentada por Arete, Chip RFID o Nombre con autocompletado en tiempo real y validación estricta de no repetición y 15 dígitos.
+    - **Lector de Código de Barras por Cámara ([`BarcodeScannerModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/BarcodeScannerModal.jsx))**: Integración del escáner óptico multi-fotograma.
+    - **Retroalimentación Instantánea (Audio + Visual)**:
+      - Sonido agradable ascendente (Web Audio API) y check visual animado en registros exitosos.
+      - Doble tono de advertencia y señal de alerta en lecturas duplicadas.
+      - Tono grave ante formatos erróneos.
+      - Cero popups bloqueantes que interrumpan la velocidad del operario en la manga.
+  - **Modelos de Datos y Sincronización Local / Nube**:
+    - Dexie versión 8 ([`db.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/db.js)): Nuevas tablas `vaquerias` y `vaqueria_animals`.
+    - Script de migración en Supabase ([`supabase_schema_vaqueria.sql`](file:///C:/Users/joses/appganadera/gestion-ganadera/supabase_schema_vaqueria.sql)) con llaves foráneas, triggers de `updated_at` y políticas RLS.
+    - Sincronización bidireccional ([`syncUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/syncUtils.js)) con subida por cola `sync_queue` y descarga reactiva `pullFromServer`.
+  - **Navegación e Integración UI**:
+    - Acceso directo a Vaquería en la barra lateral ([`NavigationDrawer.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/NavigationDrawer.jsx)) con icono `ClipboardCheck`.
+    - Rutas protegidas `/vaquerias` y `/vaquerias/:id` en [`App.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/App.jsx).
+
+---
+
 ## [1.6.1-dashboard-refinements] - 2026-10-12
 
 ### Perfeccionado y Depurado (Fase 3 - Dashboard y Remoción de Alerta de 8 Meses)

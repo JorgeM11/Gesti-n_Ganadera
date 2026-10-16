@@ -184,8 +184,26 @@ flowchart TD
   - Funcionamiento 100% offline-first mediante `useLiveQuery` conectado a IndexedDB (Dexie).
   - Skeleton loader adaptativo (`DashboardSkeleton.jsx`) con animación `animate-pulse` que sostiene la estructura visual mientras cargan los datos, funcionando idénticamente con o sin internet.
 
-#### 2. Apartado 2: Vaquería ⏳
-- [ ] En espera de especificaciones y requerimientos detallados del usuario.
+#### 2. Apartado 2: Vaquería (Asistencia y Control de Campo) ✅
+- [x] **Módulo de Asistencia Periódica por Finca**:
+  - Creación, listado y edición de vaquerías independientes por finca con nombre, fecha y notas.
+  - Comparación inteligente de rebaño: con la vaquería anterior de la finca, o con los animales activos de la finca en inventario si es la primera sesión.
+  - KPIs en tiempo real: Presentes, Tasa de asistencia, Nuevos y Faltantes.
+  - Clasificación de animales presentes:
+    - Esperados confirmados.
+    - Nuevos en vaquería (ya en sistema).
+    - No registrados en sistema (resaltado crítico) con flujo directo para completar datos e integrarlos al inventario.
+  - Clasificación de animales faltantes:
+    - Faltantes ya inactivos previamente.
+    - Faltantes activos con opción directa de inactivación por motivo o registro de ausencia simple.
+  - Experiencia de captura continua:
+    - Input de escaneo siempre enfocado para bastones RFID inalámbricos y USB-OTG.
+    - Buffer de 300 ms anti-jitter y auto-despacho para microchips ISO de 15 dígitos.
+    - Escaneo óptico por cámara con confirmación multi-fotograma.
+    - Modal de adición manual por arete, chip o nombre con autocompletado y validación de duplicidad.
+    - Retroalimentación auditiva (Web Audio API) y visual sin popups bloqueantes.
+  - Almacenamiento Dexie v8 y sincronización bidireccional con Supabase (`vaquerias` y `vaqueria_animals`).
+  - Acceso desde barra lateral y rutas `/vaquerias` y `/vaquerias/:id`.
 
 #### 3. Apartado 3: Sistema de Roles ⏳
 - [ ] En espera de especificaciones y requerimientos detallados del usuario.
@@ -207,4 +225,5 @@ flowchart TD
 | **Correcciones Visuales, Escáner y Filtros** | 2026-10-11 | **Completado** | Antigravity AI & Usuario | Vistas duales (tarjetas y lista compacta sin imágenes), icono de observaciones unificado, protección anti-lecturas incompletas en cámara y escáner físico, y filtro de observaciones con pills. |
 | **Parte 3 - Apartado 1: Dashboard (v1)** | 2026-10-12 | **Completado** | Antigravity AI & Usuario | Primera versión del Dashboard ganadero: vista general, selector por fincas, subfiltros dinámicos, pirámide de edad, biomasa, primera opción en sidebar y ruta de entrada inicial. |
 | **Refinamientos Dashboard y Remoción Alerta 8M** | 2026-10-12 | **Completado** | Antigravity AI & Usuario | Aplicadas las 7 correcciones al Dashboard (header limpio, CustomSelect, distribución numérica de sexo, remoción de cards de peso) y retirada definitiva de la alerta de 8 meses en inventario. |
+| **Parte 3 - Apartado 2: Módulo de Vaquería** | 2026-10-16 | **Completado** | Antigravity AI & Usuario | Asistencia periódica de rebaño por finca, comparativa con vaquería previa o inventario, buffer RFID continuo, feedback sonoro/visual Web Audio API, animales no registrados y gestión de faltantes. |
 

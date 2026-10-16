@@ -192,6 +192,8 @@ export async function pullFromServer() {
     'animals',
     'growth_events',
     'health_records',
+    'vaquerias',
+    'vaqueria_animals',
     'usuarios'
   ];
 

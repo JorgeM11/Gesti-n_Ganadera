@@ -7,6 +7,7 @@ import {
   X, 
   LayoutDashboard,
   Layers, 
+  ClipboardCheck,
   Building2, 
   UserCheck,
   RefreshCcw, 
@@ -123,7 +124,27 @@ export default function NavigationDrawer({
                   <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/inventario') ? 'text-white' : 'text-neutral-400'}`} />
                 </button>
 
-                {/* 2. Fincas */}
+                {/* 3. Vaquería (Asistencia y Control de Campo) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/vaquerias');
+                    onClose();
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold transition-all cursor-pointer ${
+                    isCurrentRoute('/vaquerias') || location.pathname.startsWith('/vaquerias')
+                      ? 'bg-[#1B4820] text-white shadow-lg shadow-[#1B4820]/20'
+                      : 'text-neutral-700 hover:bg-neutral-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <ClipboardCheck className={`w-5 h-5 ${isCurrentRoute('/vaquerias') || location.pathname.startsWith('/vaquerias') ? 'text-white' : 'text-[#1B4820]'}`} />
+                    <span>Vaquería</span>
+                  </div>
+                  <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/vaquerias') || location.pathname.startsWith('/vaquerias') ? 'text-white' : 'text-neutral-400'}`} />
+                </button>
+
+                {/* 4. Fincas */}
                 <button
                   type="button"
                   onClick={() => {

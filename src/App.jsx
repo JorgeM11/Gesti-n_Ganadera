@@ -10,6 +10,8 @@ import NuevoAnimal from './pages/NuevoAnimal';
 import PerfilAnimal from './pages/PerfilAnimal';
 import PerfilEvento from './pages/PerfilEvento';
 import PerfilTratamiento from './pages/PerfilTratamiento';
+import Vaquerias from './pages/Vaquerias';
+import VaqueriaDetalle from './pages/VaqueriaDetalle';
 
 function ProtectedRoute({ children }) {
   const userId = localStorage.getItem('ganadera_user_id');
@@ -42,6 +44,8 @@ export default function App() {
         <Route path="/inventario/perfil" element={<ProtectedRoute><PerfilAnimal /></ProtectedRoute>} />
         <Route path="/inventario/perfil/evento" element={<ProtectedRoute><PerfilEvento /></ProtectedRoute>} />
         <Route path="/inventario/perfil/tratamiento" element={<ProtectedRoute><PerfilTratamiento /></ProtectedRoute>} />
+        <Route path="/vaquerias" element={<ProtectedRoute><Vaquerias /></ProtectedRoute>} />
+        <Route path="/vaquerias/:id" element={<ProtectedRoute><VaqueriaDetalle /></ProtectedRoute>} />
 
         {/* Ruta 404: Redirigir al dashboard por defecto */}
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
