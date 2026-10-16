@@ -22,7 +22,8 @@ export default function CustomSelect({
   label,
   bgClass = 'bg-white',
   searchable = false,
-  searchPlaceholder = 'Buscar opción...'
+  searchPlaceholder = 'Buscar opción...',
+  disabled = false
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -73,16 +74,30 @@ export default function CustomSelect({
 
       {/* Trigger */}
       <div
-        onClick={() => setIsOpen(!isOpen)}
-        className={`w-full ${bgClass} rounded-2xl px-4 py-3.5 flex items-center justify-between border shadow-2xs transition-all cursor-pointer select-none ${
-          isOpen ? 'border-[#1B4820]/40 ring-2 ring-[#1B4820]/20' : 'border-neutral-200 hover:border-neutral-300'
+        onClick={() => {
+          if (!disabled) setIsOpen(!isOpen);
+        }}
+        className={`w-full rounded-2xl px-4 py-3.5 flex items-center justify-between border shadow-2xs transition-all select-none ${
+          disabled
+            ? 'bg-neutral-100/80 border-neutral-200 text-neutral-400 cursor-not-allowed opacity-80'
+            : `${bgClass} cursor-pointer ${
+                isOpen ? 'border-[#1B4820]/40 ring-2 ring-[#1B4820]/20' : 'border-neutral-200 hover:border-neutral-300'
+              }`
         }`}
       >
-        <span className={`text-sm truncate pr-2 ${selectedOption ? 'text-neutral-900 font-semibold' : 'text-neutral-400 font-medium'}`}>
+        <span className={`text-sm truncate pr-2 ${
+          disabled 
+            ? 'text-neutral-500 font-semibold' 
+            : (selectedOption ? 'text-neutral-900 font-semibold' : 'text-neutral-400 font-medium')
+        }`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown 
-          className={`w-4 h-4 text-neutral-400 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[#1B4820]' : ''}`} 
+          className={`w-4 h-4 shrink-0 transition-transform duration-200 ${
+            disabled 
+              ? 'text-neutral-300' 
+              : (isOpen ? 'rotate-180 text-[#1B4820]' : 'text-neutral-400')
+          }`} 
         />
       </div>
 

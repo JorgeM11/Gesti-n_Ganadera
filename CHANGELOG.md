@@ -4,6 +4,21 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.11-vaqueria-ui-enhancements] - 2026-10-16
+
+### Perfeccionado y Corregido (Identificación en Pestaña Nuevos, Iconos en Móvil/Tablet y Finca Bloqueada en Edición)
+- **Visualización Limpia en Pestaña Nuevos ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - Si un animal no registrado carece de arete pero posee microchip, el sistema ahora muestra `"Sin arete"` en su columna principal y el microchip en su badge correspondiente, evitando la duplicación visual del número de chip uno al lado del otro.
+- **Acciones Visibles con Color en Móvil y Tablet ([`Vaquerias.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Vaquerias.jsx))**:
+  - En la vista general de vaquerías para pantallas táctiles (móviles y tablets), los botones de acción de cada tarjeta ahora cuentan con color de fondo y texto claramente diferenciados (Editar en verde esmeralda, Eliminar en rojo y Navegación en verde institucional), eliminando la dependencia del evento `hover` de ratón.
+- **Bloqueo del Selector de Finca al Editar ([`CustomSelect.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/ui/CustomSelect.jsx), [`VaqueriaModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/VaqueriaModal.jsx))**:
+  - Se añadió la propiedad `disabled` a `CustomSelect` con estilos deshabilitados claros y bloqueo de interacción.
+  - En el modal de edición de vaquería, la finca asociada queda inmutable para garantizar la integridad histórica del inventario evaluado.
+- **Preservación de Ajustes de Texto**:
+  - Se mantuvieron intactas las personalizaciones de texto directo del usuario en los encabezados y diálogos de confirmación (`confirmText="Quitar"` y `confirmText="Eliminar"`).
+
+---
+
 ## [1.7.10-user-text-refinements] - 2026-10-16
 
 ### Perfeccionado y Simplificado (Restauración de Textos y Etiquetas Concisas en Modales)

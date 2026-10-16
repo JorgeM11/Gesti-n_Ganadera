@@ -81,7 +81,7 @@ export default function VaqueriaModal({
       if (initialData?.id) {
         const updated = await updateVaqueria(initialData.id, {
           name: name.trim(),
-          farm_id: farmId,
+          farm_id: initialData.farm_id || farmId,
           date,
           observations: observations.trim() || null
         });

@@ -908,7 +908,7 @@ export default function VaqueriaDetallePage() {
                       <span className="text-xs sm:text-sm font-black text-neutral-900 min-w-[80px] sm:min-w-[120px] shrink-0 truncate">
                         {item.record.name 
                           ? item.record.name 
-                          : (item.record.number ? `Arete #${item.record.number}` : (item.record.chip_number ? `Chip ${item.record.chip_number}` : 'Sin identificar'))}
+                          : (item.record.number ? `Arete #${item.record.number}` : 'Sin arete')}
                       </span>
 
                       {item.record.chip_number && (
@@ -1054,7 +1054,7 @@ export default function VaqueriaDetallePage() {
         isOpen={Boolean(deletingRecord)}
         title="¿Quitar animal de esta vaquería?"
         message={`¿Estás seguro de quitar al animal ${deletingRecord?.number ? `Arete #${deletingRecord.number}` : (deletingRecord?.chip_number ? `Chip ${deletingRecord.chip_number}` : 'seleccionado')} de la asistencia de esta sesión?`}
-        confirmText="Quitar de Vaquería"
+        confirmText="Quitar"
         cancelText="Conservar"
         isDestructive={true}
         onConfirm={handleConfirmRemove}

@@ -157,16 +157,12 @@ export default function VaqueriasPage() {
               <Menu className="w-6 h-6 stroke-[2.5]" />
             </button>
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-[#1B4820] md:bg-white/10 text-white flex items-center justify-center shadow-xs">
-                <ClipboardCheck className="w-5 h-5" />
-              </div>
+              
               <div>
-                <h1 className="text-lg md:text-xl font-black text-neutral-900 md:text-white tracking-tight leading-tight">
+                <h1 className="text-lg md:text-xl font-black text-primary md:text-white tracking-tight leading-tight">
                   Vaquería
                 </h1>
-                <p className="text-[11px] font-bold text-neutral-400 md:text-emerald-200/80 hidden sm:block">
-                  Control y pase de asistencia periódica por finca
-                </p>
+                
               </div>
             </div>
           </div>
@@ -322,11 +318,11 @@ export default function VaqueriasPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
                         onClick={(e) => handleOpenEdit(v, e)}
-                        className="p-2 text-neutral-400 hover:text-[#1B4820] hover:bg-neutral-100 rounded-xl transition-colors cursor-pointer"
+                        className="p-2 rounded-xl transition-colors cursor-pointer text-[#1B4820] bg-emerald-50 lg:bg-transparent lg:text-neutral-400 lg:hover:text-[#1B4820] lg:hover:bg-neutral-100"
                         title="Editar información"
                       >
                         <Pencil className="w-4 h-4" />
@@ -338,13 +334,13 @@ export default function VaqueriasPage() {
                           e.stopPropagation();
                           setDeletingVaqueriaId(v.id);
                         }}
-                        className="p-2 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                        className="p-2 rounded-xl transition-colors cursor-pointer text-rose-600 bg-rose-50 lg:bg-transparent lg:text-neutral-400 lg:hover:text-rose-600 lg:hover:bg-rose-50"
                         title="Eliminar vaquería"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
 
-                      <div className="w-7 h-7 rounded-lg bg-neutral-100 group-hover:bg-[#1B4820] text-neutral-600 group-hover:text-white flex items-center justify-center transition-colors ml-1">
+                      <div className="w-7 h-7 rounded-lg bg-[#1B4820] text-white lg:bg-neutral-100 lg:text-neutral-600 lg:group-hover:bg-[#1B4820] lg:group-hover:text-white flex items-center justify-center transition-colors ml-1">
                         <ArrowRight className="w-3.5 h-3.5" />
                       </div>
                     </div>
@@ -423,7 +419,7 @@ export default function VaqueriasPage() {
         isOpen={Boolean(deletingVaqueriaId)}
         title="¿Eliminar esta Vaquería?"
         message="Se eliminará la sesión de vaquería y su registro de asistencia. Los animales del inventario permanecerán intactos."
-        confirmText="Eliminar Vaquería"
+        confirmText="Eliminar"
         cancelText="Cancelar"
         isDestructive={true}
         onConfirm={handleConfirmDelete}
