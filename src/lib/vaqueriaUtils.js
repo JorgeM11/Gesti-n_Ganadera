@@ -246,7 +246,7 @@ export function calculateVaqueriaAnalysis({
       newUnregisteredCount++;
     } else if (!expectedIdsSet.has(animal.id)) {
       classification = 'NEW_IN_VAQUERIA';
-      badgeLabel = 'Nuevo en Vaquería';
+      badgeLabel = 'Nuevo';
       badgeColor = 'bg-emerald-100 text-emerald-800 border-emerald-300 font-bold';
       newInVaqueriaCount++;
     } else {

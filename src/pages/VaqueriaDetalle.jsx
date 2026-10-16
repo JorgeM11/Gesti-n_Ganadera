@@ -701,11 +701,11 @@ export default function VaqueriaDetallePage() {
                           </div>
                         )}
 
-                        {/* Badge de Estado (Solo si es Nuevo en Vaquería; se quita 'Esperado') */}
+                        {/* Badge de Estado: 'Nuevo' para animales que no estaban en la vaquería previa */}
                         {item.classification === 'NEW_IN_VAQUERIA' && (
                           <div className="shrink-0">
                             <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold border bg-emerald-100 text-emerald-800 border-emerald-300">
-                              Nuevo en Vaquería
+                              Nuevo
                             </span>
                           </div>
                         )}

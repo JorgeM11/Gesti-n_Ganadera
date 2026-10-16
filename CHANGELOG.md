@@ -4,6 +4,14 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.7-vaqueria-badge-simplification] - 2026-10-16
+
+### Perfeccionado (Etiqueta de Animal Nuevo)
+- **Simplificación de Distintivo a "Nuevo" ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx), [`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js))**:
+  - Al escanear o registrar un animal nuevo en la vaquería, la etiqueta de identificación ahora dice concisamente `"Nuevo"` en lugar de `"Nuevo en Vaquería"`.
+
+---
+
 ## [1.7.6-vaqueria-tabs-and-priority] - 2026-10-16
 
 ### Perfeccionado y Optimizado (Prioridad de Nuevos No Registrados y Pestañas Minimalistas)
