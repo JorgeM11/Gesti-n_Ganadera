@@ -17,10 +17,41 @@ const withTimeout = (promise, ms = 8000) => {
   return Promise.race([promise, timeout]);
 };
 
+// Saneamiento de cola para vaqueria_animals con tipo de identificación no estándar (ej. 'auto')
+async function healVaqueriaAnimalsSyncQueue() {
+  try {
+    const invalidItems = await db.sync_queue
+      .where('table_name')
+      .equals('vaqueria_animals')
+      .toArray();
+
+    for (const item of invalidItems) {
+      if (item.payload && !['chip', 'arete', 'name', 'manual'].includes(item.payload.identification_type)) {
+        const is15 = /^\d{15}$/.test(item.payload.chip_number || item.payload.scanned_code || '');
+        const corrected = is15 
+          ? 'chip' 
+          : (item.payload.number ? 'arete' : (item.payload.name ? 'name' : 'manual'));
+        
+        await db.sync_queue.update(item.id, { 
+          payload: { ...item.payload, identification_type: corrected },
+          status: 'PENDING'
+        });
+        if (item.payload.id) {
+          await db.vaqueria_animals.update(item.payload.id, { identification_type: corrected });
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Sync Engine] Error en healVaqueriaAnimalsSyncQueue:', err);
+  }
+}
+
 /**
  * 1. PUSH: De local a la Nube.
  */
 export async function processSyncQueue() {
+  await healVaqueriaAnimalsSyncQueue();
+
   const pendingItems = await db.sync_queue
     .where('status')
     .anyOf(['PENDING', 'ERROR'])
@@ -34,6 +65,17 @@ export async function processSyncQueue() {
   for (const item of pendingItems) {
     try {
       const payloadToUpload = { ...item.payload };
+
+      // --- SANEAMIENTO PROACTIVO PARA vaqueria_animals ---
+      if (item.table_name === 'vaqueria_animals' && payloadToUpload) {
+        const validTypes = ['chip', 'arete', 'name', 'manual'];
+        if (!validTypes.includes(payloadToUpload.identification_type)) {
+          const is15 = /^\d{15}$/.test(payloadToUpload.chip_number || payloadToUpload.scanned_code || '');
+          payloadToUpload.identification_type = is15 
+            ? 'chip' 
+            : (payloadToUpload.number ? 'arete' : (payloadToUpload.name ? 'name' : 'manual'));
+        }
+      }
 
       // --- SIEMPRE eliminar photo_blob antes de enviar a la nube ---
       delete payloadToUpload.photo_blob;

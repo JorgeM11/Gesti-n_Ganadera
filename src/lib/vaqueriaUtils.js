@@ -515,6 +515,20 @@ export async function addAnimalToVaqueria({
     }
   }
 
+  // Asegurar que identification_type sea estrictamente uno de los permitidos por Supabase ('chip', 'arete', 'name', 'manual')
+  let finalIdentificationType = identificationType;
+  if (!['chip', 'arete', 'name', 'manual'].includes(finalIdentificationType)) {
+    if (is15Digits || initialChip) {
+      finalIdentificationType = 'chip';
+    } else if (manualAnimal) {
+      finalIdentificationType = 'manual';
+    } else if (initialName) {
+      finalIdentificationType = 'name';
+    } else {
+      finalIdentificationType = 'arete';
+    }
+  }
+
   const now = new Date().toISOString();
   const newRecord = {
     id: uuidv4(),
@@ -522,7 +536,7 @@ export async function addAnimalToVaqueria({
     user_id: userId,
     animal_id: targetAnimal ? targetAnimal.id : null,
     scanned_code: cleanCode,
-    identification_type: identificationType,
+    identification_type: finalIdentificationType,
     number: initialNumber,
     chip_number: initialChip,
     name: initialName,

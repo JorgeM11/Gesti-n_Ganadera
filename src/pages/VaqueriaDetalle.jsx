@@ -32,8 +32,10 @@ import {
   removeAnimalFromVaqueria, 
   getPreviousVaqueria, 
   calculateVaqueriaAnalysis,
-  updateVaqueria
+  updateVaqueria,
+  isValidChipNumber
 } from '@/lib/vaqueriaUtils';
+import { playErrorBeep } from '@/lib/audioUtils';
 import SyncStatus from '@/components/ui/SyncStatus';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Toast from '@/components/ui/Toast';
@@ -195,7 +197,7 @@ export default function VaqueriaDetallePage() {
   }, [isAnyModalOpen]);
 
   // Manejador central para registrar asistencia (venga de input físico, cámara o manual)
-  const handleProcessScan = async (code, identificationType = 'auto', manualAnimal = null) => {
+  const handleProcessScan = async (code, identificationType = 'chip', manualAnimal = null) => {
     if (!currentVaqueria) return;
 
     const result = await addAnimalToVaqueria({
@@ -241,13 +243,20 @@ export default function VaqueriaDetallePage() {
         rfidBufferRef.current.buffer = '';
       }
 
-      // Si pulsa Enter, procesar buffer acumulado
+      // Si pulsa Enter en el bastón o teclado RFID
       if (e.key === 'Enter') {
         if (rfidBufferRef.current.buffer.length >= 2) {
           e.preventDefault();
           const captured = rfidBufferRef.current.buffer.trim();
           rfidBufferRef.current.buffer = '';
-          handleProcessScan(captured, 'auto');
+
+          // Validación estricta: el lector físico RFID solo debe emitir chips de 15 dígitos
+          if (isValidChipNumber(captured)) {
+            handleProcessScan(captured, 'chip');
+          } else {
+            playErrorBeep();
+            triggerScanFeedback('error', 'El escáner solo admite microchips RFID de 15 dígitos. Para arete use el botón Manual.');
+          }
         }
         return;
       }
@@ -275,11 +284,21 @@ export default function VaqueriaDetallePage() {
     };
   }, [isAnyModalOpen, currentVaqueria?.id]);
 
-  // Envío manual desde el input de escaneo
+  // Envío manual desde el input de escaneo (validación estricta: solo chip de 15 dígitos)
   const handleScanInputSubmit = (e) => {
     e.preventDefault();
-    if (!scanInputValue.trim()) return;
-    handleProcessScan(scanInputValue.trim(), 'auto');
+    const clean = scanInputValue.trim();
+    if (!clean) return;
+
+    if (!isValidChipNumber(clean)) {
+      playErrorBeep();
+      triggerScanFeedback('error', 'El escáner solo admite número de chip RFID (15 dígitos). Para registrar arete o nombre, use el botón Manual.');
+      setScanInputValue('');
+      setTimeout(focusScanInput, 60);
+      return;
+    }
+
+    handleProcessScan(clean, 'chip');
   };
 
   // Eliminar animal de la vaquería
@@ -555,7 +574,7 @@ export default function VaqueriaDetallePage() {
                 inputMode="none"
                 value={scanInputValue}
                 onChange={(e) => setScanInputValue(e.target.value)}
-                placeholder="Esperando escaneo RFID o ingrese arete/chip..."
+                placeholder="Esperando escaneo de chip RFID (15 dígitos)..."
                 autoComplete="off"
                 className="w-full pl-10 pr-24 py-3 bg-neutral-50 border-2 border-neutral-200 rounded-2xl text-sm font-black text-neutral-900 placeholder-neutral-400 focus:bg-white focus:border-[#1B4820] focus:ring-4 focus:ring-[#1B4820]/15 outline-none transition-all shadow-inner"
               />
@@ -599,9 +618,7 @@ export default function VaqueriaDetallePage() {
                 ? 'Línea base: Rebaño activo de la finca en inventario (Primera vaquería)'
                 : `Línea base: Vaquería anterior (${previousVaqueria?.name || 'Previa'} - ${previousVaqueria?.date || ''})`}
             </span>
-            <span className="text-neutral-500 font-black">
-              Escáner RFID activo con tolerancia anti-jitter
-            </span>
+            
           </div>
         </div>
 
@@ -985,7 +1002,8 @@ export default function VaqueriaDetallePage() {
         onClose={() => setIsBarcodeOpen(false)}
         onScanSuccess={(scannedCode) => {
           setIsBarcodeOpen(false);
-          handleProcessScan(scannedCode, 'auto');
+          const is15 = isValidChipNumber(scannedCode);
+          handleProcessScan(scannedCode, is15 ? 'chip' : 'arete');
         }}
       />
 

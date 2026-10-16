@@ -4,6 +4,19 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.9-vaqueria-chip-validation-and-sync-fix] - 2026-10-16
+
+### Corregido y Optimizado (Validación Exclusiva de Chip en Escáner y Saneamiento de Sincronización)
+- **Validación Estricta de Microchip RFID ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - El input de escaneo continuo y el lector de bastón RFID ahora admiten **únicamente** códigos de microchip de 15 dígitos numéricos (estándar ISO).
+  - Se bloquea el ingreso de números pequeños o cadenas cortas en este input, impidiendo que se detecten o guarden erróneamente como aretes.
+  - Al ingresar un código no válido, el sistema emite sonido de error, feedback visual inmediato y reenfoca el campo para escanear de nuevo, orientando al usuario a usar el botón "Manual" si desea registrar aretes o nombres.
+- **Corrección de Error 400 y Auto-saneamiento de Cola ([`syncUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/syncUtils.js), [`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js))**:
+  - Se corrigió la restricción `identification_type` en Supabase: ahora se garantiza estrictamente que todo registro enviado a la tabla `vaqueria_animals` pertenezca al dominio válido (`'chip'`, `'arete'`, `'name'`, `'manual'`), eliminando el valor `'auto'` que provocaba el fallo HTTP 400 (Bad Request).
+  - Se implementó la rutina de auto-reparación `healVaqueriaAnimalsSyncQueue` al procesar la cola de sincronización, reparando automáticamente registros locales previos que se encontraban atascados y permitiendo su subida exitosa a la nube.
+
+---
+
 ## [1.7.8-vaqueria-pagination] - 2026-10-16
 
 ### Añadido y Optimizado (Paginación Ligera y Rendimiento para Grandes Rebaños)
