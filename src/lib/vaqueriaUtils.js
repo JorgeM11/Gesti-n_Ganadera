@@ -149,11 +149,38 @@ export function calculateVaqueriaAnalysis({
   let isComparisonWithInventory = false;
 
   if (previousVaqueria && previousRecords.length > 0) {
-    // Comparación con la Vaquería anterior: los esperados son los animales que estuvieron presentes en la vaquería anterior
+    // Comparación con la Vaquería anterior:
+    // 1. Animales que estuvieron presentes en la vaquería anterior
     const expectedIds = new Set();
     previousRecords.forEach(rec => {
       if (rec.animal_id && animalsById.has(rec.animal_id)) {
         expectedIds.add(rec.animal_id);
+      }
+    });
+
+    // 2. Animales activos creados/incorporados a la finca DESPUÉS de la vaquería previa y antes o en la fecha de la actual
+    const prevDate = previousVaqueria?.date || '';
+    const prevCreatedAt = previousVaqueria?.created_at || '';
+    const vaqDate = currentVaqueria?.date || '';
+    const vaqCreatedAt = currentVaqueria?.created_at || '';
+
+    farmAnimals.forEach(a => {
+      if (a.deleted_at || a.status === 'Inactivo') return;
+      const aCreated = a.created_at || '';
+      const aDate = aCreated.slice(0, 10);
+
+      // Si fue creado después de la vaquería previa
+      const isAfterPrev = 
+        (prevDate && aDate && aDate > prevDate) ||
+        (prevCreatedAt && aCreated && aCreated > prevCreatedAt);
+
+      // Y antes o al momento de la vaquería actual
+      const isBeforeOrAtCurrent =
+        (!vaqDate || !aDate || aDate <= vaqDate) &&
+        (!vaqCreatedAt || !aCreated || aCreated <= vaqCreatedAt);
+
+      if (isAfterPrev && isBeforeOrAtCurrent) {
+        expectedIds.add(a.id);
       }
     });
 
@@ -392,7 +419,17 @@ export async function addAnimalToVaqueria({
     }
   }
 
-  // 4. Validar duplicidad
+  // 4. Validar que el animal no esté inactivo
+  if (targetAnimal && targetAnimal.status === 'Inactivo') {
+    playErrorBeep();
+    return {
+      success: false,
+      reason: 'ANIMAL_INACTIVE',
+      message: `El animal ${targetAnimal.number ? `Arete #${targetAnimal.number}` : (targetAnimal.chip_number ? `Chip ${targetAnimal.chip_number}` : 'seleccionado')} está inactivo y no puede registrar asistencia.`
+    };
+  }
+
+  // 5. Validar duplicidad
   let isDuplicate = false;
   let duplicateField = '';
 

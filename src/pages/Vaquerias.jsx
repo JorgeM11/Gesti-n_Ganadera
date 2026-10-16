@@ -181,9 +181,9 @@ export default function VaqueriasPage() {
       <main className="max-w-7xl mx-auto w-full px-4 md:px-8 mt-5 md:mt-8 flex-1">
         {/* Barra de Filtros y Búsqueda */}
         <div className="bg-white rounded-3xl p-4 md:p-6 shadow-sm border border-neutral-200/70 mb-6 space-y-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div>
             {/* Buscador */}
-            <div className="relative flex-1">
+            <div className="relative w-full">
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
               <input
                 type="text"
@@ -192,11 +192,6 @@ export default function VaqueriasPage() {
                 placeholder="Buscar por nombre de vaquería o finca..."
                 className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-2xl text-xs font-bold text-neutral-800 placeholder-neutral-400 focus:bg-white focus:border-[#1B4820] focus:ring-2 focus:ring-[#1B4820]/15 outline-none transition-all"
               />
-            </div>
-
-            {/* Contador */}
-            <div className="text-xs font-bold text-neutral-500 shrink-0 self-center">
-              {filteredVaquerias.length} {filteredVaquerias.length === 1 ? 'vaquería' : 'vaquerías'}
             </div>
           </div>
 
@@ -232,6 +227,11 @@ export default function VaqueriasPage() {
                   {f.name}
                 </button>
               ))}
+            </div>
+
+            {/* Contador de Vaquerías (Abajo de los filtros de finca y a la izquierda en móvil) */}
+            <div className="text-left text-xs font-bold text-neutral-500 pt-2.5">
+              {filteredVaquerias.length} {filteredVaquerias.length === 1 ? 'vaquería' : 'vaquerías'}
             </div>
           </div>
         </div>

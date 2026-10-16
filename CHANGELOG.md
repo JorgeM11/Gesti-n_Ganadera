@@ -4,6 +4,26 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.4-vaqueria-sync-and-ux] - 2026-10-16
+
+### Perfeccionado y Optimizado (Fase 3 - Inclusión de Animales Nuevos en Segunda Vaquería, Notificaciones Flotantes y Filtros)
+- **Inclusión de Animales Nuevos en Vaquerías Posteriores ([`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js))**:
+  - Los animales activos creados o incorporados a la finca después de la vaquería anterior ahora forman parte del rebaño esperado de la vaquería actual, apareciendo listos para ser verificados/agregados sin figurar como faltantes en la primera sesión.
+- **Notificaciones Flotantes Superpuestas Sin Salto de Layout ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - El banner de feedback visual de escaneo ahora se muestra como un toast flotante superpuesto (`fixed top-16 md:top-20 z-50 pointer-events-none`) con backdrop-blur y sombra profunda.
+  - No empuja ni desplaza ningún componente de la vista al aparecer o desaparecer.
+  - La duración en pantalla se redujo a 1.6 segundos para una experiencia ultrarrápida en campo.
+- **Contador de Vaquerías Reubicado ([`Vaquerias.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Vaquerias.jsx))**:
+  - El contador de vaquerías se trasladó debajo de los selectores de fincas y alineado a la izquierda en dispositivos móviles.
+- **Protección y Distintivo de Inactivos ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx), [`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js), [`ManualAddModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/ManualAddModal.jsx))**:
+  - En la lista de faltantes, los animales inactivos muestran la etiqueta `"INACTIVO"` al final de su fila.
+  - Se bloquea totalmente el registro de animales inactivos en la asistencia (tanto por escaneo como manual), emitiendo sonido de advertencia.
+  - Los animales inactivos ya no aparecen en las recomendaciones ni sugerencias del modal de agregar manual.
+- **Estatus Antes del Nombre de la Finca ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - En la barra superior de información del detalle de vaquería, la insignia de estatus (*En progreso* / *Finalizada*) ahora se ubica antes del nombre de la finca.
+
+---
+
 ## [1.7.3-vaqueria-ui-refinements] - 2026-10-16
 
 ### Mejorado y Depurado (Fase 3 - Simplificación de Filas, Chips en Móvil, Botón de Finalizar y Línea Base Temporal)

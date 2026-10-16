@@ -50,6 +50,9 @@ export default function ManualAddModal({
     if (!query) return [];
 
     return allAnimals.filter(animal => {
+      // Regla: No sugerir animales inactivos
+      if (animal.status === 'Inactivo') return false;
+
       // Regla: Solo sugerir animales de la finca actual
       if (farmId && animal.farm_id !== farmId) return false;
 
@@ -76,6 +79,10 @@ export default function ManualAddModal({
   };
 
   const handleSelectAnimal = (animal) => {
+    if (animal?.status === 'Inactivo') {
+      setError('Este animal está marcado como inactivo y no puede registrarse.');
+      return;
+    }
     setSelectedAnimal(animal);
     if (activeTab === 'arete') setInputValue(animal.number || '');
     if (activeTab === 'chip') setInputValue(animal.chip_number || '');
@@ -92,6 +99,11 @@ export default function ManualAddModal({
     const clean = inputValue.trim();
     if (!clean && !selectedAnimal) {
       setError('Por favor ingrese o seleccione un código.');
+      return;
+    }
+
+    if (selectedAnimal && selectedAnimal.status === 'Inactivo') {
+      setError(`El animal Arete #${selectedAnimal.number} está inactivo y no puede registrar asistencia.`);
       return;
     }
 
