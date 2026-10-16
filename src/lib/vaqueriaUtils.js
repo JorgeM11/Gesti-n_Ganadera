@@ -162,9 +162,30 @@ export function calculateVaqueriaAnalysis({
       .filter(Boolean);
   } else {
     // Si no existe vaquería anterior para esta finca, se compara contra los animales de la finca en inventario (activos e inactivos)
-    // Los inactivos aparecerán en faltantes sin opción de inactivar, y si faltan ya no saldrán en la siguiente vaquería.
+    // Regla: Solo incluir animales que ya existían o habían llegado a la finca al momento de esta vaquería.
+    // Si un animal fue creado o incorporado después, no formaba parte del rebaño en esa fecha y NO debe figurar como faltante.
     isComparisonWithInventory = true;
-    expectedAnimals = farmAnimals.filter(a => !a.deleted_at);
+    const vaqDate = currentVaqueria?.date || '';
+    const vaqCreatedAt = currentVaqueria?.created_at || '';
+
+    expectedAnimals = farmAnimals.filter(a => {
+      if (a.deleted_at) return false;
+
+      const animalCreatedAt = a.created_at || '';
+      const animalCreatedDate = animalCreatedAt.slice(0, 10);
+
+      // Si la fecha de creación del animal es posterior a la fecha de la vaquería, no había llegado aún
+      if (vaqDate && animalCreatedDate && animalCreatedDate > vaqDate) {
+        return false;
+      }
+
+      // Si tienen la misma fecha o no hay vaqDate, comparar timestamps exactos de creación
+      if (vaqCreatedAt && animalCreatedAt && animalCreatedAt > vaqCreatedAt) {
+        return false;
+      }
+
+      return true;
+    });
   }
 
   const expectedIdsSet = new Set(expectedAnimals.map(a => a.id));

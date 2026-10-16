@@ -4,6 +4,25 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.3-vaqueria-ui-refinements] - 2026-10-16
+
+### Mejorado y Depurado (Fase 3 - Simplificación de Filas, Chips en Móvil, Botón de Finalizar y Línea Base Temporal)
+- **Simplificación Extrema de Filas y Chip Visible en Móvil ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - Se eliminaron las etiquetas redundantes de "Esperado", "Faltante Activo" e "Inactivo previo" de las filas de la lista, manteniendo una vista despejada y ligera.
+  - Se suprimió la visualización de género (iconos de Marte/Venus y texto de sexo) en presentes y faltantes.
+  - El microchip RFID ahora es 100% visible tanto en teléfonos móviles como en computadoras y tablets.
+- **Iconografía Temática y Pestaña de Nuevos ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - Se sustituyó el icono genérico de destellos (`Sparkles`) por la planilla de registro ganadero (`ClipboardPlus`) para las acciones de completar y registrar animales.
+  - La tercera pestaña se renombró de "Por Registrar" a "Nuevos".
+- **Botón de Finalizar/Reabrir Full-Width y Remoción de Edición Interna ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - Se eliminó el botón de editar información de la vaquería dentro del pase de asistencia.
+  - El botón de "Finalizar Vaquería" y "Reabrir Vaquería" ahora ocupa el 100% del ancho disponible en dispositivos móviles (`w-full sm:w-auto`).
+- **Línea Base Histórica y Exclusión de Animales Posteriores ([`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js))**:
+  - En la primera vaquería de una finca, se comparan solo los animales que ya existían o habían llegado a la finca en la fecha y momento en que se creó la vaquería.
+  - Cualquier animal creado posteriormente no se marca como faltante de la primera vaquería al ingresar en sesiones posteriores.
+
+---
+
 ## [1.7.2-vaqueria-fixes] - 2026-10-16
 
 ### Corregido y Perfeccionado (Fase 3 - Reglas de Inactivos, Eliminación de Texto de No Registrados y Asignación de Nombre)
