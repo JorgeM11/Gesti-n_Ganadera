@@ -44,12 +44,15 @@ export default function ManualAddModal({
     }
   }, [isOpen, activeTab]);
 
-  // Sugerencias de animales según la pestaña y el input
+  // Sugerencias de animales según la pestaña y el input (exclusivas de esta finca y máximo 5)
   const suggestions = useMemo(() => {
     const query = normalizeText(inputValue);
     if (!query) return [];
 
     return allAnimals.filter(animal => {
+      // Regla: Solo sugerir animales de la finca actual
+      if (farmId && animal.farm_id !== farmId) return false;
+
       if (activeTab === 'arete') {
         return normalizeText(animal.number).includes(query);
       }
@@ -60,8 +63,8 @@ export default function ManualAddModal({
         return normalizeText(animal.name).includes(query);
       }
       return false;
-    }).slice(0, 8); // Top 8 coincidencias
-  }, [allAnimals, activeTab, inputValue]);
+    }).slice(0, 5); // Máximo 5 sugerencias
+  }, [allAnimals, activeTab, inputValue, farmId]);
 
   if (!isOpen) return null;
 

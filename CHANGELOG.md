@@ -4,6 +4,34 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.1-vaqueria-refinements] - 2026-10-16
+
+### Mejorado y Refinado (Fase 3 - Ajustes Visuales, Ergonómicos y de Campo en Vaquería)
+- **KPIs Simplificados y 100% Responsivos ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - En móviles y tablets, las tarjetas de KPI ahora muestran únicamente Nombre y Número para un ajuste fluido y sin saturación.
+  - Se eliminó el KPI de "Efectividad" para concentrar la atención en Presentes, Nuevos y Faltantes.
+- **Header Minimalista y Reorganización de Vista ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - El encabezado superior ahora muestra exclusivamente el nombre de la vaquería y el botón/estado de sincronización.
+  - La información complementaria (nombre de la finca, fecha, estado en progreso/finalizada, botón de edición y botón de finalizar/reabrir) se trasladó al primer bloque visible del cuerpo principal.
+- **Vista en Lista Horizontal Compacta ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - Presentes, faltantes y animales no registrados se visualizan en formato de lista horizontal ultra-compacta para maximizar la densidad de información y soportar rebaños numerosos sin desplazamiento vertical excesivo.
+  - Datos distribuidos horizontalmente: arete, nombre, microchip RFID, distintivos de condición, sexo y botones de acción agrupados al final de cada fila.
+- **Sugerencias Filtradas por Finca y Límite de 5 ([`ManualAddModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/ManualAddModal.jsx))**:
+  - En el modal de registro manual, las sugerencias en tiempo real (por arete, chip o nombre) están estrictamente limitadas a los animales de la finca activa (`farmId === currentVaqueria.farm_id`).
+  - Límite máximo de 5 recomendaciones coincidentes para facilitar la selección de chips RFID con prefijos idénticos.
+- **Botón Flotante Universal (FAB) ([`Vaquerias.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Vaquerias.jsx))**:
+  - El botón "Nueva Vaquería" es ahora flotante (FAB) en todas las resoluciones (móvil, tablet y escritorio).
+- **Consistencia en Animales Faltantes Inactivos ([`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js))**:
+  - Los animales inactivos continúan reflejándose como faltantes si y solo si estuvieron presentes en la vaquería inmediatamente anterior.
+  - Dejan de figurar una vez que se realiza una vaquería donde ya no formaron parte del pase de asistencia.
+- **Remoción de Opción Redundante "Dejar como Faltó" ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - Se retiró el botón "Dejar como Faltó", dejando la lista limpia con la acción directa de "Inactivar" para los faltantes activos.
+- **Foco Continuo de Escáner sin Teclado Virtual en Dispositivos Móviles ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - Implementado `inputMode="none"` en el input de escaneo para mantener el foco activo y recibir lecturas de bastones RFID físicos (HID / USB-OTG) sin desplegar el teclado en pantalla en teléfonos y tablets.
+  - Integrado listener de `pointerdown` y `preventScroll: true` para mantener el foco en campo tras cualquier interacción general fuera de botones o modales.
+
+---
+
 ## [1.7.0-phase3-vaqueria-attendance] - 2026-10-16
 
 ### Añadido y Lanzado (Fase 3 - Apartado 2: Módulo de Vaquería y Asistencia de Campo)

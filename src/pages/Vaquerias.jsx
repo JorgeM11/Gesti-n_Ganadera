@@ -173,14 +173,6 @@ export default function VaqueriasPage() {
 
           <div className="flex items-center gap-2">
             <SyncStatus />
-            <button
-              type="button"
-              onClick={handleOpenCreate}
-              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-[#1B4820] md:bg-white text-white md:text-[#1B4820] rounded-xl text-xs font-black shadow-md hover:bg-[#143618] md:hover:bg-neutral-100 transition-all cursor-pointer active:scale-95"
-            >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              Nueva Vaquería
-            </button>
           </div>
         </div>
       </header>
@@ -364,14 +356,15 @@ export default function VaqueriasPage() {
         )}
       </main>
 
-      {/* Botón Flotante en Móvil (FAB) */}
+      {/* Botón Flotante en Todas las Resoluciones (FAB) */}
       <button
         type="button"
         onClick={handleOpenCreate}
-        className="sm:hidden fixed right-5 bottom-6 z-40 w-14 h-14 rounded-full bg-[#1B4820] text-white flex items-center justify-center shadow-xl shadow-[#1B4820]/40 active:scale-95 transition-all cursor-pointer"
+        className="fixed right-5 md:right-8 bottom-6 z-40 flex items-center gap-2 px-5 py-3.5 rounded-full bg-[#1B4820] text-white shadow-xl shadow-[#1B4820]/35 hover:bg-[#143618] hover:shadow-2xl active:scale-95 transition-all cursor-pointer"
         title="Nueva Vaquería"
       >
-        <Plus className="w-7 h-7 stroke-[3]" />
+        <Plus className="w-5 h-5 stroke-[3]" />
+        <span className="text-xs md:text-sm font-black tracking-wide">Nueva Vaquería</span>
       </button>
 
       {/* Modales y Drawer */}
