@@ -111,9 +111,18 @@ export function getPreviousVaqueria(currentVaqueria, allVaquerias = []) {
     return (b.created_at || '').localeCompare(a.created_at || '');
   });
 
-  // Tomar la primera cuya fecha sea menor o igual a la actual (o la más reciente previa)
-  const prior = farmVaquerias.find(v => (v.date || '') <= (currentVaqueria.date || ''));
-  return prior || farmVaquerias[0] || null;
+  // Tomar la primera cuya fecha sea estrictamente anterior a la actual (o misma fecha pero creada antes)
+  const prior = farmVaquerias.find(v => {
+    const dateV = v.date || '';
+    const currDate = currentVaqueria.date || '';
+    if (dateV < currDate) return true;
+    if (dateV === currDate) {
+      return (v.created_at || '') < (currentVaqueria.created_at || '');
+    }
+    return false;
+  });
+
+  return prior || null;
 }
 
 /**
@@ -140,7 +149,7 @@ export function calculateVaqueriaAnalysis({
   let isComparisonWithInventory = false;
 
   if (previousVaqueria && previousRecords.length > 0) {
-    // Comparación con la Vaquería anterior
+    // Comparación con la Vaquería anterior: los esperados son los animales que estuvieron presentes en la vaquería anterior
     const expectedIds = new Set();
     previousRecords.forEach(rec => {
       if (rec.animal_id && animalsById.has(rec.animal_id)) {
@@ -152,9 +161,10 @@ export function calculateVaqueriaAnalysis({
       .map(id => animalsById.get(id))
       .filter(Boolean);
   } else {
-    // Si no existe vaquería anterior para esta finca, se compara contra los animales activos de la finca en inventario
+    // Si no existe vaquería anterior para esta finca, se compara contra los animales de la finca en inventario (activos e inactivos)
+    // Los inactivos aparecerán en faltantes sin opción de inactivar, y si faltan ya no saldrán en la siguiente vaquería.
     isComparisonWithInventory = true;
-    expectedAnimals = farmAnimals.filter(a => a.status === 'Activo' && !a.deleted_at);
+    expectedAnimals = farmAnimals.filter(a => !a.deleted_at);
   }
 
   const expectedIdsSet = new Set(expectedAnimals.map(a => a.id));
@@ -183,8 +193,8 @@ export function calculateVaqueriaAnalysis({
 
     if (rec.is_unregistered || !animal) {
       classification = 'UNREGISTERED_IN_SYSTEM';
-      badgeLabel = 'No registrado en sistema';
-      badgeColor = 'bg-rose-100 text-rose-800 border-rose-300 font-black';
+      badgeLabel = ''; // Sin texto de no registrado por solicitud de diseño
+      badgeColor = '';
       newUnregisteredCount++;
     } else if (!expectedIdsSet.has(animal.id)) {
       classification = 'NEW_IN_VAQUERIA';
@@ -377,13 +387,25 @@ export async function addAnimalToVaqueria({
       duplicateField = `Arete #${targetAnimal.number}`;
     }
   } else {
-    // Si no está en BD, comprobar contra los no registrados ya escaneados
-    if (is15Digits && presentChips.has(cleanCode)) {
-      isDuplicate = true;
-      duplicateField = `Chip ${cleanCode}`;
+    // Si no está en BD, comprobar contra los no registrados ya escaneados/ingresados
+    if (identificationType === 'name') {
+      const presentNames = new Set(
+        existingPresent
+          .map(r => (r.name || '').trim().toLowerCase())
+          .filter(Boolean)
+      );
+      if (presentNames.has(cleanCode.toLowerCase())) {
+        isDuplicate = true;
+        duplicateField = `Nombre "${cleanCode}"`;
+      }
+    } else if (is15Digits || identificationType === 'chip') {
+      if (presentChips.has(cleanCode)) {
+        isDuplicate = true;
+        duplicateField = `Chip ${cleanCode}`;
+      }
     } else if (presentNumbers.has(cleanCode)) {
       isDuplicate = true;
-      duplicateField = `Código ${cleanCode}`;
+      duplicateField = `Arete #${cleanCode}`;
     }
   }
 
@@ -397,6 +419,32 @@ export async function addAnimalToVaqueria({
   }
 
   // 5. Inserción del registro en `vaqueria_animals`
+  let initialNumber = null;
+  let initialChip = null;
+  let initialName = null;
+
+  if (targetAnimal) {
+    initialNumber = targetAnimal.number || null;
+    initialChip = targetAnimal.chip_number || null;
+    initialName = targetAnimal.name || null;
+  } else {
+    // Animal nuevo no registrado en sistema: asignar al campo correcto
+    if (identificationType === 'name') {
+      initialName = cleanCode;
+      initialNumber = null;
+      initialChip = null;
+    } else if (identificationType === 'chip' || is15Digits) {
+      initialChip = cleanCode;
+      initialNumber = null;
+      initialName = null;
+    } else {
+      // 'arete' o 'auto' numérico
+      initialNumber = cleanCode;
+      initialChip = null;
+      initialName = null;
+    }
+  }
+
   const now = new Date().toISOString();
   const newRecord = {
     id: uuidv4(),
@@ -405,9 +453,9 @@ export async function addAnimalToVaqueria({
     animal_id: targetAnimal ? targetAnimal.id : null,
     scanned_code: cleanCode,
     identification_type: identificationType,
-    number: targetAnimal ? targetAnimal.number : (is15Digits ? null : cleanCode),
-    chip_number: targetAnimal ? (targetAnimal.chip_number || (is15Digits ? cleanCode : null)) : (is15Digits ? cleanCode : null),
-    name: targetAnimal ? targetAnimal.name : null,
+    number: initialNumber,
+    chip_number: initialChip,
+    name: initialName,
     is_unregistered: !targetAnimal,
     notes: null,
     created_at: now,
@@ -428,7 +476,11 @@ export async function addAnimalToVaqueria({
     isUnregistered: !targetAnimal,
     message: targetAnimal 
       ? `Asistencia registrada: Arete #${targetAnimal.number}${targetAnimal.name ? ` (${targetAnimal.name})` : ''}` 
-      : `Registrado: ${is15Digits ? `Chip ${cleanCode}` : `Arete ${cleanCode}`} (No registrado en sistema)`
+      : identificationType === 'name'
+        ? `Registrado: "${cleanCode}"`
+        : is15Digits
+          ? `Registrado: Chip ${cleanCode}`
+          : `Registrado: Arete #${cleanCode}`
   };
 }
 

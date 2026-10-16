@@ -528,9 +528,6 @@ export default function VaqueriaDetallePage() {
               <span className="text-xl sm:text-3xl font-black text-neutral-900">
                 {kpis.totalPresent || 0}
               </span>
-              <span className="text-[10px] sm:text-xs font-bold text-neutral-400 hidden sm:inline">
-                / {kpis.totalExpected || 0} esp.
-              </span>
             </div>
           </div>
 
@@ -543,11 +540,6 @@ export default function VaqueriaDetallePage() {
               <span className="text-xl sm:text-3xl font-black text-neutral-900">
                 {kpis.totalNew || 0}
               </span>
-              {kpis.newUnregisteredCount > 0 && (
-                <span className="text-[9px] sm:text-[10px] font-black text-rose-700 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
-                  {kpis.newUnregisteredCount} s/reg
-                </span>
-              )}
             </div>
           </div>
 
@@ -560,11 +552,6 @@ export default function VaqueriaDetallePage() {
               <span className="text-xl sm:text-3xl font-black text-neutral-900">
                 {kpis.totalMissing || 0}
               </span>
-              {kpis.missingActiveCount > 0 && (
-                <span className="text-[9px] sm:text-[10px] font-black text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                  {kpis.missingActiveCount} act.
-                </span>
-              )}
             </div>
           </div>
         </div>
@@ -646,7 +633,7 @@ export default function VaqueriaDetallePage() {
                     <div
                       key={item.record.id}
                       className={`px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2 transition-colors ${
-                        isUnregistered ? 'bg-rose-50/30 hover:bg-rose-50/50' : 'hover:bg-neutral-50'
+                        isUnregistered ? 'border-l-4 border-rose-500 bg-rose-50/25 hover:bg-rose-50/40' : 'hover:bg-neutral-50'
                       }`}
                     >
                       {/* Datos Distribuidos Horizontalmente */}
@@ -654,12 +641,14 @@ export default function VaqueriaDetallePage() {
                         {/* Arete y Nombre */}
                         <div className="min-w-[80px] sm:min-w-[120px] shrink-0">
                           <div className="flex items-center gap-1.5">
-                            <Tag className="w-3.5 h-3.5 text-[#1B4820] shrink-0" />
+                            <Tag className={`w-3.5 h-3.5 shrink-0 ${isUnregistered ? 'text-rose-600' : 'text-[#1B4820]'}`} />
                             <span className="text-xs sm:text-sm font-black text-neutral-900 truncate">
-                              #{item.displayNumber}
+                              {item.displayNumber && item.displayNumber !== '---'
+                                ? `#${item.displayNumber}`
+                                : (item.displayName && item.displayName !== 'Sin nombre' ? item.displayName : 'Sin arete')}
                             </span>
                           </div>
-                          {item.displayName && item.displayName !== 'Sin nombre' && (
+                          {item.displayNumber && item.displayNumber !== '---' && item.displayName && item.displayName !== 'Sin nombre' && (
                             <span className="text-[10px] sm:text-[11px] font-bold text-neutral-500 block truncate">
                               {item.displayName}
                             </span>
@@ -672,12 +661,14 @@ export default function VaqueriaDetallePage() {
                           <span>{item.displayChip}</span>
                         </div>
 
-                        {/* Badge de Estado */}
-                        <div className="shrink-0">
-                          <span className={`px-2 py-0.5 rounded-lg text-[10px] border ${item.badgeColor}`}>
-                            {item.badgeLabel}
-                          </span>
-                        </div>
+                        {/* Badge de Estado (Solo si no es animal no registrado) */}
+                        {!isUnregistered && item.badgeLabel && (
+                          <div className="shrink-0">
+                            <span className={`px-2 py-0.5 rounded-lg text-[10px] border ${item.badgeColor}`}>
+                              {item.badgeLabel}
+                            </span>
+                          </div>
+                        )}
 
                         {/* Sexo (Desktop/Tablet) */}
                         {item.displaySex && (
@@ -835,11 +826,13 @@ export default function VaqueriaDetallePage() {
               {uncompletedList.map(item => (
                 <div
                   key={item.record.id}
-                  className="px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2 hover:bg-neutral-50 transition-colors"
+                  className="px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2 border-l-4 border-rose-500 bg-rose-50/20 hover:bg-rose-50/40 transition-colors"
                 >
                   <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
                     <span className="text-xs sm:text-sm font-black text-neutral-900 min-w-[80px] sm:min-w-[120px] shrink-0 truncate">
-                      {item.record.number ? `Arete #${item.record.number}` : `Chip ${item.record.chip_number}`}
+                      {item.record.name 
+                        ? item.record.name 
+                        : (item.record.number ? `Arete #${item.record.number}` : (item.record.chip_number ? `Chip ${item.record.chip_number}` : 'Sin identificar'))}
                     </span>
 
                     {item.record.chip_number && (
@@ -847,10 +840,6 @@ export default function VaqueriaDetallePage() {
                         {item.record.chip_number}
                       </span>
                     )}
-
-                    <span className="px-2 py-0.5 rounded-lg text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-200 shrink-0">
-                      Pendiente Registro
-                    </span>
                   </div>
 
                   <button

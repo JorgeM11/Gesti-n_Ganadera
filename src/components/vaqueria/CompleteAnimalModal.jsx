@@ -53,9 +53,14 @@ export default function CompleteAnimalModal({
   useEffect(() => {
     if (isOpen && vaqueriaAnimal) {
       setError('');
-      setNumber(vaqueriaAnimal.number || '');
+      if (vaqueriaAnimal.identification_type === 'name') {
+        setName(vaqueriaAnimal.name || vaqueriaAnimal.number || '');
+        setNumber(vaqueriaAnimal.name ? (vaqueriaAnimal.number || '') : '');
+      } else {
+        setNumber(vaqueriaAnimal.number || '');
+        setName(vaqueriaAnimal.name || '');
+      }
       setChipNumber(vaqueriaAnimal.chip_number || '');
-      setName(vaqueriaAnimal.name || '');
       setSex('Hembra');
       setBreed('Mestizo');
       setColor('');

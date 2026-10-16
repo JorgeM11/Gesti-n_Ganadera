@@ -4,6 +4,22 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.2-vaqueria-fixes] - 2026-10-16
+
+### Corregido y Perfeccionado (Fase 3 - Reglas de Inactivos, Eliminación de Texto de No Registrados y Asignación de Nombre)
+- **Regla Estricta de Faltantes e Inactivos de Finca ([`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js))**:
+  - En la línea base inicial (primera vaquería de una finca), se incluyen todos los animales de la propiedad (activos e inactivos).
+  - Los animales inactivos figuran en la lista de faltantes únicamente con el distintivo "Inactivo previo", sin botón para inactivar.
+  - Si un animal (activo o inactivo) falta a una vaquería, no formará parte de los registros de asistencia de dicha sesión, por lo que en la vaquería siguiente ya no aparecerá como esperado ni faltante ("si ya faltó antes, en la siguiente no aparece").
+- **KPIs y Lista Sin Texto de No Registrado ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx), [`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js))**:
+  - Se eliminó completamente el texto de "no registrado" y sub-conteo de las tarjetas de KPI superiores, conservando únicamente Nombre y Número exacto.
+  - En las listas (Presentes y Por Registrar), los animales no registrados ahora se resaltan exclusivamente mediante un borde de color lateral (`border-l-4 border-rose-500`) y fondo tenue, suprimiendo las insignias y textos redundantes de "No registrado" / "Pendiente Registro".
+- **Corrección en Registro de Animal Nuevo por Nombre ([`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js), [`CompleteAnimalModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/CompleteAnimalModal.jsx))**:
+  - Al ingresar un animal nuevo en la vaquería mediante la pestaña de Nombre, el texto capturado se almacena correctamente en la propiedad `name` y el campo `number` permanece vacío.
+  - Al pulsar "Completar", el modal asigna el nombre ingresado en el campo de Nombre del formulario y deja el campo de Arete despejado para su asignación formal.
+
+---
+
 ## [1.7.1-vaqueria-refinements] - 2026-10-16
 
 ### Mejorado y Refinado (Fase 3 - Ajustes Visuales, Ergonómicos y de Campo en Vaquería)
