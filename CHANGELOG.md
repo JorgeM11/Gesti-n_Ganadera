@@ -4,6 +4,15 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.10-user-text-refinements] - 2026-10-16
+
+### Perfeccionado y Simplificado (Restauración de Textos y Etiquetas Concisas en Modales)
+- **Modales de Asistencia y Registro ([`CompleteAnimalModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/CompleteAnimalModal.jsx), [`ManualAddModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/ManualAddModal.jsx))**:
+  - En `CompleteAnimalModal`: se simplificó el título a `"Completar Registro"`, etiquetas a `"Microchip"`, `"Nombre (Opcional)"`, `"Color (Opcional)"`, `"Dueño"`, y el botón de acción principal a `"Guardar"`.
+  - En `ManualAddModal`: se simplificó el título a `"Asistencia Manual"`, la pestaña a `"Chip"`, la etiqueta a `"Código de Microchip"`, y el botón de acción principal a `"Registrar"`.
+
+---
+
 ## [1.7.9-vaqueria-chip-validation-and-sync-fix] - 2026-10-16
 
 ### Corregido y Optimizado (Validación Exclusiva de Chip en Escáner y Saneamiento de Sincronización)

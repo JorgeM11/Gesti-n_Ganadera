@@ -185,11 +185,8 @@ export default function ManualAddModal({
               </div>
               <div>
                 <h3 className="text-lg font-black text-neutral-900 leading-tight">
-                  Agregar Asistencia Manual
+                  Asistencia Manual
                 </h3>
-                <p className="text-xs font-bold text-neutral-400">
-                  Selecciona el método de identificación
-                </p>
               </div>
             </div>
 
@@ -229,7 +226,7 @@ export default function ManualAddModal({
                 }`}
               >
                 <Cpu className="w-4 h-4" />
-                Chip RFID
+                Chip
               </button>
 
               <button
@@ -258,7 +255,7 @@ export default function ManualAddModal({
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
                   {activeTab === 'arete' && 'Número de Arete'}
-                  {activeTab === 'chip' && 'Código de Microchip RFID (15 dígitos)'}
+                  {activeTab === 'chip' && 'Código de Microchip'}
                   {activeTab === 'name' && 'Nombre del Animal'}
                 </label>
 
@@ -424,7 +421,7 @@ export default function ManualAddModal({
               disabled={isSubmitting || (isChipTab && !isChipValidLength)}
               className="flex-1 py-3 px-4 bg-[#1B4820] text-white rounded-2xl text-sm font-black shadow-lg shadow-[#1B4820]/25 hover:bg-[#143618] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
             >
-              {isSubmitting ? 'Registrando...' : 'Registrar Asistencia'}
+              {isSubmitting ? 'Registrando...' : 'Registrar'}
             </button>
           </div>
         </motion.div>

@@ -169,11 +169,8 @@ export default function CompleteAnimalModal({
               </div>
               <div>
                 <h3 className="text-lg font-black text-neutral-900 leading-tight">
-                  Completar Registro de Animal
+                  Completar Registro
                 </h3>
-                <p className="text-xs font-bold text-neutral-400">
-                  Animal detectado en vaquería no registrado en inventario
-                </p>
               </div>
             </div>
 
@@ -214,7 +211,7 @@ export default function CompleteAnimalModal({
               {/* Chip */}
               <div>
                 <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                  <Cpu className="w-3.5 h-3.5 text-[#1B4820]" /> Microchip RFID (15 dígitos)
+                  <Cpu className="w-3.5 h-3.5 text-[#1B4820]" /> Microchip
                 </label>
                 <input
                   type="tel"
@@ -230,7 +227,7 @@ export default function CompleteAnimalModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-1.5">
-                  Nombre o Alias (Opcional)
+                  Nombre (Opcional)
                 </label>
                 <input
                   type="text"
@@ -292,7 +289,7 @@ export default function CompleteAnimalModal({
 
               <div>
                 <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-1.5">
-                  Color / Capa (Opcional)
+                  Color (Opcional)
                 </label>
                 <input
                   type="text"
@@ -320,7 +317,7 @@ export default function CompleteAnimalModal({
 
               <div>
                 <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                  <UserCheck className="w-3.5 h-3.5 text-[#1B4820]" /> Propietario / Dueño
+                  <UserCheck className="w-3.5 h-3.5 text-[#1B4820]" /> Dueño
                 </label>
                 <CustomSelect
                   options={ownerOptions}
@@ -346,7 +343,7 @@ export default function CompleteAnimalModal({
                 disabled={isSubmitting}
                 className="flex-1 py-3 px-4 bg-[#1B4820] text-white rounded-2xl text-sm font-black shadow-lg shadow-[#1B4820]/25 hover:bg-[#143618] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
               >
-                {isSubmitting ? 'Guardando...' : 'Guardar y Vincular'}
+                {isSubmitting ? 'Guardando...' : 'Guardar'}
               </button>
             </div>
           </form>
