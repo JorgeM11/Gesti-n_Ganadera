@@ -25,7 +25,10 @@ flowchart TD
     end
 
     P1 --> P2["📡 PARTE 2 DE 3: Compatibilidad Escáner RFID (Culminada en Software ✅ - Espera de Campo)"]
-    P2 --> P3["📊 PARTE 3 DE 3: Dashboard, Vaquería y Sistema de Roles (Iniciada 🚀)"]
+    P2 --> P3["📊 PARTE 3 DE 3: Dashboard, Vaquería y Sistema de Roles (En Curso 🚀)"]
+    P3 --> P3_1["Apartado 1: Dashboard ✅"]
+    P3 --> P3_2["Apartado 2: Vaquería (Software Culminado ✅ - Pruebas y Despliegue Lunes)"]
+    P3 --> P3_3["Apartado 3: Sistema de Roles (Inicia Mañana ⏳)"]
 
     style P1 fill:#f1f8e9,stroke:#33691e,stroke-width:2px
     style P2 fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
@@ -184,29 +187,40 @@ flowchart TD
   - Funcionamiento 100% offline-first mediante `useLiveQuery` conectado a IndexedDB (Dexie).
   - Skeleton loader adaptativo (`DashboardSkeleton.jsx`) con animación `animate-pulse` que sostiene la estructura visual mientras cargan los datos, funcionando idénticamente con o sin internet.
 
-#### 2. Apartado 2: Vaquería (Asistencia y Control de Campo) ✅
+#### 2. Apartado 2: Vaquería (Asistencia y Control de Campo) ✅ (Software Completo - A falta de pruebas de campo)
 - [x] **Módulo de Asistencia Periódica por Finca**:
   - Creación, listado y edición de vaquerías independientes por finca con nombre, fecha y notas.
+  - Bloqueo estricto del selector de finca en edición para salvaguardar la trazabilidad histórica del censo.
   - Comparación inteligente de rebaño: con la vaquería anterior de la finca, o con los animales activos de la finca en inventario si es la primera sesión.
+  - Exclusión automática de animales que ingresaron a la finca después de la fecha de la vaquería para no listarlos falsamente como faltantes.
   - KPIs en tiempo real: Presentes, Tasa de asistencia, Nuevos y Faltantes.
-  - Clasificación de animales presentes:
+  - Clasificación y visualización de animales presentes:
     - Esperados confirmados.
     - Nuevos en vaquería (ya en sistema).
-    - No registrados en sistema (resaltado crítico) con flujo directo para completar datos e integrarlos al inventario.
+    - No registrados en sistema (resaltado crítico) con prioridad visual arriba y flujo directo para completar datos e integrarlos al inventario.
   - Clasificación de animales faltantes:
-    - Faltantes ya inactivos previamente.
-    - Faltantes activos con opción directa de inactivación por motivo o registro de ausencia simple.
+    - Faltantes ya inactivos previamente (etiquetados con "Inactivo").
+    - Faltantes activos con opción directa de inactivación por motivo (muerte, venta, robo, etc.) o registro de ausencia simple.
+    - Bloqueo de animales inactivos para impedir su ingreso a la lista de presentes.
+  - Visualización limpia en pestaña "Nuevos": si el animal carece de arete pero tiene microchip, muestra "Sin arete" y su código de chip en la insignia lateral sin duplicarlo.
   - Experiencia de captura continua:
     - Input de escaneo siempre enfocado para bastones RFID inalámbricos y USB-OTG.
-    - Buffer de 300 ms anti-jitter y auto-despacho para microchips ISO de 15 dígitos.
-    - Escaneo óptico por cámara con confirmación multi-fotograma.
+    - Validación estricta de microchip ISO 11784/11785 de 15 dígitos numéricos, rechazando aretes o números cortos por esta vía.
+    - Buffer de 300 ms anti-jitter y auto-despacho de lectura.
     - Modal de adición manual por arete, chip o nombre con autocompletado y validación de duplicidad.
-    - Retroalimentación auditiva (Web Audio API) y visual sin popups bloqueantes.
-  - Almacenamiento Dexie v8 y sincronización bidireccional con Supabase (`vaquerias` y `vaqueria_animals`).
-  - Acceso desde barra lateral y rutas `/vaquerias` y `/vaquerias/:id`.
+    - Retroalimentación auditiva (Web Audio API) y visual superpuesta sin popups bloqueantes.
+  - Paginación reactiva y ultraligera (25, 50, 100 por página) adaptada para grandes rebaños (600+ cabezas) sin sobrecarga del DOM.
+  - Optimización táctil para móvil y tablet: botones de acción (Editar, Eliminar, Flecha) con colores visibles de contraste sin requerir hover de ratón.
+  - Almacenamiento Dexie v8 y sincronización bidireccional con Supabase (`vaquerias` y `vaqueria_animals`) con auto-saneamiento de cola.
+  - Preservación íntegra de textos y personalizaciones del usuario en cabeceras y modales.
+  - **Estado actual**: Software 100% desarrollado y probado en compilación. **A falta de pruebas con escáner físico**.
+  - **Despliegue para pruebas**: Programado para el **lunes**.
 
-#### 3. Apartado 3: Sistema de Roles ⏳
-- [ ] En espera de especificaciones y requerimientos detallados del usuario.
+#### 3. Apartado 3: Sistema de Roles ⏳ (Inicia Mañana)
+- [ ] Definición del modelo de roles (Administrador, Operador/Vaquero, Veterinario, etc.).
+- [ ] Restricciones de interfaz y permisos según el rol asignado.
+- [ ] Seguridad en sincronización y persistencia de usuarios en Supabase y Dexie.
+- [ ] **Fecha de inicio**: Programado para **mañana**.
 
 ---
 
@@ -225,5 +239,7 @@ flowchart TD
 | **Correcciones Visuales, Escáner y Filtros** | 2026-10-11 | **Completado** | Antigravity AI & Usuario | Vistas duales (tarjetas y lista compacta sin imágenes), icono de observaciones unificado, protección anti-lecturas incompletas en cámara y escáner físico, y filtro de observaciones con pills. |
 | **Parte 3 - Apartado 1: Dashboard (v1)** | 2026-10-12 | **Completado** | Antigravity AI & Usuario | Primera versión del Dashboard ganadero: vista general, selector por fincas, subfiltros dinámicos, pirámide de edad, biomasa, primera opción en sidebar y ruta de entrada inicial. |
 | **Refinamientos Dashboard y Remoción Alerta 8M** | 2026-10-12 | **Completado** | Antigravity AI & Usuario | Aplicadas las 7 correcciones al Dashboard (header limpio, CustomSelect, distribución numérica de sexo, remoción de cards de peso) y retirada definitiva de la alerta de 8 meses en inventario. |
-| **Parte 3 - Apartado 2: Módulo de Vaquería** | 2026-10-16 | **Completado** | Antigravity AI & Usuario | Asistencia periódica de rebaño por finca, comparativa con vaquería previa o inventario, buffer RFID continuo, feedback sonoro/visual Web Audio API, animales no registrados y gestión de faltantes. |
+| **Parte 3 - Apartado 2: Módulo de Vaquería** | 2026-10-16 | **Completado (Software)** | Antigravity AI & Usuario | Asistencia periódica por finca, comparativa histórica, validación 15 dígitos RFID, paginación (600+ cabezas), no registrados, gestión de faltantes, bloqueo de finca y optimizaciones móviles/tablets. Culminada a nivel de código; pendiente pruebas con escáner físico. |
+| **Parte 3 - Apartado 3: Sistema de Roles** | Próximo (Mañana) | **En Planificación** | Antigravity AI & Usuario | Inicio del diseño e implementación del sistema de roles de usuario, control de accesos y permisos en la aplicación. |
+| **Despliegue y Pruebas Generales de Campo** | Próximo (Lunes) | **Programado** | Antigravity AI & Usuario | Despliegue en producción para pruebas exhaustivas con escáner físico de microchip y validación integral con el cliente. |
 

@@ -133,9 +133,7 @@ export default function VaqueriaModal({
                 <h3 className="text-lg font-black text-neutral-900 leading-tight">
                   {initialData ? 'Editar Vaquería' : 'Nueva Vaquería'}
                 </h3>
-                <p className="text-xs font-bold text-neutral-400">
-                  {initialData ? 'Modifica los datos de la sesión' : 'Control y pase de asistencia del rebaño'}
-                </p>
+                
               </div>
             </div>
 
