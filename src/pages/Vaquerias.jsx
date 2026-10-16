@@ -267,7 +267,7 @@ export default function VaqueriasPage() {
               return (
                 <div
                   key={v.id}
-                  onClick={() => navigate(`/vaquerias/${v.id}`)}
+                  onClick={() => navigate(`/vaquerias/${v.id}`, { state: { vaqueria: v } })}
                   className="bg-white rounded-3xl p-5 border border-neutral-200/80 shadow-xs hover:shadow-md hover:border-[#1B4820]/40 transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden"
                 >
                   {/* Barra lateral de estado */}
@@ -413,7 +413,7 @@ export default function VaqueriasPage() {
             'success'
           );
           if (!editingVaqueria) {
-            navigate(`/vaquerias/${v.id}`);
+            navigate(`/vaquerias/${v.id}`, { state: { vaqueria: v } });
           }
         }}
       />

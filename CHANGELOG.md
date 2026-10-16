@@ -4,6 +4,18 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.5-vaqueria-loading-fix] - 2026-10-16
+
+### Corregido (Eliminación de Parpadeo y Falso Aviso de "Vaquería no encontrada")
+- **Diferenciación de Estado de Carga vs No Encontrado ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - Se corrigió la condición reactiva de `useLiveQuery` en IndexedDB: mientras la consulta asíncrona está en progreso (`undefined`), se presenta un spinner institucional `#1B4820` en lugar de evaluar erróneamente la pantalla de error.
+  - La vista de "Vaquería no encontrada" ahora se despliega única y exclusivamente cuando la consulta culmina y confirma fehacientemente que el registro no existe en la base de datos (`null`), incluyendo un reintento de seguridad ante micro-retrasos de I/O.
+- **Paso de Estado en Navegación Inmediata ([`Vaquerias.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Vaquerias.jsx), [`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - Al crear una nueva vaquería o abrir una tarjeta existente, se transfiere el objeto de la sesión en el `state` del enrutador.
+  - La pantalla de detalle consume dicho estado de forma instantánea en el primer fotograma (`initialVaqueria`), suprimiendo por completo el parpadeo de 1 milisegundo y previniendo salidas en falso al navegar.
+
+---
+
 ## [1.7.4-vaqueria-sync-and-ux] - 2026-10-16
 
 ### Perfeccionado y Optimizado (Fase 3 - Inclusión de Animales Nuevos en Segunda Vaquería, Notificaciones Flotantes y Filtros)

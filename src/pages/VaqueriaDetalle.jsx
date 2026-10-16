@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -46,6 +46,14 @@ import VaqueriaModal from '@/components/vaqueria/VaqueriaModal';
 export default function VaqueriaDetallePage() {
   const { id: vaqueriaId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Datos pasados opcionalmente por navegación para evitar cualquier parpadeo de carga
+  const initialVaqueria = useMemo(() => {
+    return (location.state?.vaqueria && location.state.vaqueria.id === vaqueriaId)
+      ? location.state.vaqueria
+      : undefined;
+  }, [location.state?.vaqueria, vaqueriaId]);
 
   // Estados de interfaz y pestañas
   const [activeTab, setActiveTab] = useState('presentes'); // 'presentes' | 'faltantes' | 'por_completar'
@@ -92,8 +100,19 @@ export default function VaqueriaDetallePage() {
 
   // Consultas reactivas Dexie (100% offline-first)
   const currentVaqueria = useLiveQuery(
-    () => db.vaquerias.get(vaqueriaId),
-    [vaqueriaId]
+    async () => {
+      if (!vaqueriaId) return null;
+      let v = await db.vaquerias.get(vaqueriaId);
+      // En caso de navegación inmediata tras creación o micro-retraso de I/O en IndexedDB
+      if (!v) {
+        await new Promise(r => setTimeout(r, 120));
+        v = await db.vaquerias.get(vaqueriaId);
+      }
+      if (!v || v.deleted_at) return null;
+      return v;
+    },
+    [vaqueriaId],
+    initialVaqueria
   );
 
   const allVaquerias = useLiveQuery(
@@ -284,7 +303,20 @@ export default function VaqueriaDetallePage() {
     }
   };
 
-  if (!currentVaqueria) {
+  // Estado de carga inicial mientras se resuelve la consulta a IndexedDB
+  if (currentVaqueria === undefined) {
+    return (
+      <div className="min-h-screen bg-[#F0F2EB] flex flex-col items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-[#1B4820] border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-bold text-neutral-600">Cargando vaquería...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Si tras la consulta confirmamos que la vaquería no existe o fue borrada
+  if (currentVaqueria === null) {
     return (
       <div className="min-h-screen bg-[#F0F2EB] flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-lg border border-neutral-200">
