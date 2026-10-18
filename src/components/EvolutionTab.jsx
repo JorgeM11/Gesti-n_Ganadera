@@ -14,7 +14,7 @@ import {
 import { useLiveQuery } from 'dexie-react-hooks';
 import { motion } from 'framer-motion';
 import { db } from '@/lib/db';
-import { formatWeight, formatDateLocal } from '@/lib/dateUtils';
+import { formatWeight, formatDateLocal, parseLocalDate } from '@/lib/dateUtils';
 import AnimalImage from '@/components/inventario/AnimalImage';
 import BottomSheet from '@/components/ui/BottomSheet';
 import EventForm from '@/components/inventario/EventForm';
@@ -93,11 +93,34 @@ export default function EvolutionTab({ animal }) {
         {events && events.length > 0 ? (
           events.map((event, i) => {
             const badge = getEventTypeBadge(event.event_type);
-            // Calcular delta de peso respecto al evento cronológicamente anterior (events[i + 1])
-            const prevEvent = events[i + 1];
-            const weightDiff = (event.weight_kg !== null && event.weight_kg !== undefined && prevEvent?.weight_kg !== null && prevEvent?.weight_kg !== undefined)
-              ? (Number(event.weight_kg) - Number(prevEvent.weight_kg)).toFixed(1)
+            // Buscar el evento cronológicamente anterior que tenga peso registrado
+            const hasWeight = event.weight_kg !== null && event.weight_kg !== undefined && event.weight_kg !== '';
+            const prevWeightEvent = hasWeight
+              ? events.slice(i + 1).find(e => e.weight_kg !== null && e.weight_kg !== undefined && e.weight_kg !== '')
               : null;
+
+            let weightDiff = null;
+            let dailyGain = null;
+            let daysBetween = null;
+
+            if (hasWeight && prevWeightEvent) {
+              const diff = Number(event.weight_kg) - Number(prevWeightEvent.weight_kg);
+              weightDiff = diff.toFixed(1);
+
+              if (event.event_date && prevWeightEvent.event_date) {
+                const currD = parseLocalDate(event.event_date);
+                const prevD = parseLocalDate(prevWeightEvent.event_date);
+                if (currD && prevD && !isNaN(currD) && !isNaN(prevD)) {
+                  const diffMs = currD.getTime() - prevD.getTime();
+                  const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
+                  if (days > 0) {
+                    daysBetween = days;
+                    const rate = diff / days;
+                    dailyGain = rate.toFixed(2);
+                  }
+                }
+              }
+            }
 
             return (
               <div key={event.id} className="relative">
@@ -159,15 +182,35 @@ export default function EvolutionTab({ animal }) {
                             value={formatWeight(event.weight_kg)}
                           />
                           {weightDiff !== null && (
-                            <div className="flex items-center px-0.5">
-                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black border leading-none shrink-0 ${
-                                Number(weightDiff) >= 0 
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80' 
-                                  : 'bg-rose-50 text-rose-800 border-rose-200/80'
-                              }`}>
+                            <div className="flex items-center gap-1.5 flex-wrap px-0.5">
+                              {/* Ganancia o pérdida total acumulada */}
+                              <span 
+                                title="Variación total de peso respecto al pesaje anterior"
+                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black border leading-none shrink-0 ${
+                                  Number(weightDiff) >= 0 
+                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80' 
+                                    : 'bg-rose-50 text-rose-800 border-rose-200/80'
+                                }`}
+                              >
                                 {Number(weightDiff) >= 0 ? <TrendingUp className="w-2.5 h-2.5 text-emerald-600 shrink-0" /> : <TrendingDown className="w-2.5 h-2.5 text-rose-600 shrink-0" />}
                                 <span>{Number(weightDiff) >= 0 ? `+${weightDiff} kg` : `${weightDiff} kg`}</span>
                               </span>
+
+                              {/* Ganancia o pérdida de peso por día (GDP) */}
+                              {dailyGain !== null && (
+                                <span 
+                                  title={Number(dailyGain) >= 0 
+                                    ? `Ganancia diaria de peso: +${dailyGain} kg/día (${daysBetween} días)` 
+                                    : `Pérdida diaria de peso: ${dailyGain} kg/día (${daysBetween} días)`}
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black border leading-none shrink-0 ${
+                                    Number(dailyGain) >= 0 
+                                      ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80' 
+                                      : 'bg-rose-50 text-rose-800 border-rose-200/80'
+                                  }`}
+                                >
+                                  <span>{Number(dailyGain) > 0 ? `+${dailyGain} kg/día` : `${dailyGain} kg/día`}</span>
+                                </span>
+                              )}
                             </div>
                           )}
                         </div>

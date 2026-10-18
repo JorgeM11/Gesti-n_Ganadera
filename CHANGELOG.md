@@ -4,6 +4,16 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.15-daily-weight-gain-events] - 2026-10-18
+
+### Añadido y Perfeccionado (Ganancia y Pérdida Diaria de Peso en Eventos de Evolución)
+- **Tasa de Ganancia o Pérdida Diaria ([`EvolutionTab.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/EvolutionTab.jsx))**:
+  - Al lado de la insignia de ganancia/pérdida total de peso (`+XX.X kg` o `-XX.X kg`), ahora se calcula y muestra la **ganancia de peso por día o pérdida de peso por día** (ej. `+0.65 kg/día` o `-0.20 kg/día`).
+  - Cálculo robusto de GDP (Ganancia Diaria de Peso): busca automáticamente el pesaje cronológicamente previo con peso válido, calculando los días transcurridos (`daysBetween`) y la tasa diaria con 2 decimales de precisión.
+  - Formato visual adaptativo: renderizado en paralelo con envoltura responsiva (`flex-wrap`) para una lectura limpia tanto en teléfonos móviles como en computadoras de escritorio.
+
+---
+
 ## [1.7.14-audit-trail-obrero-dashboard] - 2026-10-18
 
 ### Añadido y Corregido (Auditoría de Modificaciones por Obrero en Historial de Cambios)
