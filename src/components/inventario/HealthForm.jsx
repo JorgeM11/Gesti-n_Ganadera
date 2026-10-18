@@ -20,6 +20,7 @@ import {
 import { db } from "@/lib/db";
 import { supabase } from "@/lib/supabaseClient";
 import { addToSyncQueue } from "@/lib/syncUtils";
+import { getEffectiveUserId } from "@/lib/authService";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { DateInput } from '@/components/ui/DateInput';
 
@@ -87,7 +88,7 @@ export default function HealthForm({
 
   // --- LÓGICA LOCAL-FIRST (Zero Delay) ---
   const getLocalUserId = () => {
-    return localStorage.getItem("ganadera_user_id");
+    return getEffectiveUserId();
   };
 
   const onSubmit = async (data) => {

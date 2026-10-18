@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Tractor, ArrowRight, Mail, Lock, AlertCircle, ShieldCheck } from "lucide-react";
 import InputField from "@/components/ui/InputField";
 import PrimaryButton from "@/components/ui/PrimaryButton";
-import { authenticateUser, seedInitialAdminIfNeeded } from "@/lib/authService";
+import { authenticateUser, seedInitialAdminIfNeeded, isCurrentUserWorker } from "@/lib/authService";
 
 const MotionDiv = motion.div;
 
@@ -34,7 +34,11 @@ export default function LoginPage() {
 
     const userId = localStorage.getItem("ganadera_user_id");
     if (userId) {
-      navigate("/dashboard");
+      if (isCurrentUserWorker()) {
+        navigate("/inventario");
+      } else {
+        navigate("/dashboard");
+      }
     }
   }, [navigate]);
 
@@ -53,7 +57,11 @@ export default function LoginPage() {
         return;
       }
 
-      navigate("/dashboard");
+      if (isCurrentUserWorker()) {
+        navigate("/inventario");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (error) {
       setServerError(error?.message || "Error al iniciar sesión.");
     } finally {

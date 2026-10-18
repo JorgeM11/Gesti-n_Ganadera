@@ -25,10 +25,10 @@ flowchart TD
     end
 
     P1 --> P2["📡 PARTE 2 DE 3: Compatibilidad Escáner RFID (Culminada en Software ✅ - Espera de Campo)"]
-    P2 --> P3["📊 PARTE 3 DE 3: Dashboard, Vaquería y Sistema de Roles (En Curso 🚀)"]
+    P2 --> P3["📊 PARTE 3 DE 3: Dashboard, Vaquería y Sistema de Roles (Culminada en Software ✅)"]
     P3 --> P3_1["Apartado 1: Dashboard ✅"]
     P3 --> P3_2["Apartado 2: Vaquería (Software Culminado ✅ - Pruebas y Despliegue Lunes)"]
-    P3 --> P3_3["Apartado 3: Sistema de Roles (Inicia Mañana ⏳)"]
+    P3 --> P3_3["Apartado 3: Sistema de Roles (Software Culminado ✅)"]
 
     style P1 fill:#f1f8e9,stroke:#33691e,stroke-width:2px
     style P2 fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
@@ -220,11 +220,22 @@ flowchart TD
   - **Estado actual**: Software 100% desarrollado y probado en compilación. **A falta de pruebas con escáner físico**.
   - **Despliegue para pruebas**: Programado para el **lunes**.
 
-#### 3. Apartado 3: Sistema de Roles ⏳ (Inicia Mañana)
-- [ ] Definición del modelo de roles (Administrador, Operador/Vaquero, Veterinario, etc.).
-- [ ] Restricciones de interfaz y permisos según el rol asignado.
-- [ ] Seguridad en sincronización y persistencia de usuarios en Supabase y Dexie.
-- [ ] **Fecha de inicio**: Programado para **mañana**.
+#### 3. Apartado 3: Sistema de Roles ✅ (Completado)
+- [x] **Modelo de Asignación de Fincas (`usuario_farms`)**:
+  - Script SQL `supabase_schema_usuario_farms.sql` con tabla relacional, triggers para `updated_at`, índices y políticas RLS.
+  - Almacenamiento Dexie v9 (`usuario_farms`) con soporte offline total.
+  - Sincronización bidireccional bajo `effectiveOwnerId` (el administrador titular).
+- [x] **Restricciones de Rutas y Navegación**:
+  - Redirección automática de obreros a `/inventario` en login y ruta raíz (`/`).
+  - Bloqueo y protección de rutas administrativas (`/dashboard`, `/vaquerias`, `/vaquerias/:id`) con `AdminOnlyRoute`.
+  - Drawer de navegación simplificado: Dashboard, Vaquería, Fincas, Potreros y Dueños ocultos para el rol de obrero.
+- [x] **Restricción de Creación de Entidades**:
+  - Ocultados todos los botones `"+ Nuevo"` y modales de Fincas, Potreros y Dueños en formularios y vistas para obreros.
+- [x] **Filtros y Formularios Restringidos**:
+  - Inventario: lista de animales, filtro de fincas, filtro de potreros y filtro de dueños limitados estrictamente a las fincas asignadas al obrero y a sus dueños asociados.
+  - Formulario de Animal: selector de finca restringido con auto-selección si solo tiene 1 asignada; potreros y dueños filtrados por fincas asignadas; persistencia de titularidad bajo `admin_id`.
+  - Perfiles y Eventos: validación de finca asignada para impedir visualización o registro en animales no asignados.
+- [x] **Estado actual**: Software 100% desarrollado y probado en compilación (`npm run build` en 814ms).
 
 ---
 
@@ -245,6 +256,6 @@ flowchart TD
 | **Refinamientos Dashboard y Remoción Alerta 8M** | 2026-10-12 | **Completado** | Antigravity AI & Usuario | Aplicadas las 7 correcciones al Dashboard (header limpio, CustomSelect, distribución numérica de sexo, remoción de cards de peso) y retirada definitiva de la alerta de 8 meses en inventario. |
 | **Parte 3 - Apartado 2: Módulo de Vaquería** | 2026-10-16 | **Completado (Software)** | Antigravity AI & Usuario | Asistencia periódica por finca, comparativa histórica, validación 15 dígitos RFID, paginación (600+ cabezas), no registrados, gestión de faltantes, bloqueo de finca y optimizaciones móviles/tablets. Culminada a nivel de código; pendiente pruebas con escáner físico. |
 | **Parte 3 - Apartado 2: Instantánea Inmutable (Snapshot)** | 2026-10-18 | **Completado** | Antigravity AI & Usuario | Congelamiento absoluto de listas y métricas al finalizar la vaquería con soporte cloud en Supabase (`snapshot_data JSONB`). |
-| **Parte 3 - Apartado 3: Sistema de Roles** | Próximo (Mañana) | **En Planificación** | Antigravity AI & Usuario | Inicio del diseño e implementación del sistema de roles de usuario, control de accesos y permisos en la aplicación. |
+| **Parte 3 - Apartado 3: Sistema de Roles** | 2026-10-18 | **Completado (Software)** | Antigravity AI & Usuario | Restricciones completas de perfil obrero/operador: asignación de fincas relacional en Supabase y Dexie v9, acceso exclusivo a inventario, bloqueo de Dashboard y Vaquería, filtros restringidos a fincas asignadas y dueños con animales presentes, formularios de registro protegidos y titularidad de datos centralizada en admin. |
 | **Despliegue y Pruebas Generales de Campo** | Próximo (Lunes) | **Programado** | Antigravity AI & Usuario | Despliegue en producción para pruebas exhaustivas con escáner físico de microchip y validación integral con el cliente. |
 

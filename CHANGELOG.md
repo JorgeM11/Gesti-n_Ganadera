@@ -4,6 +4,38 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.13-roles-obrero-system] - 2026-10-18
+
+### Añadido y Perfeccionado (Sistema de Roles para Obrero / Operador y Asignación de Fincas)
+- **Modelo Relacional de Asignación de Fincas (`usuario_farms`, Opción A)**:
+  - Script SQL [`supabase_schema_usuario_farms.sql`](file:///C:/Users/joses/appganadera/gestion-ganadera/supabase_schema_usuario_farms.sql) con la tabla relacional `usuario_farms (id, user_id, farm_id, created_at, updated_at, deleted_at)`, índices de optimización, triggers para `updated_at` y políticas RLS.
+  - Almacenamiento local en Dexie v9 (`usuario_farms: 'id, user_id, farm_id, updated_at, deleted_at'`) en [`db.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/db.js) para garantizar el funcionamiento 100% offline de las restricciones de campo.
+  - Sincronización en [`syncUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/syncUtils.js): descarga de `usuario_farms` para el usuario activo y consulta de datos del titular (`effectiveOwnerId = admin_id`).
+- **Control de Rutas y Redirecciones por Rol ([`App.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/App.jsx), [`Login.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Login.jsx))**:
+  - `AdminOnlyRoute`: Bloquea acceso a `/dashboard`, `/vaquerias` y `/vaquerias/:id` para cuentas con rol de obrero u operador, redirigiéndolas inmediatamente a `/inventario`.
+  - `DefaultRedirect`: En la ruta raíz (`/`) y rutas no encontradas (`*`), los administradores van a `/dashboard` y los obreros van directamente a `/inventario`.
+  - En `Login.jsx`, tanto al iniciar sesión como si ya existía una sesión guardada, el obrero es dirigido directamente a `/inventario`.
+- **Restricción de Menú Lateral ([`NavigationDrawer.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/NavigationDrawer.jsx))**:
+  - Para obreros se ocultan los enlaces a **Dashboard** y **Vaquería**.
+  - Se ocultan los accesos y modales de gestión administrativa de **Fincas**, **Potreros** y **Dueños**.
+  - Se mantienen visibles únicamente **Inventario**, botón de **Respaldo** manual y **Cerrar Sesión**.
+- **Filtros Restringidos en Inventario ([`Inventario.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Inventario.jsx))**:
+  - La lista de animales solo incluye los que pertenecen a las fincas asignadas al obrero.
+  - El filtro de Finca solo lista las fincas asignadas y oculta la opción "Sin finca asignada".
+  - El filtro de Potrero solo muestra potreros pertenecientes a las fincas asignadas.
+  - El filtro de Dueño solo muestra dueños que tienen animales presentes en las fincas asignadas.
+- **Formulario de Registro y Edición de Animales ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - Ocultados los botones de creación `"+ Nuevo"` / `"+ Fincas"` para Dueño, Finca y Potrero cuando el usuario es obrero.
+  - Selector de Finca restringido a las fincas asignadas (con auto-selección automática si el obrero solo tiene 1 finca asignada).
+  - Selector de Potreros restringido a potreros de las fincas asignadas.
+  - Selector de Dueños restringido a propietarios con ganado en las fincas asignadas.
+  - Titularidad de datos: al registrar o editar animales y eventos de nacimiento, `user_id` se asigna automáticamente al `admin_id` titular para preservar la propiedad centralizada del rebaño.
+- **Protección de Ficha de Animal y Eventos ([`PerfilAnimal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/PerfilAnimal.jsx), [`PerfilEvento.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/PerfilEvento.jsx), [`PerfilTratamiento.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/PerfilTratamiento.jsx), [`EventForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/EventForm.jsx), [`HealthForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/HealthForm.jsx))**:
+  - Validación de acceso: si un obrero intenta abrir la ficha o registrar eventos/tratamientos para un animal fuera de sus fincas asignadas, se bloquea el acceso mostrando animal no encontrado.
+  - Persistencia de eventos de crecimiento y tratamientos sanitarios bajo el `user_id` del administrador titular.
+
+---
+
 ## [1.7.12-vaqueria-immutable-snapshot] - 2026-10-18
 
 ### Añadido y Perfeccionado (Instantánea Inmutable para Vaquerías Finalizadas)

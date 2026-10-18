@@ -77,6 +77,16 @@ export async function processSyncQueue() {
         }
       }
 
+      // --- TITULARIDAD DE DATOS PARA OBRERO ---
+      const activeAdminId = localStorage.getItem('ganadera_admin_id');
+      const activeRole = localStorage.getItem('ganadera_user_role');
+      const isWorkerActive = activeRole === 'obrero' || activeRole === 'operador';
+      if (isWorkerActive && activeAdminId && item.table_name !== 'usuario_farms' && item.table_name !== 'usuarios') {
+        if (payloadToUpload.user_id) {
+          payloadToUpload.user_id = activeAdminId;
+        }
+      }
+
       // --- SIEMPRE eliminar photo_blob antes de enviar a la nube ---
       delete payloadToUpload.photo_blob;
 
@@ -227,6 +237,11 @@ export async function pullFromServer() {
     }
   }
 
+  const adminId = localStorage.getItem('ganadera_admin_id');
+  const userRole = localStorage.getItem('ganadera_user_role');
+  const isWorker = userRole === 'obrero' || userRole === 'operador';
+  const effectiveOwnerId = (isWorker && adminId) ? adminId : userId;
+
   const tables = [
     'farms',
     'potreros',
@@ -236,15 +251,20 @@ export async function pullFromServer() {
     'health_records',
     'vaquerias',
     'vaqueria_animals',
+    'usuario_farms',
     'usuarios'
   ];
 
   for (const table of tables) {
     let query = supabase.from(table).select('*').gt('updated_at', lastSync);
 
-    // Si la tabla maneja user_id, filtramos por el usuario activo (usuarios sincroniza directo)
-    if (table !== 'usuarios') {
-      query = query.eq('user_id', userId);
+    // Si la tabla maneja user_id, filtramos por el titular de datos (admin para obreros)
+    if (table === 'usuario_farms') {
+      if (isWorker) {
+        query = query.eq('user_id', userId);
+      }
+    } else if (table !== 'usuarios') {
+      query = query.eq('user_id', effectiveOwnerId);
     }
 
     const { data: serverData, error } = await withTimeout(query, 12000);

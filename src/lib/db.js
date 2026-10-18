@@ -3,7 +3,7 @@ import Dexie from 'dexie';
 /**
  * @typedef {Object} SyncQueueItem
  * @property {number} [id]
- * @property {'farms' | 'potreros' | 'owners' | 'animals' | 'growth_events' | 'health_records' | 'usuarios' | 'vaquerias' | 'vaqueria_animals'} table_name
+ * @property {'farms' | 'potreros' | 'owners' | 'animals' | 'growth_events' | 'health_records' | 'usuarios' | 'vaquerias' | 'vaqueria_animals' | 'usuario_farms'} table_name
  * @property {'INSERT' | 'UPDATE' | 'DELETE'} operation
  * @property {any} payload
  * @property {string} created_at
@@ -105,8 +105,19 @@ import Dexie from 'dexie';
  * @property {string} name
  * @property {string} email
  * @property {string} password_hash
- * @property {'admin' | 'operador' | 'veterinario'} role
+ * @property {'admin' | 'obrero' | 'operador' | 'veterinario'} role
+ * @property {string} [admin_id]
  * @property {'Activo' | 'Inactivo' | 'Suspendido'} status
+ * @property {string} created_at
+ * @property {string} updated_at
+ * @property {string} [deleted_at]
+ */
+
+/**
+ * @typedef {Object} UsuarioFarm
+ * @property {string} id
+ * @property {string} user_id
+ * @property {string} farm_id
  * @property {string} created_at
  * @property {string} updated_at
  * @property {string} [deleted_at]
@@ -254,6 +265,19 @@ export class GanaderaDB extends Dexie {
             vaqueria_animals: 'id, vaqueria_id, user_id, animal_id, chip_number, number, is_unregistered, updated_at, deleted_at'
         });
 
+        // --- VERSIÓN 9: Asignación de fincas a usuarios/obreros (usuario_farms) ---
+        this.version(9).stores({
+            animals: 'id, user_id, farm_id, potrero_id, owner_id, number, chip_number, name, status, sex, breed, last_weight_kg, last_weight_date, mother_id, father_id, updated_at, deleted_at',
+            farms: 'id, user_id, name, updated_at, deleted_at',
+            potreros: 'id, user_id, farm_id, name, updated_at, deleted_at',
+            owners: 'id, user_id, name, updated_at, deleted_at',
+            milking_records: 'id, user_id, animal_id, farm_id, milking_date, shift, updated_at, deleted_at',
+            usuarios: 'id, email, role, admin_id, status, updated_at, deleted_at',
+            vaquerias: 'id, user_id, farm_id, name, date, status, updated_at, deleted_at',
+            vaqueria_animals: 'id, vaqueria_id, user_id, animal_id, chip_number, number, is_unregistered, updated_at, deleted_at',
+            usuario_farms: 'id, user_id, farm_id, updated_at, deleted_at'
+        });
+
         /** @type {Dexie.Table<Animal, string>} */
         this.animals = this.table('animals');
         /** @type {Dexie.Table<Service, string>} */
@@ -278,6 +302,8 @@ export class GanaderaDB extends Dexie {
         this.vaquerias = this.table('vaquerias');
         /** @type {Dexie.Table<VaqueriaAnimal, string>} */
         this.vaqueria_animals = this.table('vaqueria_animals');
+        /** @type {Dexie.Table<UsuarioFarm, string>} */
+        this.usuario_farms = this.table('usuario_farms');
         /** @type {Dexie.Table<SyncQueueItem, number>} */
         this.sync_queue = this.table('sync_queue');
     }
@@ -304,6 +330,7 @@ export async function clearLocalData() {
     db.usuarios.clear(),
     db.vaquerias.clear(),
     db.vaqueria_animals.clear(),
+    db.usuario_farms.clear(),
     db.sync_queue.clear()
   ]);
   localStorage.removeItem("lastSyncTimestamp");
@@ -311,5 +338,6 @@ export async function clearLocalData() {
   localStorage.removeItem("ganadera_user_email");
   localStorage.removeItem("ganadera_user_name");
   localStorage.removeItem("ganadera_user_role");
+  localStorage.removeItem("ganadera_admin_id");
   localStorage.removeItem("viewed8Months");
 }

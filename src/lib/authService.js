@@ -141,6 +141,11 @@ export function saveSessionLocally(user) {
   localStorage.setItem('ganadera_user_name', user.name || '');
   localStorage.setItem('ganadera_user_email', user.email || '');
   localStorage.setItem('ganadera_user_role', user.role || 'operador');
+  if (user.admin_id) {
+    localStorage.setItem('ganadera_admin_id', user.admin_id);
+  } else {
+    localStorage.removeItem('ganadera_admin_id');
+  }
 }
 
 /**
@@ -149,12 +154,34 @@ export function saveSessionLocally(user) {
 export function getCurrentUser() {
   const id = localStorage.getItem('ganadera_user_id');
   if (!id) return null;
+  const role = localStorage.getItem('ganadera_user_role') || 'operador';
+  const adminId = localStorage.getItem('ganadera_admin_id') || null;
+  const isWorker = role === 'obrero' || role === 'operador';
   return {
     id,
     name: localStorage.getItem('ganadera_user_name') || '',
     email: localStorage.getItem('ganadera_user_email') || '',
-    role: localStorage.getItem('ganadera_user_role') || 'operador',
+    role,
+    adminId,
+    isWorker,
+    effectiveAdminId: isWorker && adminId ? adminId : id
   };
+}
+
+/**
+ * Retorna true si el usuario activo tiene rol de obrero / operador
+ */
+export function isCurrentUserWorker() {
+  const user = getCurrentUser();
+  return Boolean(user?.isWorker);
+}
+
+/**
+ * Retorna el ID de titular de datos: admin_id si es obrero, o su propio id si es admin
+ */
+export function getEffectiveUserId() {
+  const user = getCurrentUser();
+  return user?.effectiveAdminId || localStorage.getItem('ganadera_user_id') || '00000000-0000-0000-0000-000000000001';
 }
 
 /**
@@ -165,4 +192,5 @@ export function logoutUser() {
   localStorage.removeItem('ganadera_user_name');
   localStorage.removeItem('ganadera_user_email');
   localStorage.removeItem('ganadera_user_role');
+  localStorage.removeItem('ganadera_admin_id');
 }

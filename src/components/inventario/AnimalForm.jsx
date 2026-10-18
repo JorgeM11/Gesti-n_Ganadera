@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import { db } from '@/lib/db';
 import { addToSyncQueue } from '@/lib/syncUtils';
 import { compressImage } from '@/lib/imageUtils';
+import { isCurrentUserWorker, getEffectiveUserId } from '@/lib/authService';
 import GenealogySelector from './GenealogySelector';
 import FarmModal from './FarmModal';
 import PotreroModal from './PotreroModal';
@@ -152,10 +153,51 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
   const [isSaved, setIsSaved] = useState(false);
   const currentSavingIdRef = useRef(null);
 
+  const isWorker = isCurrentUserWorker();
+  const currentUserId = localStorage.getItem('ganadera_user_id');
+
+  // Asignaciones de fincas si el usuario actual es obrero
+  const assignedFarmIds = useLiveQuery(
+    async () => {
+      if (!isWorker || !currentUserId) return null;
+      const ufs = await db.usuario_farms
+        .where('user_id')
+        .equals(currentUserId)
+        .filter(uf => !uf.deleted_at)
+        .toArray();
+      return new Set(ufs.map(uf => uf.farm_id));
+    },
+    [isWorker, currentUserId]
+  );
+
   // Consultas reactivas Dexie
-  const farms = useLiveQuery(() => db.farms.filter(f => !f.deleted_at).toArray()) || [];
-  const owners = useLiveQuery(() => db.owners.filter(o => !o.deleted_at).toArray()) || [];
+  const rawFarms = useLiveQuery(() => db.farms.filter(f => !f.deleted_at).toArray()) || [];
+  const rawOwners = useLiveQuery(() => db.owners.filter(o => !o.deleted_at).toArray()) || [];
   const allAnimals = useLiveQuery(() => db.animals.filter(a => !a.deleted_at).toArray()) || [];
+
+  const farms = useMemo(() => {
+    if (!isWorker || !assignedFarmIds) return rawFarms;
+    return rawFarms.filter(f => assignedFarmIds.has(f.id));
+  }, [rawFarms, isWorker, assignedFarmIds]);
+
+  const accessibleOwnerIds = useMemo(() => {
+    if (!isWorker) return null;
+    const set = new Set();
+    if (initialValues?.owner_id) {
+      set.add(initialValues.owner_id);
+    }
+    allAnimals.forEach(a => {
+      if (a.farm_id && assignedFarmIds?.has(a.farm_id) && a.owner_id) {
+        set.add(a.owner_id);
+      }
+    });
+    return set;
+  }, [isWorker, allAnimals, assignedFarmIds, initialValues?.owner_id]);
+
+  const owners = useMemo(() => {
+    if (!isWorker || !accessibleOwnerIds) return rawOwners;
+    return rawOwners.filter(o => accessibleOwnerIds.has(o.id));
+  }, [isWorker, accessibleOwnerIds, rawOwners]);
 
   const defaultValuesMapped = useMemo(() => {
     if (!initialValues) return {
@@ -241,6 +283,13 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
       setValue('potrero_id', '');
     }
   }, [selectedFarmId, selectedPotreroId, potreros, setValue]);
+
+  // Auto-seleccionar finca si el obrero solo tiene una asignada y no tiene ninguna seleccionada
+  useEffect(() => {
+    if (isWorker && farms.length === 1 && !selectedFarmId) {
+      setValue('farm_id', farms[0].id);
+    }
+  }, [isWorker, farms, selectedFarmId, setValue]);
 
   // Manejo de captura de foto
   const handleImageCapture = async (e) => {
@@ -359,6 +408,18 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         navigate('/login');
         return;
       }
+      const effectiveUserId = getEffectiveUserId();
+
+      // Validación de asignación de finca para obreros
+      if (isWorker && (!data.farm_id || !assignedFarmIds?.has(data.farm_id))) {
+        setToast({
+          show: true,
+          type: 'error',
+          message: 'Debes seleccionar una finca asignada.'
+        });
+        setTimeout(() => setToast(p => ({ ...p, show: false })), 4000);
+        return;
+      }
 
       const isEditing = !!initialValues?.id;
       const animalId = initialValues?.id || crypto.randomUUID();
@@ -412,7 +473,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
 
       const animalData = {
         id: animalId,
-        user_id: userId,
+        user_id: effectiveUserId,
         number: cleanNumber,
         chip_number: cleanChip || null,
         name: data.name?.trim() || null,
@@ -465,7 +526,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
           } else {
             const newBirthEvent = {
               id: crypto.randomUUID(),
-              user_id: userId,
+              user_id: effectiveUserId,
               animal_id: animalId,
               event_type: 'Nacimiento',
               event_date: data.birth_date,
@@ -974,14 +1035,16 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                   <UserCheck className="w-3.5 h-3.5 text-neutral-400" />
                   8. Dueño
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setIsOwnerModalOpen(true)}
-                  className="text-[11px] font-bold text-[#1B4820] hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Nuevo</span>
-                </button>
+                {!isWorker && (
+                  <button
+                    type="button"
+                    onClick={() => setIsOwnerModalOpen(true)}
+                    className="text-[11px] font-bold text-[#1B4820] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Nuevo</span>
+                  </button>
+                )}
               </div>
 
               <CustomSelect
@@ -1002,23 +1065,32 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                   <Building2 className="w-3.5 h-3.5 text-neutral-400" />
                   9. Finca
                 </label>
-                <button
-                  type="button"
-                  onClick={() => setIsFarmModalOpen(true)}
-                  className="text-[11px] font-bold text-[#1B4820] hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>Fincas</span>
-                </button>
+                {!isWorker && (
+                  <button
+                    type="button"
+                    onClick={() => setIsFarmModalOpen(true)}
+                    className="text-[11px] font-bold text-[#1B4820] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Fincas</span>
+                  </button>
+                )}
               </div>
 
               <CustomSelect
                 value={selectedFarmId}
                 onChange={(val) => setValue('farm_id', val)}
-                options={[
-                  { value: '', label: 'Sin finca asignada' },
-                  ...farms.map(f => ({ value: f.id, label: `${f.name}${f.location ? ` (${f.location})` : ''}` }))
-                ]}
+                options={
+                  isWorker
+                    ? [
+                        ...(farms.length > 1 ? [{ value: '', label: 'Selecciona una finca...' }] : []),
+                        ...farms.map(f => ({ value: f.id, label: `${f.name}${f.location ? ` (${f.location})` : ''}` }))
+                      ]
+                    : [
+                        { value: '', label: 'Sin finca asignada' },
+                        ...farms.map(f => ({ value: f.id, label: `${f.name}${f.location ? ` (${f.location})` : ''}` }))
+                      ]
+                }
                 placeholder="Selecciona la finca..."
               />
             </div>
@@ -1031,7 +1103,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                 }`}>
                   10. Potrero
                 </label>
-                {selectedFarmId && (
+                {selectedFarmId && !isWorker && (
                   <button
                     type="button"
                     onClick={() => setIsPotreroModalOpen(true)}
@@ -1051,7 +1123,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                     { value: '', label: 'Sin potrero asignado' },
                     ...potreros.map(p => ({ value: p.id, label: p.name }))
                   ]}
-                  placeholder={potreros.length === 0 ? "Sin potreros (crea uno)" : "Selecciona potrero..."}
+                  placeholder={potreros.length === 0 ? (isWorker ? "Sin potreros disponibles" : "Sin potreros (crea uno)") : "Selecciona potrero..."}
                 />
               ) : (
                 <div className="p-3 bg-neutral-50 rounded-2xl border border-neutral-200/70 text-xs text-neutral-400 font-medium italic">

@@ -21,6 +21,7 @@ import { db } from "@/lib/db";
 import { supabase } from "@/lib/supabaseClient";
 import { addToSyncQueue, runFullSync } from "@/lib/syncUtils";
 import { compressImage } from "@/lib/imageUtils";
+import { getEffectiveUserId } from "@/lib/authService";
 import AnimalImage from "@/components/inventario/AnimalImage";
 import BottomSheet from "@/components/ui/BottomSheet";
 import { DateInput } from '@/components/ui/DateInput';
@@ -182,7 +183,7 @@ export default function EventForm({
 
   // --- LÓGICA LOCAL-FIRST (Zero Delay) ---
   const getLocalUserId = () => {
-    return localStorage.getItem("ganadera_user_id");
+    return getEffectiveUserId();
   };
 
   const onSubmit = async (data) => {

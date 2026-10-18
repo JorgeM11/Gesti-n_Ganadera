@@ -18,6 +18,7 @@ import {
   Fence
 } from 'lucide-react';
 import { GiCow } from 'react-icons/gi';
+import { isCurrentUserWorker } from '@/lib/authService';
 
 export default function NavigationDrawer({
   isOpen,
@@ -35,6 +36,7 @@ export default function NavigationDrawer({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const isWorker = isCurrentUserWorker();
 
   const isCurrentRoute = (path) => location.pathname === path;
 
@@ -84,25 +86,27 @@ export default function NavigationDrawer({
 
               {/* Lista de Enlaces de Navegación */}
               <nav className="p-4 space-y-2">
-                {/* 1. Dashboard (Primera opción del sidebar) */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigate('/dashboard');
-                    onClose();
-                  }}
-                  className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold transition-all cursor-pointer ${
-                    isCurrentRoute('/dashboard')
-                      ? 'bg-[#1B4820] text-white shadow-lg shadow-[#1B4820]/20'
-                      : 'text-neutral-700 hover:bg-neutral-100'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <LayoutDashboard className={`w-5 h-5 ${isCurrentRoute('/dashboard') ? 'text-white' : 'text-[#1B4820]'}`} />
-                    <span>Dashboard</span>
-                  </div>
-                  <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/dashboard') ? 'text-white' : 'text-neutral-400'}`} />
-                </button>
+                {/* 1. Dashboard (Solo administradores) */}
+                {!isWorker && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate('/dashboard');
+                      onClose();
+                    }}
+                    className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold transition-all cursor-pointer ${
+                      isCurrentRoute('/dashboard')
+                        ? 'bg-[#1B4820] text-white shadow-lg shadow-[#1B4820]/20'
+                        : 'text-neutral-700 hover:bg-neutral-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <LayoutDashboard className={`w-5 h-5 ${isCurrentRoute('/dashboard') ? 'text-white' : 'text-[#1B4820]'}`} />
+                      <span>Dashboard</span>
+                    </div>
+                    <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/dashboard') ? 'text-white' : 'text-neutral-400'}`} />
+                  </button>
+                )}
 
                 {/* 2. Inventario */}
                 <button
@@ -124,82 +128,90 @@ export default function NavigationDrawer({
                   <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/inventario') ? 'text-white' : 'text-neutral-400'}`} />
                 </button>
 
-                {/* 3. Vaquería (Asistencia y Control de Campo) */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigate('/vaquerias');
-                    onClose();
-                  }}
-                  className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold transition-all cursor-pointer ${
-                    isCurrentRoute('/vaquerias') || location.pathname.startsWith('/vaquerias')
-                      ? 'bg-[#1B4820] text-white shadow-lg shadow-[#1B4820]/20'
-                      : 'text-neutral-700 hover:bg-neutral-100'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <ClipboardCheck className={`w-5 h-5 ${isCurrentRoute('/vaquerias') || location.pathname.startsWith('/vaquerias') ? 'text-white' : 'text-[#1B4820]'}`} />
-                    <span>Vaquería</span>
-                  </div>
-                  <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/vaquerias') || location.pathname.startsWith('/vaquerias') ? 'text-white' : 'text-neutral-400'}`} />
-                </button>
+                {/* 3. Vaquería (Solo administradores) */}
+                {!isWorker && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate('/vaquerias');
+                      onClose();
+                    }}
+                    className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold transition-all cursor-pointer ${
+                      isCurrentRoute('/vaquerias') || location.pathname.startsWith('/vaquerias')
+                        ? 'bg-[#1B4820] text-white shadow-lg shadow-[#1B4820]/20'
+                        : 'text-neutral-700 hover:bg-neutral-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <ClipboardCheck className={`w-5 h-5 ${isCurrentRoute('/vaquerias') || location.pathname.startsWith('/vaquerias') ? 'text-white' : 'text-[#1B4820]'}`} />
+                      <span>Vaquería</span>
+                    </div>
+                    <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/vaquerias') || location.pathname.startsWith('/vaquerias') ? 'text-white' : 'text-neutral-400'}`} />
+                  </button>
+                )}
 
-                {/* 4. Fincas */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onOpenFarms) onOpenFarms();
-                  }}
-                  className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold text-neutral-700 hover:bg-neutral-100 transition-all cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <Building2 className="w-5 h-5 text-neutral-600" />
-                    <span>Fincas</span>
-                  </div>
-                  {farmsCount > 0 && (
-                    <span className="text-[10px] font-black bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-full">
-                      {farmsCount}
-                    </span>
-                  )}
-                </button>
+                {/* 4. Fincas (Solo administradores) */}
+                {!isWorker && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onOpenFarms) onOpenFarms();
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold text-neutral-700 hover:bg-neutral-100 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Building2 className="w-5 h-5 text-neutral-600" />
+                      <span>Fincas</span>
+                    </div>
+                    {farmsCount > 0 && (
+                      <span className="text-[10px] font-black bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-full">
+                        {farmsCount}
+                      </span>
+                    )}
+                  </button>
+                )}
 
-                {/* 3. Potreros */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onOpenPotreros) onOpenPotreros();
-                  }}
-                  className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold text-neutral-700 hover:bg-neutral-100 transition-all cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <Fence className="w-5 h-5 text-neutral-600" />
-                    <span>Potreros</span>
-                  </div>
-                  {potrerosCount > 0 && (
-                    <span className="text-[10px] font-black bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-full">
-                      {potrerosCount}
-                    </span>
-                  )}
-                </button>
+                {/* 5. Potreros (Solo administradores) */}
+                {!isWorker && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onOpenPotreros) onOpenPotreros();
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold text-neutral-700 hover:bg-neutral-100 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Fence className="w-5 h-5 text-neutral-600" />
+                      <span>Potreros</span>
+                    </div>
+                    {potrerosCount > 0 && (
+                      <span className="text-[10px] font-black bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-full">
+                        {potrerosCount}
+                      </span>
+                    )}
+                  </button>
+                )}
 
-                {/* 4. Dueños */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onOpenOwners) onOpenOwners();
-                  }}
-                  className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold text-neutral-700 hover:bg-neutral-100 transition-all cursor-pointer"
-                >
-                  <div className="flex items-center gap-3">
-                    <UserCheck className="w-5 h-5 text-neutral-600" />
-                    <span>Dueños</span>
-                  </div>
-                  {ownersCount > 0 && (
-                    <span className="text-[10px] font-black bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-full">
-                      {ownersCount}
-                    </span>
-                  )}
-                </button>
+                {/* 6. Dueños (Solo administradores) */}
+                {!isWorker && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onOpenOwners) onOpenOwners();
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold text-neutral-700 hover:bg-neutral-100 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <UserCheck className="w-5 h-5 text-neutral-600" />
+                      <span>Dueños</span>
+                    </div>
+                    {ownersCount > 0 && (
+                      <span className="text-[10px] font-black bg-neutral-200 text-neutral-700 px-2 py-0.5 rounded-full">
+                        {ownersCount}
+                      </span>
+                    )}
+                  </button>
+                )}
 
                 {/* Separador sutil */}
                 <div className="my-2 border-t border-neutral-100" />

@@ -5,6 +5,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 
 // Importaciones Core
 import { db } from '@/lib/db';
+import { isCurrentUserWorker } from '@/lib/authService';
 import EventForm from '@/components/inventario/EventForm';
 
 // 1. EL CONTENIDO PRINCIPAL SEPARADO PARA LEER LA URL
@@ -12,12 +13,28 @@ function EventoContent() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const animalId = searchParams.get("id"); // Leemos el ID de la URL
+  const isWorker = isCurrentUserWorker();
+  const currentUserId = localStorage.getItem('ganadera_user_id');
 
   // --- CONSULTAS REACTIVAS (DEXIE) ---
-  const animal = useLiveQuery(() => {
-    if (animalId) return db.animals.get(animalId);
-    return null;
-  }, [animalId]);
+  const animal = useLiveQuery(async () => {
+    if (!animalId) return null;
+    const a = await db.animals.get(animalId);
+    if (!a || a.deleted_at) return null;
+
+    if (isWorker && currentUserId) {
+      const ufs = await db.usuario_farms
+        .where('user_id')
+        .equals(currentUserId)
+        .filter(uf => !uf.deleted_at)
+        .toArray();
+      const farmSet = new Set(ufs.map(uf => uf.farm_id));
+      if (!a.farm_id || !farmSet.has(a.farm_id)) {
+        return null;
+      }
+    }
+    return a;
+  }, [animalId, isWorker, currentUserId]);
   
   const existingEvents = useLiveQuery(
     () => {

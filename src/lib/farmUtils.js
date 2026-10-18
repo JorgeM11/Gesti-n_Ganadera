@@ -2,18 +2,45 @@ import { db } from './db';
 import { addToSyncQueue } from './syncUtils';
 import { v4 as uuidv4 } from 'uuid';
 
+import { isCurrentUserWorker } from './authService';
+
 /**
- * Obtiene todas las fincas activas del usuario
+ * Obtiene todas las fincas activas del usuario (o admin si es obrero)
  */
 export async function getFarms() {
   const userId = localStorage.getItem('ganadera_user_id');
   if (!userId) return [];
 
   return db.farms
-    .where('user_id')
-    .equals(userId)
-    .and(f => !f.deleted_at)
+    .filter(f => !f.deleted_at)
     .toArray();
+}
+
+/**
+ * Obtiene los IDs de las fincas asignadas al usuario obrero desde db.usuario_farms
+ */
+export async function getAssignedFarmIds(userId) {
+  const targetUserId = userId || localStorage.getItem('ganadera_user_id');
+  if (!targetUserId) return [];
+
+  const assignments = await db.usuario_farms
+    .where('user_id')
+    .equals(targetUserId)
+    .filter(uf => !uf.deleted_at)
+    .toArray();
+
+  return assignments.map(a => a.farm_id);
+}
+
+/**
+ * Retorna Set con los IDs de fincas accesibles para el usuario actual:
+ * - Si es obrero: Set con los IDs asignados
+ * - Si es admin: null (acceso a todas las fincas)
+ */
+export async function getAccessibleFarmIds() {
+  if (!isCurrentUserWorker()) return null;
+  const ids = await getAssignedFarmIds();
+  return new Set(ids);
 }
 
 /**

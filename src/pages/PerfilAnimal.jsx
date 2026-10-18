@@ -4,6 +4,7 @@ import { ArrowLeft, List, TrendingUp, ShieldPlus, Share2, Loader2, Pencil } from
 import { FaVenusMars } from 'react-icons/fa6';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
+import { isCurrentUserWorker } from '@/lib/authService';
 
 // Importación de Módulos (Tabs)
 import DetailsTab from '@/components/DetailsTab';
@@ -61,11 +62,29 @@ function ProfileContent() {
   }, []);
   // ------------------------------------------------
 
+  const isWorker = isCurrentUserWorker();
+  const currentUserId = localStorage.getItem('ganadera_user_id');
+
   // Consulta reactiva a Dexie usando el ID de la URL
-  const animal = useLiveQuery(() => {
-    if (animalId) return db.animals.get(animalId);
-    return null;
-  }, [animalId]);
+  const animal = useLiveQuery(async () => {
+    if (!animalId) return null;
+    const a = await db.animals.get(animalId);
+    if (!a || a.deleted_at) return null;
+
+    if (isWorker && currentUserId) {
+      const ufs = await db.usuario_farms
+        .where('user_id')
+        .equals(currentUserId)
+        .filter(uf => !uf.deleted_at)
+        .toArray();
+      const farmSet = new Set(ufs.map(uf => uf.farm_id));
+      if (!a.farm_id || !farmSet.has(a.farm_id)) {
+        return null; // El animal no pertenece a las fincas asignadas al obrero
+      }
+    }
+
+    return a;
+  }, [animalId, isWorker, currentUserId]);
 
   // Sincronizar el tab si cambia en la URL o si el animal cambia y la pestaña no aplica a su sexo
   useEffect(() => {

@@ -29,7 +29,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, clearLocalData } from '@/lib/db';
 import { calculateAge, formatWeight, parseLocalDate } from '@/lib/dateUtils';
 import { formatGeneticsLabel } from '@/lib/geneticsUtils';
-import { logoutUser } from '@/lib/authService';
+import { logoutUser, isCurrentUserWorker } from '@/lib/authService';
 import SyncStatus from '@/components/ui/SyncStatus';
 import AnimalImage from '@/components/inventario/AnimalImage';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -357,27 +357,54 @@ export default function InventarioPage() {
     setToast({ id: Date.now(), title, message, type });
   };
 
-  const farms = useLiveQuery(() => db.farms.filter(f => !f.deleted_at).toArray()) || [];
-  const potreros = useLiveQuery(() => db.potreros.filter(p => !p.deleted_at).toArray()) || [];
-  const owners = useLiveQuery(() => db.owners.filter(o => !o.deleted_at).toArray()) || [];
+  const isWorker = isCurrentUserWorker();
+  const currentUserId = localStorage.getItem('ganadera_user_id');
+
+  // Asignaciones de fincas para el usuario activo (en caso de ser obrero)
+  const assignedFarmIds = useLiveQuery(
+    async () => {
+      if (!isWorker || !currentUserId) return null;
+      const ufs = await db.usuario_farms
+        .where('user_id')
+        .equals(currentUserId)
+        .filter(uf => !uf.deleted_at)
+        .toArray();
+      return new Set(ufs.map(uf => uf.farm_id));
+    },
+    [isWorker, currentUserId]
+  );
+
+  const rawFarms = useLiveQuery(() => db.farms.filter(f => !f.deleted_at).toArray()) || [];
+  const rawPotreros = useLiveQuery(() => db.potreros.filter(p => !p.deleted_at).toArray()) || [];
+  const rawOwners = useLiveQuery(() => db.owners.filter(o => !o.deleted_at).toArray()) || [];
+
+  const farms = useMemo(() => {
+    if (!isWorker || !assignedFarmIds) return rawFarms;
+    return rawFarms.filter(f => assignedFarmIds.has(f.id));
+  }, [rawFarms, isWorker, assignedFarmIds]);
+
+  const potreros = useMemo(() => {
+    if (!isWorker || !assignedFarmIds) return rawPotreros;
+    return rawPotreros.filter(p => assignedFarmIds.has(p.farm_id));
+  }, [rawPotreros, isWorker, assignedFarmIds]);
 
   const farmMap = useMemo(() => {
     const map = {};
-    farms.forEach(f => { map[f.id] = f.name; });
+    rawFarms.forEach(f => { map[f.id] = f.name; });
     return map;
-  }, [farms]);
+  }, [rawFarms]);
 
   const potreroMap = useMemo(() => {
     const map = {};
-    potreros.forEach(p => { map[p.id] = p.name; });
+    rawPotreros.forEach(p => { map[p.id] = p.name; });
     return map;
-  }, [potreros]);
+  }, [rawPotreros]);
 
   const ownerMap = useMemo(() => {
     const map = {};
-    owners.forEach(o => { map[o.id] = o.name; });
+    rawOwners.forEach(o => { map[o.id] = o.name; });
     return map;
-  }, [owners]);
+  }, [rawOwners]);
 
   const executeLogout = async () => {
     try {
@@ -421,13 +448,41 @@ export default function InventarioPage() {
   });
 
   const allAnimals = useLiveQuery(
-    () => db.animals
-      .orderBy('updated_at')
-      .reverse()
-      .filter(a => !a.deleted_at)
-      .toArray(),
-    []
+    async () => {
+      let animals = await db.animals
+        .orderBy('updated_at')
+        .reverse()
+        .filter(a => !a.deleted_at)
+        .toArray();
+
+      if (isWorker && currentUserId) {
+        const ufs = await db.usuario_farms
+          .where('user_id')
+          .equals(currentUserId)
+          .filter(uf => !uf.deleted_at)
+          .toArray();
+        const farmSet = new Set(ufs.map(uf => uf.farm_id));
+        animals = animals.filter(a => a.farm_id && farmSet.has(a.farm_id));
+      }
+      return animals;
+    },
+    [isWorker, currentUserId]
   );
+
+  // Dueños relacionados a las fincas asignadas (dueños que tienen al menos 1 animal en esas fincas)
+  const accessibleOwnerIds = useMemo(() => {
+    if (!isWorker) return null;
+    const set = new Set();
+    (allAnimals || []).forEach(a => {
+      if (a.owner_id) set.add(a.owner_id);
+    });
+    return set;
+  }, [isWorker, allAnimals]);
+
+  const owners = useMemo(() => {
+    if (!isWorker || !accessibleOwnerIds) return rawOwners;
+    return rawOwners.filter(o => accessibleOwnerIds.has(o.id));
+  }, [isWorker, accessibleOwnerIds, rawOwners]);
 
   // Extraer todas las razas presentes en los animales
   const availableBreeds = useMemo(() => {
@@ -689,6 +744,7 @@ export default function InventarioPage() {
                     );
                   })}
                   {(() => {
+                    if (isWorker) return null;
                     const sinFincaCount = allAnimals?.filter(a => !a.farm_id).length || 0;
                     if (sinFincaCount === 0) return null;
                     return (
