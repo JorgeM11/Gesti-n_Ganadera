@@ -4,6 +4,17 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.18-farm-isolation-vaqueria] - 2026-10-18
+
+### Añadido y Validado (Aislamiento Estricto de Animales por Finca en Vaquería)
+- **Validación de Pertenencia de Finca ([`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js), [`ManualAddModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/ManualAddModal.jsx), [`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - *Problema resuelto*: Al realizar una sesión de vaquería en una finca (ej. Finca 1), si el usuario escaneaba un chip RFID, leía un código de barras con la cámara o ingresaba manualmente un animal registrado en otra finca (ej. Finca 2), el sistema lo registraba en la asistencia como si fuera nuevo de la vaquería.
+  - *Solución*: Se implementó validación centralizada en `addAnimalToVaqueria` y preventiva en `ManualAddModal`. Si el animal encontrado en inventario pertenece a otra finca (`targetAnimal.farm_id !== effectiveFarmId`), se rechaza la operación inmediatamente con sonido de error `playErrorBeep()` y el mensaje explícito: `El animal [Arete # / Chip] no pertenece a esta finca (pertenece a la finca "[Nombre de Finca]").`
+  - *Feedback Visual Específico*: El banner flotante muestra el título `"Animal de Otra Finca"` en rojo con ícono de error y se extiende su tiempo en pantalla a 3.5 segundos para facilitar la lectura del operario.
+  - *Historial y Trazabilidad*: En caso de animales que hubiesen sido registrados previamente durante pruebas, se identifican con la insignia `"Otra finca"` en color rosa en la lista de presentes para facilitar su remoción.
+
+---
+
 ## [1.7.17-react-hooks-order-vaqueria] - 2026-10-18
 
 ### Corregido (Cumplimiento Estricto de Reglas de Hooks de React en Detalle de Vaquería)

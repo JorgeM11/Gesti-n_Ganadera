@@ -109,16 +109,17 @@ export default function VaqueriaDetallePage() {
   };
 
   // Disparar feedback instantáneo visual
-  const triggerScanFeedback = (type, message) => {
-    setScanFeedback({ type, message, timestamp: Date.now() });
+  const triggerScanFeedback = (type, message, title = null) => {
+    setScanFeedback({ type, message, title, timestamp: Date.now() });
   };
 
-  // Auto-limpiar feedback visual tras 1.6 segundos para que dure poco en pantalla
+  // Auto-limpiar feedback visual tras 1.8 segundos (éxito) o 3.5 segundos (errores/advertencias)
   useEffect(() => {
     if (!scanFeedback) return;
+    const duration = scanFeedback.type === 'success' ? 1800 : 3500;
     const t = setTimeout(() => {
       setScanFeedback(null);
-    }, 1600);
+    }, duration);
     return () => clearTimeout(t);
   }, [scanFeedback]);
 
@@ -255,9 +256,11 @@ export default function VaqueriaDetallePage() {
         setCurrentPage(1);
       } else {
         if (result.reason === 'DUPLICATE') {
-          triggerScanFeedback('duplicate', result.message);
+          triggerScanFeedback('duplicate', result.message, 'Animal Ya Registrado');
+        } else if (result.reason === 'ANIMAL_OTHER_FARM') {
+          triggerScanFeedback('error', result.message, 'Animal de Otra Finca');
         } else {
-          triggerScanFeedback('error', result.message);
+          triggerScanFeedback('error', result.message, 'Error en Registro');
         }
       }
     } catch (err) {
@@ -701,9 +704,11 @@ export default function VaqueriaDetallePage() {
                   </div>
                   <div>
                     <h4 className="text-xs md:text-sm font-black leading-tight">
-                      {scanFeedback.type === 'success' && '¡Asistencia Registrada!'}
-                      {scanFeedback.type === 'duplicate' && 'Animal Ya Registrado'}
-                      {scanFeedback.type === 'error' && 'Error en Registro'}
+                      {scanFeedback.title || (
+                        scanFeedback.type === 'success' ? '¡Asistencia Registrada!' :
+                        scanFeedback.type === 'duplicate' ? 'Animal Ya Registrado' :
+                        'Error en Registro'
+                      )}
                     </h4>
                     <p className="text-[11px] font-medium text-white/95">
                       {scanFeedback.message}
@@ -950,6 +955,15 @@ export default function VaqueriaDetallePage() {
                           <div className="shrink-0">
                             <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold border bg-emerald-100 text-emerald-800 border-emerald-300">
                               Nuevo
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Badge de Estado: 'Otra finca' para animales que pertenecen a otra finca */}
+                        {item.classification === 'OTHER_FARM' && (
+                          <div className="shrink-0">
+                            <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold border bg-rose-100 text-rose-800 border-rose-300">
+                              Otra finca
                             </span>
                           </div>
                         )}

@@ -255,11 +255,18 @@ export function calculateVaqueriaAnalysis({
     let badgeLabel = 'Esperado';
     let badgeColor = 'bg-neutral-100 text-neutral-700 border-neutral-200';
 
+    const isFromOtherFarm = Boolean(animal && currentVaqueria?.farm_id && animal.farm_id && animal.farm_id !== currentVaqueria.farm_id);
+
     if (rec.is_unregistered || !animal) {
       classification = 'UNREGISTERED_IN_SYSTEM';
       badgeLabel = ''; // Sin texto de no registrado por solicitud de diseño
       badgeColor = '';
       newUnregisteredCount++;
+    } else if (isFromOtherFarm) {
+      classification = 'OTHER_FARM';
+      badgeLabel = 'Otra finca';
+      badgeColor = 'bg-rose-100 text-rose-800 border-rose-300 font-bold';
+      newInVaqueriaCount++;
     } else if (!expectedIdsSet.has(animal.id)) {
       classification = 'NEW_IN_VAQUERIA';
       badgeLabel = 'Nuevo';
@@ -373,6 +380,16 @@ export async function addAnimalToVaqueria({
   const userId = localStorage.getItem('ganadera_user_id') || '00000000-0000-0000-0000-000000000001';
   const cleanCode = (code || '').trim();
 
+  let effectiveFarmId = farmId;
+  if (!effectiveFarmId && vaqueriaId) {
+    try {
+      const v = await db.vaquerias.get(vaqueriaId);
+      if (v?.farm_id) effectiveFarmId = v.farm_id;
+    } catch {
+      // ignore
+    }
+  }
+
   if (!cleanCode && !manualAnimal) {
     playErrorBeep();
     return {
@@ -414,7 +431,7 @@ export async function addAnimalToVaqueria({
     } else if (identificationType === 'arete') {
       // Priorizar coincidencia en la misma finca
       const farmMatches = allActiveAnimals.filter(a => 
-        a.farm_id === farmId && 
+        a.farm_id === effectiveFarmId && 
         normalizeText(a.number) === normalizeText(cleanCode)
       );
       if (farmMatches.length > 0) {
@@ -425,7 +442,7 @@ export async function addAnimalToVaqueria({
       }
     } else if (identificationType === 'name') {
       targetAnimal = allActiveAnimals.find(a => 
-        a.farm_id === farmId && 
+        a.farm_id === effectiveFarmId && 
         normalizeText(a.name) === normalizeText(cleanCode)
       ) || allActiveAnimals.find(a => normalizeText(a.name) === normalizeText(cleanCode));
     } else {
@@ -433,21 +450,53 @@ export async function addAnimalToVaqueria({
       if (is15Digits) {
         targetAnimal = allActiveAnimals.find(a => a.chip_number && a.chip_number.trim() === cleanCode);
       }
-      // Segundo intentar por número de arete
-      if (!targetAnimal) {
+      // Segundo intentar por número de arete en la misma finca
+      if (!targetAnimal && effectiveFarmId) {
         targetAnimal = allActiveAnimals.find(a => 
-          a.farm_id === farmId && 
+          a.farm_id === effectiveFarmId && 
           normalizeText(a.number) === normalizeText(cleanCode)
-        ) || allActiveAnimals.find(a => normalizeText(a.number) === normalizeText(cleanCode));
+        );
       }
-      // Tercero intentar por chip aunque no tenga 15 dígitos exactos
+      // Tercero intentar por número de arete global
+      if (!targetAnimal) {
+        targetAnimal = allActiveAnimals.find(a => normalizeText(a.number) === normalizeText(cleanCode));
+      }
+      // Cuarto intentar por chip aunque no tenga 15 dígitos exactos
       if (!targetAnimal) {
         targetAnimal = allActiveAnimals.find(a => a.chip_number && a.chip_number.trim() === cleanCode);
       }
     }
   }
 
-  // 4. Validar que el animal no esté inactivo
+  // 4. Validar que el animal pertenezca a la finca de esta vaquería
+  if (targetAnimal && effectiveFarmId && targetAnimal.farm_id !== effectiveFarmId) {
+    playErrorBeep();
+    let otherFarmName = '';
+    if (targetAnimal.farm_id) {
+      try {
+        const otherFarm = await db.farms.get(targetAnimal.farm_id);
+        if (otherFarm?.name) {
+          otherFarmName = ` (pertenece a la finca "${otherFarm.name}")`;
+        }
+      } catch {
+        // ignore
+      }
+    } else {
+      otherFarmName = ' (no tiene finca asignada en inventario)';
+    }
+
+    const animalDesc = targetAnimal.number 
+      ? `Arete #${targetAnimal.number}` 
+      : (targetAnimal.chip_number ? `Chip ${targetAnimal.chip_number}` : (targetAnimal.name || 'El animal'));
+
+    return {
+      success: false,
+      reason: 'ANIMAL_OTHER_FARM',
+      message: `El animal ${animalDesc} no pertenece a esta finca${otherFarmName}.`
+    };
+  }
+
+  // 5. Validar que el animal no esté inactivo
   if (targetAnimal && targetAnimal.status === 'Inactivo') {
     playErrorBeep();
     return {
@@ -457,7 +506,7 @@ export async function addAnimalToVaqueria({
     };
   }
 
-  // 5. Validar duplicidad
+  // 6. Validar duplicidad
   let isDuplicate = false;
   let duplicateField = '';
 

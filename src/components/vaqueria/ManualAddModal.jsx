@@ -5,6 +5,7 @@ import { X, Tag, Cpu, User, Search, CheckCircle2, AlertTriangle, Plus } from 'lu
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { normalizeText, isValidChipNumber } from '@/lib/vaqueriaUtils';
+import { playErrorBeep } from '@/lib/audioUtils';
 
 export default function ManualAddModal({
   isOpen,
@@ -128,6 +129,40 @@ export default function ManualAddModal({
       }
       if (activeTab === 'arete' && presentNumbers.has(clean)) {
         setError(`El arete #${clean} ya está registrado en esta vaquería.`);
+        return;
+      }
+    }
+
+    // Validación de pertenencia a la finca si se ingresa un código que pertenece a otra finca
+    if (!selectedAnimal && farmId) {
+      let otherFarmAnimal = null;
+      if (activeTab === 'chip' || /^\d{15}$/.test(clean)) {
+        otherFarmAnimal = allAnimals.find(a => a.chip_number && a.chip_number.trim() === clean && a.farm_id && a.farm_id !== farmId);
+      } else if (activeTab === 'arete') {
+        const inThisFarm = allAnimals.some(a => a.farm_id === farmId && normalizeText(a.number) === normalizeText(clean));
+        if (!inThisFarm) {
+          otherFarmAnimal = allAnimals.find(a => normalizeText(a.number) === normalizeText(clean) && a.farm_id && a.farm_id !== farmId);
+        }
+      } else if (activeTab === 'name') {
+        const inThisFarm = allAnimals.some(a => a.farm_id === farmId && normalizeText(a.name) === normalizeText(clean));
+        if (!inThisFarm) {
+          otherFarmAnimal = allAnimals.find(a => normalizeText(a.name) === normalizeText(clean) && a.farm_id && a.farm_id !== farmId);
+        }
+      }
+
+      if (otherFarmAnimal) {
+        playErrorBeep();
+        let otherFarmName = '';
+        if (otherFarmAnimal.farm_id) {
+          try {
+            const f = await db.farms.get(otherFarmAnimal.farm_id);
+            if (f?.name) otherFarmName = ` (pertenece a la finca "${f.name}")`;
+          } catch {
+            // ignore
+          }
+        }
+        const desc = otherFarmAnimal.number ? `Arete #${otherFarmAnimal.number}` : (otherFarmAnimal.chip_number ? `Chip ${otherFarmAnimal.chip_number}` : 'El animal');
+        setError(`El animal ${desc} no pertenece a esta finca${otherFarmName}.`);
         return;
       }
     }
