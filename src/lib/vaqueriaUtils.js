@@ -610,10 +610,12 @@ export async function inactivateAnimalDirectly({ animalId, reason }) {
   const animal = await db.animals.get(animalId);
   if (!animal) throw new Error('Animal no encontrado');
 
+  const actualUserId = localStorage.getItem('ganadera_user_id') || animal.user_id;
   const updatedAnimal = {
     ...animal,
     status: 'Inactivo',
     inactivity_reason: reason?.trim() || 'Inactivo por Vaquería',
+    updated_by_user_id: actualUserId,
     updated_at: now
   };
 
@@ -622,6 +624,7 @@ export async function inactivateAnimalDirectly({ animalId, reason }) {
     id: animalId,
     status: 'Inactivo',
     inactivity_reason: updatedAnimal.inactivity_reason,
+    updated_by_user_id: actualUserId,
     updated_at: now
   });
 
@@ -635,13 +638,18 @@ export async function completeUnregisteredAnimal({
   vaqueriaAnimalId,
   animalData
 }) {
-  const userId = localStorage.getItem('ganadera_user_id') || '00000000-0000-0000-0000-000000000001';
+  const actualUserId = localStorage.getItem('ganadera_user_id') || '00000000-0000-0000-0000-000000000001';
+  const adminId = localStorage.getItem('ganadera_admin_id');
+  const role = localStorage.getItem('ganadera_user_role');
+  const effectiveUserId = ((role === 'obrero' || role === 'operador') && adminId) ? adminId : actualUserId;
   const now = new Date().toISOString();
   const newAnimalId = uuidv4();
 
   const newAnimal = {
     id: newAnimalId,
-    user_id: userId,
+    user_id: effectiveUserId,
+    created_by_user_id: actualUserId,
+    updated_by_user_id: actualUserId,
     farm_id: animalData.farm_id || null,
     potrero_id: animalData.potrero_id || null,
     owner_id: animalData.owner_id || null,

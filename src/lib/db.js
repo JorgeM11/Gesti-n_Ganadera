@@ -48,6 +48,8 @@ import Dexie from 'dexie';
  * @typedef {Object} Animal
  * @property {string} id
  * @property {string} user_id
+ * @property {string} [created_by_user_id]
+ * @property {string} [updated_by_user_id]
  * @property {string} [farm_id]
  * @property {string} number
  * @property {string} [birth_date]
@@ -276,6 +278,11 @@ export class GanaderaDB extends Dexie {
             vaquerias: 'id, user_id, farm_id, name, date, status, updated_at, deleted_at',
             vaqueria_animals: 'id, vaqueria_id, user_id, animal_id, chip_number, number, is_unregistered, updated_at, deleted_at',
             usuario_farms: 'id, user_id, farm_id, updated_at, deleted_at'
+        });
+
+        // --- VERSIÓN 10: Auditoría de usuario creador y modificador en animales ---
+        this.version(10).stores({
+            animals: 'id, user_id, created_by_user_id, updated_by_user_id, farm_id, potrero_id, owner_id, number, chip_number, name, status, sex, breed, last_weight_kg, last_weight_date, mother_id, father_id, updated_at, deleted_at'
         });
 
         /** @type {Dexie.Table<Animal, string>} */

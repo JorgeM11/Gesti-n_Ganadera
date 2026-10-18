@@ -235,7 +235,11 @@ flowchart TD
   - Inventario: lista de animales, filtro de fincas, filtro de potreros y filtro de dueños limitados estrictamente a las fincas asignadas al obrero y a sus dueños asociados.
   - Formulario de Animal: selector de finca restringido con auto-selección si solo tiene 1 asignada; potreros y dueños filtrados por fincas asignadas; persistencia de titularidad bajo `admin_id`.
   - Perfiles y Eventos: validación de finca asignada para impedir visualización o registro en animales no asignados.
-- [x] **Estado actual**: Software 100% desarrollado y probado en compilación (`npm run build` en 814ms).
+- [x] **Auditoría de Modificaciones por Obrero en Dashboard**:
+  - Captura del usuario actuante en `created_by_user_id` y `updated_by_user_id` en Dexie v10 y Supabase.
+  - Resolución en Historial de Cambios (`Dashboard.jsx`) mostrando el nombre real del obrero y su insignia `OBRERO` (ámbar), preservando a la vez la titularidad del administrador titular en `user_id`.
+  - Sincronización continua de usuarios del equipo y tolerancia resiliente ante columnas no creadas (`PGRST204`).
+- [x] **Estado actual**: Software 100% desarrollado y probado en compilación (`npm run build` exitoso).
 
 ---
 

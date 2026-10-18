@@ -4,6 +4,23 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.14-audit-trail-obrero-dashboard] - 2026-10-18
+
+### Añadido y Corregido (Auditoría de Modificaciones por Obrero en Historial de Cambios)
+- **Trazabilidad de Autoría en Animales ([`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx), [`EventForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/EventForm.jsx), [`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js))**:
+  - Al crear o editar un animal, se registra el ID del usuario actuante (`localStorage.getItem('ganadera_user_id')`) en los campos `created_by_user_id` y `updated_by_user_id`.
+  - La titularidad global (`user_id`) se mantiene intacta como el titular de la explotación (`effectiveUserId`), garantizando que la propiedad del rebaño pertenezca al administrador.
+- **Historial de Cambios en Dashboard ([`Dashboard.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Dashboard.jsx))**:
+  - En la tabla de "Actividad Reciente / Modificado Por", la autoría se resuelve prioritariamente desde `animal.updated_by_user_id || animal.created_by_user_id || animal.user_id`.
+  - Al ser modificado por un obrero, el historial muestra explícitamente el nombre del obrero (ej. "Obrero Bomzai 1") y su placa de rol correspondiente en color ámbar (`OBRERO`), en lugar del administrador principal.
+- **Esquema Dexie v10 ([`db.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/db.js))**:
+  - Añadida versión 10 con índices para `created_by_user_id` y `updated_by_user_id` en el almacén `animals`.
+- **Sincronización Resiliente y Descarga de Usuarios ([`syncUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/syncUtils.js))**:
+  - Descarga del equipo: la tabla `usuarios` ahora descarga permanentemente al administrador y todos sus obreros asociados (`or(id.eq.adminId,admin_id.eq.adminId)`), asegurando que los nombres y roles de los obreros estén siempre disponibles localmente para resolver la auditoría en la UI.
+  - Tolerancia a esquemas desfasados: captura de código `PGRST204` en caso de que la columna remota `updated_by_user_id` aún no haya sido creada en Supabase, reintentando automáticamente sin bloquear la cola de sincronización.
+
+---
+
 ## [1.7.13-roles-obrero-system] - 2026-10-18
 
 ### Añadido y Perfeccionado (Sistema de Roles para Obrero / Operador y Asignación de Fincas)

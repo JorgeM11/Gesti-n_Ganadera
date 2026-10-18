@@ -157,6 +157,45 @@ export async function processSyncQueue() {
         error = deleteError;
       }
 
+      if (error && error.code === 'PGRST204' && payloadToUpload.updated_by_user_id) {
+        console.warn(`[Sync Engine] Columna updated_by_user_id ausente en Supabase (${item.table_name}). Reintentando sin el campo.`);
+        delete payloadToUpload.updated_by_user_id;
+
+        if (item.operation === 'PATCH' || (item.operation === 'UPDATE' && !payloadToUpload.user_id)) {
+          const { id, ...fields } = payloadToUpload;
+          if (id) {
+            const { error: retryError } = await withTimeout(
+              supabase.from(item.table_name).update(fields).eq('id', id),
+              15000
+            );
+            error = retryError;
+          }
+        } else if (item.operation === 'INSERT') {
+          const { error: retryError } = await withTimeout(
+            supabase.from(item.table_name).upsert(payloadToUpload),
+            15000
+          );
+          error = retryError;
+        } else if (item.operation === 'UPDATE') {
+          const { id, ...fields } = payloadToUpload;
+          if (id) {
+            const { error: retryUpdate } = await withTimeout(
+              supabase.from(item.table_name).update(fields).eq('id', id),
+              15000
+            );
+            if (retryUpdate) {
+              const { error: retryUpsert } = await withTimeout(
+                supabase.from(item.table_name).upsert(payloadToUpload),
+                15000
+              );
+              error = retryUpsert;
+            } else {
+              error = null;
+            }
+          }
+        }
+      }
+
       if (error) throw error;
 
       // Éxito: Eliminar de la cola local
@@ -197,7 +236,9 @@ async function fetchAllServerIds(table, userId) {
   const pageSize = 1000;
   while (true) {
     let query = supabase.from(table).select('id, deleted_at').range(from, from + pageSize - 1);
-    if (table !== 'usuarios') {
+    if (table === 'usuarios') {
+      query = query.or(`id.eq.${userId},admin_id.eq.${userId}`);
+    } else {
       query = query.eq('user_id', userId);
     }
     const { data, error } = await withTimeout(query, 12000);
@@ -256,15 +297,26 @@ export async function pullFromServer() {
   ];
 
   for (const table of tables) {
-    let query = supabase.from(table).select('*').gt('updated_at', lastSync);
+    let query;
 
-    // Si la tabla maneja user_id, filtramos por el titular de datos (admin para obreros)
-    if (table === 'usuario_farms') {
-      if (isWorker) {
-        query = query.eq('user_id', userId);
+    if (table === 'usuarios') {
+      // Para usuarios del equipo (admin y obreros asociados), descargamos el equipo
+      // para asegurar nombres y roles siempre actualizados en la auditoría del dashboard
+      query = supabase
+        .from('usuarios')
+        .select('id, name, email, role, admin_id, status, created_at, updated_at, deleted_at')
+        .or(`id.eq.${effectiveOwnerId},admin_id.eq.${effectiveOwnerId}`);
+    } else {
+      query = supabase.from(table).select('*').gt('updated_at', lastSync);
+
+      // Si la tabla maneja user_id, filtramos por el titular de datos (admin para obreros)
+      if (table === 'usuario_farms') {
+        if (isWorker) {
+          query = query.eq('user_id', userId);
+        }
+      } else {
+        query = query.eq('user_id', effectiveOwnerId);
       }
-    } else if (table !== 'usuarios') {
-      query = query.eq('user_id', effectiveOwnerId);
     }
 
     const { data: serverData, error } = await withTimeout(query, 12000);

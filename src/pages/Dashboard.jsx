@@ -1145,7 +1145,8 @@ export default function DashboardPage() {
                 </thead>
                 <tbody className="divide-y divide-neutral-100 text-xs font-medium text-neutral-700">
                   {metrics.recientes.map((animal) => {
-                    const userInfo = getUserInfo(animal.user_id);
+                    const modifierUserId = animal.updated_by_user_id || animal.created_by_user_id || animal.user_id;
+                    const userInfo = getUserInfo(modifierUserId);
                     return (
                       <tr
                         key={animal.id}

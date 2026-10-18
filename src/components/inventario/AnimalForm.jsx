@@ -471,9 +471,15 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         }
       }
 
+      const actualUserId = localStorage.getItem('ganadera_user_id') || effectiveUserId;
+
       const animalData = {
         id: animalId,
         user_id: effectiveUserId,
+        created_by_user_id: isEditing
+          ? (initialValues?.created_by_user_id || initialValues?.user_id || actualUserId)
+          : actualUserId,
+        updated_by_user_id: actualUserId,
         number: cleanNumber,
         chip_number: cleanChip || null,
         name: data.name?.trim() || null,

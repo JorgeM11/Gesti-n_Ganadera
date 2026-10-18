@@ -231,8 +231,10 @@ export default function EventForm({
 
         // Sincronizar fecha y peso de nacimiento si es un evento de Nacimiento para actualizar la edad y peso en la ficha
         if (eventData.event_type === 'Nacimiento') {
+          const actualUserId = localStorage.getItem('ganadera_user_id') || userId;
           const animalUpdate = {
             birth_date: eventData.event_date,
+            updated_by_user_id: actualUserId,
             updated_at: now
           };
           if (eventData.weight_kg) {
