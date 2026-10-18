@@ -243,6 +243,7 @@ export async function pullFromServer() {
   const effectiveOwnerId = (isWorker && adminId) ? adminId : userId;
 
   const tables = [
+    'usuario_farms',
     'farms',
     'potreros',
     'owners',
@@ -251,7 +252,6 @@ export async function pullFromServer() {
     'health_records',
     'vaquerias',
     'vaqueria_animals',
-    'usuario_farms',
     'usuarios'
   ];
 
@@ -307,7 +307,8 @@ export async function pullFromServer() {
     // Permite que eliminaciones directas en Supabase o panel administrativo se sincronicen en local
     if (table !== 'usuarios') {
       try {
-        const serverIds = await fetchAllServerIds(table, userId);
+        const reconciliationOwnerId = (table === 'usuario_farms') ? userId : effectiveOwnerId;
+        const serverIds = await fetchAllServerIds(table, reconciliationOwnerId);
         const serverMap = new Map(serverIds.map(r => [r.id, r]));
         const localRecords = await db.table(table).toArray();
         const pendingIds = pendingIdsByTable.get(table) || new Set();

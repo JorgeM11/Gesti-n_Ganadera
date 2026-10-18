@@ -137,6 +137,12 @@ export async function authenticateUser(email, password) {
  * Guarda las credenciales locales de sesión (permanentes sin expiración arbitraria)
  */
 export function saveSessionLocally(user) {
+  const previousUserId = localStorage.getItem('ganadera_user_id');
+  if (previousUserId !== user.id) {
+    // Si cambia de usuario, asegurar una sincronización limpia desde el inicio
+    localStorage.removeItem('lastSyncTimestamp');
+  }
+
   localStorage.setItem('ganadera_user_id', user.id);
   localStorage.setItem('ganadera_user_name', user.name || '');
   localStorage.setItem('ganadera_user_email', user.email || '');
@@ -193,4 +199,5 @@ export function logoutUser() {
   localStorage.removeItem('ganadera_user_email');
   localStorage.removeItem('ganadera_user_role');
   localStorage.removeItem('ganadera_admin_id');
+  localStorage.removeItem('lastSyncTimestamp');
 }
