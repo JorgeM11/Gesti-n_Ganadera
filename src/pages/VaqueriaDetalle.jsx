@@ -273,6 +273,11 @@ export default function VaqueriaDetallePage() {
     return result;
   };
 
+  const handleProcessScanRef = useRef(handleProcessScan);
+  useEffect(() => {
+    handleProcessScanRef.current = handleProcessScan;
+  });
+
   // Listener global de cuña de teclado para bastón RFID físico con buffer de 300 ms anti-jitter
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -302,7 +307,7 @@ export default function VaqueriaDetallePage() {
         }
 
         const bufferVal = rfidBufferRef.current.buffer.trim();
-        const inputVal = (scanInputRef.current?.value || '').trim() || scanInputValue.trim();
+        const inputVal = (scanInputRef.current?.value || '').trim();
         rfidBufferRef.current.buffer = '';
 
         const captured = bufferVal.length >= 2 ? bufferVal : inputVal;
@@ -311,7 +316,7 @@ export default function VaqueriaDetallePage() {
           clearAllScanInputs();
           // Validación estricta: el lector físico RFID solo debe emitir chips de 15 dígitos
           if (isValidChipNumber(captured)) {
-            handleProcessScan(captured, 'chip');
+            handleProcessScanRef.current(captured, 'chip');
           } else {
             playErrorBeep();
             triggerScanFeedback('error', 'El escáner solo admite microchips RFID de 15 dígitos. Para arete use el botón Manual.');
@@ -335,7 +340,7 @@ export default function VaqueriaDetallePage() {
             const captured = rfidBufferRef.current.buffer.trim();
             clearAllScanInputs();
             if (captured && isValidChipNumber(captured)) {
-              handleProcessScan(captured, 'chip');
+              handleProcessScanRef.current(captured, 'chip');
             }
           }, 80);
         }
@@ -347,7 +352,7 @@ export default function VaqueriaDetallePage() {
       window.removeEventListener('keydown', handleKeyDown);
       if (rfidBufferRef.current.timer) clearTimeout(rfidBufferRef.current.timer);
     };
-  }, [isAnyModalOpen, currentVaqueria?.id, currentVaqueria?.status, scanInputValue]);
+  }, [isAnyModalOpen, currentVaqueria?.id, currentVaqueria?.status]);
 
   // Envío manual desde el input de escaneo (validación estricta: solo chip de 15 dígitos)
   const handleScanInputSubmit = (e) => {
@@ -487,42 +492,6 @@ export default function VaqueriaDetallePage() {
     }
   };
 
-  // Estado de carga inicial mientras se resuelve la consulta a IndexedDB
-  if (currentVaqueria === undefined) {
-    return (
-      <div className="min-h-screen bg-[#F0F2EB] flex flex-col items-center justify-center p-4">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-[#1B4820] border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs font-bold text-neutral-600">Cargando vaquería...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Si tras la consulta confirmamos que la vaquería no existe o fue borrada
-  if (currentVaqueria === null) {
-    return (
-      <div className="min-h-screen bg-[#F0F2EB] flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-lg border border-neutral-200">
-          <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle className="w-6 h-6" />
-          </div>
-          <h2 className="text-base font-black text-neutral-900 mb-2">Vaquería no encontrada</h2>
-          <p className="text-xs font-medium text-neutral-500 mb-6">
-            La sesión solicitada no existe o fue eliminada previamente.
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate('/vaquerias')}
-            className="w-full py-3 bg-[#1B4820] text-white rounded-2xl text-xs font-black shadow-md cursor-pointer"
-          >
-            Volver a Vaquerías
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   const isFinalized = currentVaqueria?.status === 'Finalizada';
   const { classifiedPresent = [], missingAnimals = [], kpis = {} } = analysis || {};
 
@@ -602,6 +571,42 @@ export default function VaqueriaDetallePage() {
     const start = (validPage - 1) * itemsPerPage;
     return filteredUncompleted.slice(start, start + itemsPerPage);
   }, [filteredUncompleted, validPage, itemsPerPage]);
+
+  // Estado de carga inicial mientras se resuelve la consulta a IndexedDB
+  if (currentVaqueria === undefined) {
+    return (
+      <div className="min-h-screen bg-[#F0F2EB] flex flex-col items-center justify-center p-4">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-[#1B4820] border-t-transparent rounded-full animate-spin" />
+          <p className="text-xs font-bold text-neutral-600">Cargando vaquería...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Si tras la consulta confirmamos que la vaquería no existe o fue borrada
+  if (currentVaqueria === null) {
+    return (
+      <div className="min-h-screen bg-[#F0F2EB] flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-lg border border-neutral-200">
+          <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <h2 className="text-base font-black text-neutral-900 mb-2">Vaquería no encontrada</h2>
+          <p className="text-xs font-medium text-neutral-500 mb-6">
+            La sesión solicitada no existe o fue eliminada previamente.
+          </p>
+          <button
+            type="button"
+            onClick={() => navigate('/vaquerias')}
+            className="w-full py-3 bg-[#1B4820] text-white rounded-2xl text-xs font-black shadow-md cursor-pointer"
+          >
+            Volver a Vaquerías
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F0F2EB] flex flex-col font-sans select-none pb-28 md:pb-14">

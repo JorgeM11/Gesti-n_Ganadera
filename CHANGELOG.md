@@ -4,6 +4,18 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.17-react-hooks-order-vaqueria] - 2026-10-18
+
+### Corregido (Cumplimiento Estricto de Reglas de Hooks de React en Detalle de Vaquería)
+- **Eliminación de Retornos Tempranos Previos a Hooks ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - *Problema resuelto*: Al crear una nueva vaquería o abrirla directamente, la pantalla se ponía en blanco con el error `Uncaught Error: Rendered fewer hooks than expected. This may be caused by an accidental early return statement.` en `<VaqueriaDetallePage>`. Esto ocurría porque los estados condicionales de carga (`if (currentVaqueria === undefined) return ...`) y vaquería no encontrada (`if (currentVaqueria === null) return ...`) estaban posicionados antes de 7 llamadas a `useMemo` (`filteredPresent`, `filteredMissing`, `uncompletedList`, `filteredUncompleted`, `paginatedPresent`, `paginatedMissing`, `paginatedUncompleted`), alterando el orden y la cantidad de hooks entre renders.
+  - *Solución*: Se reordenaron todas las definiciones de hooks (`useMemo`, `useRef`, `useEffect`) hacia el nivel superior incondicional del componente, garantizando que cada render invoque exactamente el mismo conjunto de hooks en idéntico orden antes de cualquier sentencia `return`.
+- **Estabilización de Dependencias en `useEffect` ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - *Problema resuelto*: Error `The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant. Previous: [false, ..., En progreso] Incoming: [false, ..., En progreso, ]`.
+  - *Solución*: Se estabilizó el array de dependencias a un tamaño constante de 3 elementos (`[isAnyModalOpen, currentVaqueria?.id, currentVaqueria?.status]`), eliminando dependencias transitorias como `scanInputValue`. La lectura del código escaneado se realiza directamente desde la referencia del input DOM (`scanInputRef.current.value`) y el despachador se desacopló mediante `handleProcessScanRef`.
+
+---
+
 ## [1.7.16-scanner-antirebound-input-clear] - 2026-10-18
 
 ### Corregido y Perfeccionado (Estabilidad de Escáner Físico RFID / Código de Barras en Vaquería e Inventario)
