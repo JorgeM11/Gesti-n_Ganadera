@@ -24,7 +24,8 @@ import {
   ClipboardCheck, 
   UserX,
   ClipboardPlus,
-  Info
+  Info,
+  Lock
 } from 'lucide-react';
 import { db } from '@/lib/db';
 import { 
@@ -198,7 +199,7 @@ export default function VaqueriaDetallePage() {
 
   // Manejador central para registrar asistencia (venga de input físico, cámara o manual)
   const handleProcessScan = async (code, identificationType = 'chip', manualAnimal = null) => {
-    if (!currentVaqueria) return;
+    if (!currentVaqueria || currentVaqueria.status === 'Finalizada') return;
 
     const result = await addAnimalToVaqueria({
       vaqueriaId: currentVaqueria.id,
@@ -228,8 +229,8 @@ export default function VaqueriaDetallePage() {
   // Listener global de cuña de teclado para bastón RFID físico con buffer de 300 ms anti-jitter
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Si el usuario está dentro de otro modal o campo de texto específico que no sea el scan input, no interceptar
-      if (isAnyModalOpen) return;
+      // Si la vaquería está finalizada, o el usuario está dentro de otro modal o campo ajeno, no interceptar
+      if (isAnyModalOpen || currentVaqueria?.status === 'Finalizada') return;
       if (e.target && e.target !== scanInputRef.current && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
         return;
       }
@@ -282,7 +283,7 @@ export default function VaqueriaDetallePage() {
       window.removeEventListener('keydown', handleKeyDown);
       if (rfidBufferRef.current.timer) clearTimeout(rfidBufferRef.current.timer);
     };
-  }, [isAnyModalOpen, currentVaqueria?.id]);
+  }, [isAnyModalOpen, currentVaqueria?.id, currentVaqueria?.status]);
 
   // Envío manual desde el input de escaneo (validación estricta: solo chip de 15 dígitos)
   const handleScanInputSubmit = (e) => {
@@ -317,14 +318,96 @@ export default function VaqueriaDetallePage() {
   // Cambiar estatus de la vaquería (Finalizada / En progreso)
   const handleToggleStatus = async () => {
     if (!currentVaqueria) return;
-    const newStatus = currentVaqueria.status === 'Finalizada' ? 'En progreso' : 'Finalizada';
+    const isCurrentlyFinalized = currentVaqueria.status === 'Finalizada';
+    const newStatus = isCurrentlyFinalized ? 'En progreso' : 'Finalizada';
+
     try {
-      await updateVaqueria(currentVaqueria.id, { status: newStatus });
-      showToast(
-        newStatus === 'Finalizada' ? 'Vaquería Finalizada' : 'Vaquería Reabierta',
-        `El estado se actualizó a "${newStatus}".`,
-        'success'
-      );
+      if (newStatus === 'Finalizada') {
+        // Tomar fotografía congelada (snapshot) del análisis actual
+        const snapshotData = {
+          finalized_at: new Date().toISOString(),
+          isComparisonWithInventory: Boolean(analysis?.isComparisonWithInventory),
+          previousVaqueria: previousVaqueria ? {
+            id: previousVaqueria.id,
+            name: previousVaqueria.name,
+            date: previousVaqueria.date
+          } : null,
+          classifiedPresent: (analysis?.classifiedPresent || []).map(p => ({
+            record: p.record ? {
+              id: p.record.id,
+              vaqueria_id: p.record.vaqueria_id,
+              animal_id: p.record.animal_id,
+              number: p.record.number,
+              chip_number: p.record.chip_number,
+              name: p.record.name,
+              is_unregistered: Boolean(p.record.is_unregistered),
+              created_at: p.record.created_at
+            } : null,
+            animal: p.animal ? {
+              id: p.animal.id,
+              number: p.animal.number,
+              chip_number: p.animal.chip_number,
+              name: p.animal.name,
+              sex: p.animal.sex,
+              breed: p.animal.breed,
+              status: p.animal.status
+            } : null,
+            classification: p.classification,
+            badgeLabel: p.badgeLabel,
+            badgeColor: p.badgeColor,
+            displayName: p.displayName,
+            displayNumber: p.displayNumber,
+            displayChip: p.displayChip,
+            displaySex: p.displaySex,
+            displayBreed: p.displayBreed
+          })),
+          missingAnimals: (analysis?.missingAnimals || []).map(m => ({
+            animal: m.animal ? {
+              id: m.animal.id,
+              number: m.animal.number,
+              chip_number: m.animal.chip_number,
+              name: m.animal.name,
+              sex: m.animal.sex,
+              breed: m.animal.breed,
+              status: m.animal.status,
+              inactivity_reason: m.animal.inactivity_reason || null
+            } : null,
+            isAlreadyInactive: Boolean(m.isAlreadyInactive),
+            status: m.status,
+            inactivityReason: m.inactivityReason || null,
+            displayName: m.displayName,
+            displayNumber: m.displayNumber,
+            displayChip: m.displayChip,
+            displaySex: m.displaySex,
+            displayBreed: m.displayBreed,
+            badgeLabel: m.badgeLabel,
+            badgeColor: m.badgeColor
+          })),
+          kpis: analysis?.kpis || {}
+        };
+
+        await updateVaqueria(currentVaqueria.id, {
+          status: 'Finalizada',
+          snapshot_data: snapshotData
+        });
+
+        showToast(
+          'Vaquería Finalizada',
+          'La vaquería se cerró exitosamente y todas sus listas quedaron congeladas de forma inmutable.',
+          'success'
+        );
+      } else {
+        await updateVaqueria(currentVaqueria.id, {
+          status: 'En progreso',
+          snapshot_data: null
+        });
+
+        showToast(
+          'Vaquería Reabierta',
+          'La sesión está de nuevo en progreso y reactiva.',
+          'success'
+        );
+      }
     } catch (err) {
       showToast('Error', err.message || 'No se pudo cambiar el estado.', 'error');
     }
@@ -366,6 +449,7 @@ export default function VaqueriaDetallePage() {
     );
   }
 
+  const isFinalized = currentVaqueria?.status === 'Finalizada';
   const { classifiedPresent = [], missingAnimals = [], kpis = {} } = analysis || {};
 
   // Filtrar presentes por término de búsqueda (siempre de primero los nuevos no registrados)
@@ -560,67 +644,84 @@ export default function VaqueriaDetallePage() {
           )}
         </AnimatePresence>
 
-        {/* Barra de Escaneo Continuo & Acciones Rápidas (Sticky / Primordial en campo) */}
-        <div className="bg-white rounded-3xl p-4 md:p-5 shadow-sm border border-neutral-200/80">
-          <form onSubmit={handleScanInputSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            {/* Input Escaneo Continuo RFID (con inputMode='none' para no abrir teclado virtual en móvil/tablet) */}
-            <div className="relative flex-1">
-              <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-neutral-400">
-                <Cpu className="w-4 h-4 text-[#1B4820]" />
+        {/* Barra de Escaneo Continuo & Acciones Rápidas (o Banner de Bloqueo si está Finalizada) */}
+        {isFinalized ? (
+          <div className="bg-white rounded-3xl p-4 md:p-5 shadow-sm border border-neutral-200/80 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-neutral-100 text-[#1B4820] flex items-center justify-center shrink-0 shadow-inner">
+                <Lock className="w-5 h-5 stroke-[2.5]" />
               </div>
-              <input
-                ref={scanInputRef}
-                type="text"
-                inputMode="none"
-                value={scanInputValue}
-                onChange={(e) => setScanInputValue(e.target.value)}
-                placeholder="Esperando escaneo de chip RFID (15 dígitos)..."
-                autoComplete="off"
-                className="w-full pl-10 pr-24 py-3 bg-neutral-50 border-2 border-neutral-200 rounded-2xl text-sm font-black text-neutral-900 placeholder-neutral-400 focus:bg-white focus:border-[#1B4820] focus:ring-4 focus:ring-[#1B4820]/15 outline-none transition-all shadow-inner"
-              />
-              <button
-                type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-[#1B4820] text-white rounded-xl text-xs font-black shadow-xs hover:bg-[#143618] active:scale-95 transition-all cursor-pointer"
-              >
-                Registrar
-              </button>
+              <div>
+                <h4 className="text-xs md:text-sm font-black text-neutral-800">
+                  Vaquería Finalizada (Listas Inmutables)
+                </h4>
+                <p className="text-[11px] font-medium text-neutral-500">
+                  Todas las listas de asistencia, faltantes y métricas están congeladas históricamente. Para realizar modificaciones, pulse "Reabrir Vaquería".
+                </p>
+              </div>
             </div>
-
-            {/* Botones de Escaneo de Cámara y Manual */}
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsBarcodeOpen(true)}
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-3 bg-neutral-100 hover:bg-neutral-200/70 text-neutral-700 rounded-2xl text-xs font-black transition-all cursor-pointer"
-                title="Escanear código de barras con cámara"
-              >
-                <ScanBarcode className="w-4 h-4 text-[#1B4820]" />
-                <span className="hidden sm:inline">Cámara</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setIsManualAddOpen(true)}
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-3 bg-emerald-50 hover:bg-emerald-100 text-[#1B4820] border border-emerald-200 rounded-2xl text-xs font-black transition-all cursor-pointer"
-                title="Agregar manualmente por arete, chip o nombre"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Manual</span>
-              </button>
-            </div>
-          </form>
-
-          {/* Subtítulo informativo de línea base */}
-          <div className="mt-2.5 pt-2 border-t border-neutral-100 flex flex-wrap items-center justify-between text-[11px] font-bold text-neutral-400 gap-2">
-            <span className="flex items-center gap-1.5">
-              <Info className="w-3.5 h-3.5 text-[#1B4820]" />
-              {analysis?.isComparisonWithInventory
-                ? 'Línea base: Rebaño activo de la finca en inventario (Primera vaquería)'
-                : `Línea base: Vaquería anterior (${previousVaqueria?.name || 'Previa'} - ${previousVaqueria?.date || ''})`}
-            </span>
-            
           </div>
-        </div>
+        ) : (
+          <div className="bg-white rounded-3xl p-4 md:p-5 shadow-sm border border-neutral-200/80">
+            <form onSubmit={handleScanInputSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              {/* Input Escaneo Continuo RFID (con inputMode='none' para no abrir teclado virtual en móvil/tablet) */}
+              <div className="relative flex-1">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-neutral-400">
+                  <Cpu className="w-4 h-4 text-[#1B4820]" />
+                </div>
+                <input
+                  ref={scanInputRef}
+                  type="text"
+                  inputMode="none"
+                  value={scanInputValue}
+                  onChange={(e) => setScanInputValue(e.target.value)}
+                  placeholder="Esperando escaneo de chip RFID (15 dígitos)..."
+                  autoComplete="off"
+                  className="w-full pl-10 pr-24 py-3 bg-neutral-50 border-2 border-neutral-200 rounded-2xl text-sm font-black text-neutral-900 placeholder-neutral-400 focus:bg-white focus:border-[#1B4820] focus:ring-4 focus:ring-[#1B4820]/15 outline-none transition-all shadow-inner"
+                />
+                <button
+                  type="submit"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-[#1B4820] text-white rounded-xl text-xs font-black shadow-xs hover:bg-[#143618] active:scale-95 transition-all cursor-pointer"
+                >
+                  Registrar
+                </button>
+              </div>
+
+              {/* Botones de Escaneo de Cámara y Manual */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setIsBarcodeOpen(true)}
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-3 bg-neutral-100 hover:bg-neutral-200/70 text-neutral-700 rounded-2xl text-xs font-black transition-all cursor-pointer"
+                  title="Escanear código de barras con cámara"
+                >
+                  <ScanBarcode className="w-4 h-4 text-[#1B4820]" />
+                  <span className="hidden sm:inline">Cámara</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsManualAddOpen(true)}
+                  className="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-3 bg-emerald-50 hover:bg-emerald-100 text-[#1B4820] border border-emerald-200 rounded-2xl text-xs font-black transition-all cursor-pointer"
+                  title="Agregar manualmente por arete, chip o nombre"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Manual</span>
+                </button>
+              </div>
+            </form>
+
+            {/* Subtítulo informativo de línea base */}
+            <div className="mt-2.5 pt-2 border-t border-neutral-100 flex flex-wrap items-center justify-between text-[11px] font-bold text-neutral-400 gap-2">
+              <span className="flex items-center gap-1.5">
+                <Info className="w-3.5 h-3.5 text-[#1B4820]" />
+                {analysis?.isComparisonWithInventory
+                  ? 'Línea base: Rebaño activo de la finca en inventario (Primera vaquería)'
+                  : `Línea base: Vaquería anterior (${previousVaqueria?.name || 'Previa'} - ${previousVaqueria?.date || ''})`}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Tarjetas de KPIs Consolidados (Solo Nombre y Número para respetar 100% el responsive móvil/tablet) */}
         <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
@@ -777,7 +878,7 @@ export default function VaqueriaDetallePage() {
 
                       {/* Acciones al Final */}
                       <div className="flex items-center gap-1.5 shrink-0">
-                        {isUnregistered && (
+                        {isUnregistered && !isFinalized && (
                           <button
                             type="button"
                             onClick={() => setCompletingAnimalRecord(item.record)}
@@ -789,14 +890,16 @@ export default function VaqueriaDetallePage() {
                           </button>
                         )}
 
-                        <button
-                          type="button"
-                          onClick={() => setDeletingRecord(item.record)}
-                          className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                          title="Quitar de esta vaquería"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        {!isFinalized && (
+                          <button
+                            type="button"
+                            onClick={() => setDeletingRecord(item.record)}
+                            className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            title="Quitar de esta vaquería"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
@@ -858,19 +961,21 @@ export default function VaqueriaDetallePage() {
 
                       {/* Acciones al Final */}
                       <div className="flex items-center gap-1.5 shrink-0">
-                        {!isInactive ? (
-                          <button
-                            type="button"
-                            onClick={() => setInactivatingAnimal(item.animal)}
-                            className="py-1 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[11px] font-black shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
-                          >
-                            <UserX className="w-3.5 h-3.5" />
-                            <span>Inactivar</span>
-                          </button>
-                        ) : (
+                        {isInactive ? (
                           <span className="text-[10px] font-black uppercase tracking-wider text-neutral-500 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded-lg">
                             Inactivo
                           </span>
+                        ) : (
+                          !isFinalized && (
+                            <button
+                              type="button"
+                              onClick={() => setInactivatingAnimal(item.animal)}
+                              className="py-1 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[11px] font-black shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
+                            >
+                              <UserX className="w-3.5 h-3.5" />
+                              <span>Inactivar</span>
+                            </button>
+                          )
                         )}
                       </div>
                     </div>
@@ -918,14 +1023,16 @@ export default function VaqueriaDetallePage() {
                       )}
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setCompletingAnimalRecord(item.record)}
-                      className="py-1 px-3 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-black shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
-                    >
-                      <ClipboardPlus className="w-3.5 h-3.5" />
-                      <span>Completar</span>
-                    </button>
+                    {!isFinalized && (
+                      <button
+                        type="button"
+                        onClick={() => setCompletingAnimalRecord(item.record)}
+                        className="py-1 px-3 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-black shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
+                      >
+                        <ClipboardPlus className="w-3.5 h-3.5" />
+                        <span>Completar</span>
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

@@ -139,6 +139,22 @@ export function calculateVaqueriaAnalysis({
   farmAnimals = [],
   allAnimals = []
 }) {
+  // --- MODO INMUTABLE POR SNAPSHOT ---
+  // Si la vaquería está Finalizada y posee snapshot_data guardado,
+  // se devuelve la fotografía histórica congelada para asegurar inmutabilidad absoluta.
+  if (currentVaqueria?.status === 'Finalizada' && currentVaqueria?.snapshot_data) {
+    const snap = currentVaqueria.snapshot_data;
+    return {
+      isComparisonWithInventory: Boolean(snap.isComparisonWithInventory),
+      previousVaqueria: snap.previousVaqueria || null,
+      classifiedPresent: snap.classifiedPresent || [],
+      missingAnimals: snap.missingAnimals || [],
+      kpis: snap.kpis || {},
+      isSnapshot: true,
+      finalizedAt: snap.finalized_at || null
+    };
+  }
+
   const animalsById = new Map();
   allAnimals.forEach(a => {
     if (a && a.id) animalsById.set(a.id, a);

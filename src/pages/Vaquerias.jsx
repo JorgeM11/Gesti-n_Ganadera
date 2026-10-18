@@ -257,7 +257,9 @@ export default function VaqueriasPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {filteredVaquerias.map(v => {
               const farm = farmsById.get(v.farm_id);
-              const presentCount = countsByVaqueria.get(v.id) || 0;
+              const presentCount = (v.status === 'Finalizada' && v.snapshot_data?.kpis?.totalPresent !== undefined)
+                ? v.snapshot_data.kpis.totalPresent
+                : (countsByVaqueria.get(v.id) || 0);
               const isFinalized = v.status === 'Finalizada';
 
               return (

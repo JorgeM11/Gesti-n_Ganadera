@@ -232,7 +232,7 @@ export default function VaqueriaModal({
                 disabled={isSaving}
                 className="flex-1 py-3 px-4 bg-[#1B4820] text-white rounded-2xl text-sm font-black shadow-lg shadow-[#1B4820]/25 hover:bg-[#143618] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
               >
-                {isSaving ? 'Guardando...' : (initialData ? 'Guardar Cambios' : 'Comenzar Vaquería')}
+                {isSaving ? 'Guardando...' : (initialData ? 'Guardar' : 'Comenzar')}
               </button>
             </div>
           </form>

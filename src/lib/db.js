@@ -20,6 +20,7 @@ import Dexie from 'dexie';
  * @property {string} date
  * @property {'En progreso' | 'Finalizada'} [status]
  * @property {string} [observations]
+ * @property {any} [snapshot_data]
  * @property {string} created_at
  * @property {string} updated_at
  * @property {string} [deleted_at]

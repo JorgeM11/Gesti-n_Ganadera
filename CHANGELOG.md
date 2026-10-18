@@ -4,6 +4,25 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.12-vaqueria-immutable-snapshot] - 2026-10-18
+
+### Añadido y Perfeccionado (Instantánea Inmutable para Vaquerías Finalizadas)
+- **Instantánea Congelada al Finalizar ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx), [`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js))**:
+  - Al hacer clic en **"Finalizar Vaquería"**, el sistema genera y almacena una instantánea (`snapshot_data`) inmutable con el censo exacto de presentes, faltantes y métricas de ese día.
+  - Cuando una vaquería tiene estado `Finalizada`, las listas y contadores se leen directamente de la instantánea congelada, asegurando que futuros movimientos de ganado entre fincas, ventas o muertes no alteren el reporte histórico.
+  - Al pulsar **"Reabrir Vaquería"**, se restablece el modo dinámico y reactivo en tiempo real para permitir continuar el trabajo de campo.
+- **Protección de Interfaz en Modo Finalizado ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - Se sustituyó la barra de escaneo continuo por un banner informativo de sólo lectura con icono de candado (`Lock`).
+  - Se desactiva el listener de escaneo por teclado RFID para prevenir ingresos accidentales.
+  - Se ocultan los botones destructivos o de edición (Quitar, Inactivar, Completar) en las tres pestañas mientras la vaquería esté finalizada.
+- **Soporte en Base de Datos y Sincronización Cloud ([`supabase_update_vaqueria_snapshot.sql`](file:///C:/Users/joses/appganadera/gestion-ganadera/supabase_update_vaqueria_snapshot.sql), [`db.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/db.js), [`Vaquerias.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Vaquerias.jsx))**:
+  - Se añadió la columna `snapshot_data JSONB NULL` en Supabase para sincronizar la instantánea inmutable entre dispositivos.
+  - En la lista de tarjetas de vaquerías, las sesiones finalizadas obtienen su conteo de animales presentes directamente del snapshot.
+- **Preservación de Textos del Usuario**:
+  - Se conservó la simplificación del botón de acción en `VaqueriaModal` a `"Guardar"` y `"Comenzar"`.
+
+---
+
 ## [1.7.11-vaqueria-ui-enhancements] - 2026-10-16
 
 ### Perfeccionado y Corregido (Identificación en Pestaña Nuevos, Iconos en Móvil/Tablet y Finca Bloqueada en Edición)

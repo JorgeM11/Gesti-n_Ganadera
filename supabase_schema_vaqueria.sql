@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS vaquerias (
     date DATE NOT NULL DEFAULT CURRENT_DATE,
     status VARCHAR(30) NOT NULL DEFAULT 'En progreso' CHECK (status IN ('En progreso', 'Finalizada')),
     observations TEXT NULL,
+    snapshot_data JSONB NULL,
     created_by_user_id UUID NULL REFERENCES usuarios(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

@@ -211,6 +211,10 @@ flowchart TD
     - Retroalimentación auditiva (Web Audio API) y visual superpuesta sin popups bloqueantes.
   - Paginación reactiva y ultraligera (25, 50, 100 por página) adaptada para grandes rebaños (600+ cabezas) sin sobrecarga del DOM.
   - Optimización táctil para móvil y tablet: botones de acción (Editar, Eliminar, Flecha) con colores visibles de contraste sin requerir hover de ratón.
+  - **Instantánea Inmutable (Snapshot) al Finalizar**:
+    - Al marcar como "Finalizada", se almacena una fotografía congelada (`snapshot_data`) en Dexie y Supabase con las listas y KPIs exactos de ese día.
+    - Cero alteración histórica: futuros movimientos de ganado entre fincas o inactivaciones no afectan las vaquerías finalizadas.
+    - Modo sólo lectura bloqueado con candado al estar finalizada; reactividad dinámica al reabrir.
   - Almacenamiento Dexie v8 y sincronización bidireccional con Supabase (`vaquerias` y `vaqueria_animals`) con auto-saneamiento de cola.
   - Preservación íntegra de textos y personalizaciones del usuario en cabeceras y modales.
   - **Estado actual**: Software 100% desarrollado y probado en compilación. **A falta de pruebas con escáner físico**.
@@ -240,6 +244,7 @@ flowchart TD
 | **Parte 3 - Apartado 1: Dashboard (v1)** | 2026-10-12 | **Completado** | Antigravity AI & Usuario | Primera versión del Dashboard ganadero: vista general, selector por fincas, subfiltros dinámicos, pirámide de edad, biomasa, primera opción en sidebar y ruta de entrada inicial. |
 | **Refinamientos Dashboard y Remoción Alerta 8M** | 2026-10-12 | **Completado** | Antigravity AI & Usuario | Aplicadas las 7 correcciones al Dashboard (header limpio, CustomSelect, distribución numérica de sexo, remoción de cards de peso) y retirada definitiva de la alerta de 8 meses en inventario. |
 | **Parte 3 - Apartado 2: Módulo de Vaquería** | 2026-10-16 | **Completado (Software)** | Antigravity AI & Usuario | Asistencia periódica por finca, comparativa histórica, validación 15 dígitos RFID, paginación (600+ cabezas), no registrados, gestión de faltantes, bloqueo de finca y optimizaciones móviles/tablets. Culminada a nivel de código; pendiente pruebas con escáner físico. |
+| **Parte 3 - Apartado 2: Instantánea Inmutable (Snapshot)** | 2026-10-18 | **Completado** | Antigravity AI & Usuario | Congelamiento absoluto de listas y métricas al finalizar la vaquería con soporte cloud en Supabase (`snapshot_data JSONB`). |
 | **Parte 3 - Apartado 3: Sistema de Roles** | Próximo (Mañana) | **En Planificación** | Antigravity AI & Usuario | Inicio del diseño e implementación del sistema de roles de usuario, control de accesos y permisos en la aplicación. |
 | **Despliegue y Pruebas Generales de Campo** | Próximo (Lunes) | **Programado** | Antigravity AI & Usuario | Despliegue en producción para pruebas exhaustivas con escáner físico de microchip y validación integral con el cliente. |
 
