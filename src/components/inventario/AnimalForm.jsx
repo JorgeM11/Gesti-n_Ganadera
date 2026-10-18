@@ -380,6 +380,9 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
     if (existingAnimal) {
       // Requisito 1: Si se escanea o pega un código que ya existe, NO dejarlo pegar
       setValue('chip_number', '', { shouldValidate: true, shouldDirty: true });
+      resetChipScanner();
+      const chipInput = document.getElementById('animal_rfid_identifier');
+      if (chipInput) chipInput.value = '';
       setToast({
         show: true,
         type: 'error',

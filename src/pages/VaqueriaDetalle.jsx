@@ -89,6 +89,20 @@ export default function VaqueriaDetallePage() {
     lastKeyTime: 0,
     timer: null
   });
+  const isProcessingScanRef = useRef(false);
+  const lastProcessedScanRef = useRef({ code: '', time: 0 });
+
+  const clearAllScanInputs = () => {
+    setScanInputValue('');
+    if (scanInputRef.current) {
+      scanInputRef.current.value = '';
+    }
+    rfidBufferRef.current.buffer = '';
+    if (rfidBufferRef.current.timer) {
+      clearTimeout(rfidBufferRef.current.timer);
+      rfidBufferRef.current.timer = null;
+    }
+  };
 
   const showToast = (title, message, type = 'success') => {
     setToast({ id: Date.now(), title, message, type });
@@ -201,28 +215,61 @@ export default function VaqueriaDetallePage() {
   const handleProcessScan = async (code, identificationType = 'chip', manualAnimal = null) => {
     if (!currentVaqueria || currentVaqueria.status === 'Finalizada') return;
 
-    const result = await addAnimalToVaqueria({
-      vaqueriaId: currentVaqueria.id,
-      farmId: currentVaqueria.farm_id,
-      code,
-      identificationType,
-      manualAnimal
-    });
-
-    if (result.success) {
-      triggerScanFeedback('success', result.message);
-      setScanInputValue('');
-      setCurrentPage(1);
-    } else {
-      if (result.reason === 'DUPLICATE') {
-        triggerScanFeedback('duplicate', result.message);
-      } else {
-        triggerScanFeedback('error', result.message);
-      }
+    const clean = (code || '').trim();
+    if (!clean && !manualAnimal) {
+      clearAllScanInputs();
+      return;
     }
 
-    // Volver a enfocar el input de inmediato
-    setTimeout(focusScanInput, 60);
+    const now = Date.now();
+    // 1. Antirrebote estricto: Si el mismo código se procesó hace menos de 1200 ms
+    // (ej. disparo simultáneo por detección de 15 dígitos + tecla Enter de hardware):
+    if (clean && clean === lastProcessedScanRef.current.code && (now - lastProcessedScanRef.current.time) < 1200) {
+      clearAllScanInputs();
+      return;
+    }
+
+    // 2. Candado de concurrencia: evitar carreras asíncronas
+    if (isProcessingScanRef.current) {
+      clearAllScanInputs();
+      return;
+    }
+    isProcessingScanRef.current = true;
+    lastProcessedScanRef.current = { code: clean, time: now };
+
+    // Limpiar inmediatamente el input y los buffers antes de la consulta
+    clearAllScanInputs();
+
+    let result;
+    try {
+      result = await addAnimalToVaqueria({
+        vaqueriaId: currentVaqueria.id,
+        farmId: currentVaqueria.farm_id,
+        code: clean,
+        identificationType,
+        manualAnimal
+      });
+
+      if (result.success) {
+        triggerScanFeedback('success', result.message);
+        setCurrentPage(1);
+      } else {
+        if (result.reason === 'DUPLICATE') {
+          triggerScanFeedback('duplicate', result.message);
+        } else {
+          triggerScanFeedback('error', result.message);
+        }
+      }
+    } catch (err) {
+      console.error('[Vaqueria] Error en handleProcessScan:', err);
+      triggerScanFeedback('error', 'Ocurrió un error al procesar el animal.');
+    } finally {
+      // 3. Limpiar SIEMPRE el input y buffers (éxito, duplicado, error o formato inválido)
+      clearAllScanInputs();
+      isProcessingScanRef.current = false;
+      setTimeout(focusScanInput, 60);
+    }
+
     return result;
   };
 
@@ -246,24 +293,39 @@ export default function VaqueriaDetallePage() {
 
       // Si pulsa Enter en el bastón o teclado RFID
       if (e.key === 'Enter') {
-        if (rfidBufferRef.current.buffer.length >= 2) {
-          e.preventDefault();
-          const captured = rfidBufferRef.current.buffer.trim();
-          rfidBufferRef.current.buffer = '';
+        e.preventDefault();
+        e.stopPropagation();
 
+        if (rfidBufferRef.current.timer) {
+          clearTimeout(rfidBufferRef.current.timer);
+          rfidBufferRef.current.timer = null;
+        }
+
+        const bufferVal = rfidBufferRef.current.buffer.trim();
+        const inputVal = (scanInputRef.current?.value || '').trim() || scanInputValue.trim();
+        rfidBufferRef.current.buffer = '';
+
+        const captured = bufferVal.length >= 2 ? bufferVal : inputVal;
+
+        if (captured) {
+          clearAllScanInputs();
           // Validación estricta: el lector físico RFID solo debe emitir chips de 15 dígitos
           if (isValidChipNumber(captured)) {
             handleProcessScan(captured, 'chip');
           } else {
             playErrorBeep();
             triggerScanFeedback('error', 'El escáner solo admite microchips RFID de 15 dígitos. Para arete use el botón Manual.');
+            clearAllScanInputs();
+            setTimeout(focusScanInput, 60);
           }
+        } else {
+          clearAllScanInputs();
         }
         return;
       }
 
       // Acumular caracteres imprimibles
-      if (e.key.length === 1) {
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
         rfidBufferRef.current.buffer += e.key;
 
         // Auto-detección: si se completan 15 dígitos numéricos continuos de microchip ganadero ISO
@@ -271,9 +333,11 @@ export default function VaqueriaDetallePage() {
           if (rfidBufferRef.current.timer) clearTimeout(rfidBufferRef.current.timer);
           rfidBufferRef.current.timer = setTimeout(() => {
             const captured = rfidBufferRef.current.buffer.trim();
-            rfidBufferRef.current.buffer = '';
-            handleProcessScan(captured, 'chip');
-          }, 60);
+            clearAllScanInputs();
+            if (captured && isValidChipNumber(captured)) {
+              handleProcessScan(captured, 'chip');
+            }
+          }, 80);
         }
       }
     };
@@ -283,18 +347,28 @@ export default function VaqueriaDetallePage() {
       window.removeEventListener('keydown', handleKeyDown);
       if (rfidBufferRef.current.timer) clearTimeout(rfidBufferRef.current.timer);
     };
-  }, [isAnyModalOpen, currentVaqueria?.id, currentVaqueria?.status]);
+  }, [isAnyModalOpen, currentVaqueria?.id, currentVaqueria?.status, scanInputValue]);
 
   // Envío manual desde el input de escaneo (validación estricta: solo chip de 15 dígitos)
   const handleScanInputSubmit = (e) => {
     e.preventDefault();
-    const clean = scanInputValue.trim();
-    if (!clean) return;
+    e.stopPropagation();
+
+    if (rfidBufferRef.current.timer) {
+      clearTimeout(rfidBufferRef.current.timer);
+      rfidBufferRef.current.timer = null;
+    }
+
+    const clean = scanInputValue.trim() || (scanInputRef.current?.value || '').trim();
+    if (!clean) {
+      clearAllScanInputs();
+      return;
+    }
 
     if (!isValidChipNumber(clean)) {
       playErrorBeep();
       triggerScanFeedback('error', 'El escáner solo admite número de chip RFID (15 dígitos). Para registrar arete o nombre, use el botón Manual.');
-      setScanInputValue('');
+      clearAllScanInputs();
       setTimeout(focusScanInput, 60);
       return;
     }

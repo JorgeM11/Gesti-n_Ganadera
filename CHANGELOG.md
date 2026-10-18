@@ -4,6 +4,18 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.16-scanner-antirebound-input-clear] - 2026-10-18
+
+### Corregido y Perfeccionado (Estabilidad de Escáner Físico RFID / Código de Barras en Vaquería e Inventario)
+- **Eliminación de Carrera y Doble Registro por Escáner ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))**:
+  - *Problema resuelto*: Al escanear con lectores físicos Bluetooth o USB-OTG, la detección automática de 15 dígitos y el evento final de tecla `Enter` disparaban dos consultas simultáneas. La primera registraba con éxito la asistencia y la segunda fracción de segundo después arrojaba una falsa alarma de error *"Animal ya registrado"*.
+  - *Solución*: Implementado candado de concurrencia (`isProcessingScanRef`) y protección antirrebote (`lastProcessedScanRef`) con ventana de 1200ms que descarta disparos duplicados del mismo microchip. Cancelación inmediata del temporizador al recibir `Enter`.
+- **Limpieza Garantizada del Input de Escaneo ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx), [`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx))**:
+  - *Problema resuelto*: Cuando un animal resultaba duplicado o el código era inválido, el texto permanecía atrapado en la caja de texto, haciendo que lecturas posteriores acumularan caracteres (30 dígitos) o fallaran de forma repetitiva.
+  - *Solución*: Creación de `clearAllScanInputs()` que borra atómicamente tanto el estado React como el elemento físico del DOM (`scanInputRef.current.value = ''`) y los buffers internos, ejecutándose incondicionalmente en el bloque `finally` para cualquier resultado (éxito, duplicado, inactivo, error de formato o descarte).
+
+---
+
 ## [1.7.15-daily-weight-gain-events] - 2026-10-18
 
 ### Añadido y Perfeccionado (Ganancia y Pérdida Diaria de Peso en Eventos de Evolución)
