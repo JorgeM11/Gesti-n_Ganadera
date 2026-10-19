@@ -167,7 +167,7 @@ export default function InactivateAnimalModal({
                 disabled={isSubmitting}
                 className="flex-1 py-3 px-4 bg-amber-600 text-white rounded-2xl text-sm font-black shadow-lg shadow-amber-600/25 hover:bg-amber-700 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
               >
-                {isSubmitting ? 'Inactivando...' : 'Confirmar Inactivación'}
+                {isSubmitting ? 'Inactivando...' : 'Inactivar'}
               </button>
             </div>
           </form>
