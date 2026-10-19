@@ -13,26 +13,29 @@ Este documento define la hoja de ruta estratégica, el desglose de fases, las de
 
 ---
 
-## 🗺️ Mapa de Fases y Macro-Estructura (3 Partes)
+## 🗺️ Mapa de Fases y Macro-Estructura
 
 ```mermaid
 flowchart TD
-    subgraph P1["PARTE 1 DE 3: Sistema Base, UI, BD Cloud & Offline (Completada ✅)"]
+    subgraph P1["PARTE 1: Sistema Base, UI, BD Cloud & Offline (Completada ✅)"]
         F1["Fase 1: Creación Base"] --> F2["Fase 2: Adaptación UI/UX"]
         F2 --> F3["Fase 3: Nueva BD Supabase"]
         F3 --> F4["Fase 4: Conexión Frontend"]
         F4 --> F5["Fase 5: QA y Cierre"]
     end
 
-    P1 --> P2["📡 PARTE 2 DE 3: Compatibilidad Escáner RFID (Culminada en Software ✅ - Espera de Campo)"]
-    P2 --> P3["📊 PARTE 3 DE 3: Dashboard, Vaquería y Sistema de Roles (Culminada en Software ✅)"]
+    P1 --> P2["📡 PARTE 2: Compatibilidad Escáner RFID (Completada ✅)"]
+    P2 --> P3["📊 PARTE 3: Dashboard, Vaquería y Roles (Despliegue Culminado ✅)"]
     P3 --> P3_1["Apartado 1: Dashboard ✅"]
-    P3 --> P3_2["Apartado 2: Vaquería (Software Culminado ✅ - Pruebas y Despliegue Lunes)"]
-    P3 --> P3_3["Apartado 3: Sistema de Roles (Software Culminado ✅)"]
+    P3 --> P3_2["Apartado 2: Vaquería ✅"]
+    P3 --> P3_3["Apartado 3: Sistema de Roles ✅"]
+
+    P3 --> P4["🚀 FASE 4: Correcciones del Cliente y Nuevos Requerimientos (En Espera / Para Mañana ⏳)"]
 
     style P1 fill:#f1f8e9,stroke:#33691e,stroke-width:2px
     style P2 fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
-    style P3 fill:#e1f5fe,stroke:#01579b,stroke-width:3px
+    style P3 fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style P4 fill:#fff8e1,stroke:#f57f17,stroke-width:3px
 ```
 
 ---
@@ -162,7 +165,7 @@ flowchart TD
 
 ---
 
-### 🚀 Parte 3 de 3: Dashboard, Vaquería y Sistema de Roles (En Desarrollo)
+### ✅ Parte 3: Dashboard, Vaquería y Sistema de Roles (Despliegue Culminado)
 > **Estructura definida**: Dividida formalmente en 3 apartados operativos clave.
 
 #### 1. Apartado 1: Dashboard (Vista General Ejecutiva del Sistema) ✅
@@ -217,8 +220,8 @@ flowchart TD
     - Modo sólo lectura bloqueado con candado al estar finalizada; reactividad dinámica al reabrir.
   - Almacenamiento Dexie v8 y sincronización bidireccional con Supabase (`vaquerias` y `vaqueria_animals`) con auto-saneamiento de cola.
   - Preservación íntegra de textos y personalizaciones del usuario en cabeceras y modales.
-  - **Estado actual**: Software 100% desarrollado y probado en compilación. **A falta de pruebas con escáner físico**.
-  - **Despliegue para pruebas**: Programado para el **lunes**.
+  - **Estado actual**: Despliegue completado con éxito el 2026-10-19. Módulo operativo con pruebas iniciales de escáner y móvil realizadas. Correcciones operativas aplicadas (eliminación de teclado virtual tras escaneo en móvil, filtro select de finca en móvil sobre barra de búsqueda, persistencia sin parpadeo durante sincronización y nombre predeterminado "Vaquería").
+  - **Próximo paso**: En espera de observaciones y correcciones finales por parte del cliente y arranque de la **Fase 4** (programado para mañana).
 
 #### 3. Apartado 3: Sistema de Roles ✅ (Completado)
 - [x] **Modelo de Asignación de Fincas (`usuario_farms`)**:
@@ -239,7 +242,18 @@ flowchart TD
   - Captura del usuario actuante en `created_by_user_id` y `updated_by_user_id` en Dexie v10 y Supabase.
   - Resolución en Historial de Cambios (`Dashboard.jsx`) mostrando el nombre real del obrero y su insignia `OBRERO` (ámbar), preservando a la vez la titularidad del administrador titular en `user_id`.
   - Sincronización continua de usuarios del equipo y tolerancia resiliente ante columnas no creadas (`PGRST204`).
-- [x] **Estado actual**: Software 100% desarrollado y probado en compilación (`npm run build` exitoso).
+- [x] **Estado actual**: Despliegue completado con éxito el 2026-10-19 y operativo en producción.
+
+---
+
+### ⏳ Fase 4: Correcciones del Cliente y Nuevos Requerimientos (Programada para Mañana)
+> **Objetivo**: Atender la lista de observaciones, correcciones y ajustes operativos que reporte el cliente tras las pruebas en campo del sistema desplegado, así como dar inicio al siguiente paquete de requerimientos.
+
+- **Estado**: En espera de las observaciones y correcciones del cliente.
+- **Fecha de inicio programada**: 2026-10-20 (Mañana).
+- [ ] Recepción y consolidación del feedback del cliente sobre el despliegue actual.
+- [ ] Planificación y priorización de ajustes solicitados.
+- [ ] Desarrollo, pruebas y despliegue del paquete de correcciones y mejoras de la Fase 4.
 
 ---
 
@@ -261,5 +275,6 @@ flowchart TD
 | **Parte 3 - Apartado 2: Módulo de Vaquería** | 2026-10-16 | **Completado (Software)** | Antigravity AI & Usuario | Asistencia periódica por finca, comparativa histórica, validación 15 dígitos RFID, paginación (600+ cabezas), no registrados, gestión de faltantes, bloqueo de finca y optimizaciones móviles/tablets. Culminada a nivel de código; pendiente pruebas con escáner físico. |
 | **Parte 3 - Apartado 2: Instantánea Inmutable (Snapshot)** | 2026-10-18 | **Completado** | Antigravity AI & Usuario | Congelamiento absoluto de listas y métricas al finalizar la vaquería con soporte cloud en Supabase (`snapshot_data JSONB`). |
 | **Parte 3 - Apartado 3: Sistema de Roles** | 2026-10-18 | **Completado (Software)** | Antigravity AI & Usuario | Restricciones completas de perfil obrero/operador: asignación de fincas relacional en Supabase y Dexie v9, acceso exclusivo a inventario, bloqueo de Dashboard y Vaquería, filtros restringidos a fincas asignadas y dueños con animales presentes, formularios de registro protegidos y titularidad de datos centralizada en admin. |
-| **Despliegue y Pruebas Generales de Campo** | Próximo (Lunes) | **Programado** | Antigravity AI & Usuario | Despliegue en producción para pruebas exhaustivas con escáner físico de microchip y validación integral con el cliente. |
+| **Despliegue en Producción y Pruebas Iniciales** | 2026-10-19 | **Completado** | Antigravity AI & Usuario | Despliegue completado con éxito. Pruebas de campo iniciales realizadas en móvil y escáner, con ajustes aplicados (supresión de teclado virtual, CustomSelect de fincas y buffer reactivo sin parpadeo). |
+| **Fase 4: Correcciones del Cliente y Nuevos Requerimientos** | 2026-10-20 (Mañana) | **En Espera** | Antigravity AI & Usuario | A la espera de las observaciones y correcciones del cliente tras sus pruebas de campo para dar inicio a la Fase 4 el día de mañana. |
 
