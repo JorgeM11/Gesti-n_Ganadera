@@ -39,9 +39,6 @@ export default function ManualAddModal({
       setInputValue('');
       setSelectedAnimal(null);
       setError('');
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 150);
     }
   }, [isOpen, activeTab]);
 

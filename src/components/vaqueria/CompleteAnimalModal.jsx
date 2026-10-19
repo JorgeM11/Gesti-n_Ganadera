@@ -203,7 +203,6 @@ export default function CompleteAnimalModal({
                   value={number}
                   onChange={(e) => setNumber(e.target.value)}
                   placeholder="Ej. 104"
-                  autoFocus
                   className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm font-black text-neutral-900 focus:bg-white focus:border-[#1B4820] focus:ring-2 focus:ring-[#1B4820]/15 outline-none transition-all"
                 />
               </div>

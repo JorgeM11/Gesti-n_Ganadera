@@ -4,6 +4,25 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.20-mobile-keyboard-and-vaqueria-defaults] - 2026-10-19
+
+### Mejorado y Corregido (Experiencia Móvil y Formularios de Vaquería)
+- **Nombre Predeterminado "Vaquería" al Crear ([`VaqueriaModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/VaqueriaModal.jsx))**:
+  - Al abrir el modal de nueva vaquería, el nombre predeterminado ahora se inicializa simplemente como `"Vaquería"` (en lugar de componer automáticamente `"Vaquería Mes Año"`), otorgando al usuario un punto de partida directo y limpio.
+- **Eliminación de Autoenfoque en Modales de Vaquería ([`VaqueriaModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/VaqueriaModal.jsx), [`CompleteAnimalModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/CompleteAnimalModal.jsx), [`ManualAddModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/ManualAddModal.jsx))**:
+  - Se eliminó el atributo `autoFocus` y los enfoques automáticos programáticos al abrir los modales de creación de vaquería, edición de vaquería, completar información de animal y asistencia manual.
+  - Esto evita que el teclado virtual en dispositivos móviles o tablets se abra automáticamente tapando el formulario o los botones de acción, permitiendo que el operario revise la información y decida libremente cuándo tocar el input para enfocarlo.
+- **Prevención de Despliegue Involuntario del Teclado en Móvil tras Escaneo ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx), [`BarcodeScannerModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/BarcodeScannerModal.jsx))**:
+  - *Problema resuelto*: Al escanear un animal mediante la cámara del móvil o lector RFID, el sistema enfocaba automáticamente el campo de escaneo tras procesar la asistencia (`setTimeout(focusScanInput, 60)`), forzando al navegador móvil a desplegar el teclado en pantalla y tapar la lista de animales y métricas.
+  - *Solución*:
+    1. Se incorporó detección de entorno móvil/táctil (`isMobileOrTouchDevice`).
+    2. En dispositivos móviles y táctiles, se omite cualquier autoenfoque forzado en montado y toques sobre la pantalla (`pointerdown`).
+    3. En el bloque de finalización de escaneo (`handleProcessScan.finally`), en móviles se ejecuta un desenfoque explícito atómico (`scanInputRef.current?.blur()` y `document.activeElement?.blur()`), asegurando que el teclado virtual permanezca oculto en todo momento tras registrar cada animal.
+    4. En el modal de escáner con cámara (`BarcodeScannerModal`), se desenfoca cualquier elemento activo previo al cierre del modal.
+    5. Se agregó `virtualKeyboardPolicy="manual"` en el campo de escaneo continuo.
+
+---
+
 ## [1.7.19-fix-vaqueria-sync-flicker] - 2026-10-18
 
 ### Corregido (Persistencia Continua de Animales en Lista de Vaquería durante Sincronización)

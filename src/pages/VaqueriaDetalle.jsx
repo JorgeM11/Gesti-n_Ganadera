@@ -46,6 +46,15 @@ import InactivateAnimalModal from '@/components/vaqueria/InactivateAnimalModal';
 import CompleteAnimalModal from '@/components/vaqueria/CompleteAnimalModal';
 import VaqueriaModal from '@/components/vaqueria/VaqueriaModal';
 
+const isMobileOrTouchDevice = () => {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
+  return (
+    'ontouchstart' in window ||
+    navigator.maxTouchPoints > 0 ||
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  );
+};
+
 export default function VaqueriaDetallePage() {
   const { id: vaqueriaId } = useParams();
   const navigate = useNavigate();
@@ -203,20 +212,26 @@ export default function VaqueriaDetallePage() {
   }
   const activeAnalysis = analysis || lastAnalysisRef.current;
 
-  // Mantener el input de escaneo siempre enfocado si no hay modales abiertos
+  // Mantener el input de escaneo enfocado en desktop con lectores físicos sin modales abiertos
   const isAnyModalOpen = isBarcodeOpen || isManualAddOpen || isEditVaqueriaOpen || Boolean(inactivatingAnimal) || Boolean(completingAnimalRecord) || Boolean(deletingRecord);
 
   const focusScanInput = () => {
+    // En móviles/táctiles no enfocar programáticamente para evitar que el teclado virtual se despliegue
+    if (isMobileOrTouchDevice()) return;
+
     if (!isAnyModalOpen && scanInputRef.current) {
       scanInputRef.current.focus({ preventScroll: true });
     }
   };
 
   useEffect(() => {
-    focusScanInput();
+    if (!isMobileOrTouchDevice()) {
+      focusScanInput();
+    }
 
     const handleDocumentPointerDown = (e) => {
-      if (isAnyModalOpen) return;
+      // En dispositivos móviles / táctiles no interceptar toques para reenfocar
+      if (isMobileOrTouchDevice() || isAnyModalOpen) return;
       // No reenfocar si el usuario hace clic o tap en un elemento interactivo explícito
       const interactive = e.target.closest('button, a, input, select, textarea, [role="button"]');
       if (!interactive) {
@@ -286,7 +301,14 @@ export default function VaqueriaDetallePage() {
       // 3. Limpiar SIEMPRE el input y buffers (éxito, duplicado, error o formato inválido)
       clearAllScanInputs();
       isProcessingScanRef.current = false;
-      setTimeout(focusScanInput, 60);
+      if (isMobileOrTouchDevice()) {
+        scanInputRef.current?.blur();
+        if (typeof document !== 'undefined' && document.activeElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
+        }
+      } else {
+        setTimeout(focusScanInput, 60);
+      }
     }
 
     return result;
@@ -340,7 +362,14 @@ export default function VaqueriaDetallePage() {
             playErrorBeep();
             triggerScanFeedback('error', 'El escáner solo admite microchips RFID de 15 dígitos. Para arete use el botón Manual.');
             clearAllScanInputs();
-            setTimeout(focusScanInput, 60);
+            if (isMobileOrTouchDevice()) {
+              scanInputRef.current?.blur();
+              if (typeof document !== 'undefined' && document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+              }
+            } else {
+              setTimeout(focusScanInput, 60);
+            }
           }
         } else {
           clearAllScanInputs();
@@ -393,7 +422,14 @@ export default function VaqueriaDetallePage() {
       playErrorBeep();
       triggerScanFeedback('error', 'El escáner solo admite número de chip RFID (15 dígitos). Para registrar arete o nombre, use el botón Manual.');
       clearAllScanInputs();
-      setTimeout(focusScanInput, 60);
+      if (isMobileOrTouchDevice()) {
+        scanInputRef.current?.blur();
+        if (typeof document !== 'undefined' && document.activeElement && typeof document.activeElement.blur === 'function') {
+          document.activeElement.blur();
+        }
+      } else {
+        setTimeout(focusScanInput, 60);
+      }
       return;
     }
 
@@ -774,6 +810,7 @@ export default function VaqueriaDetallePage() {
                   ref={scanInputRef}
                   type="text"
                   inputMode="none"
+                  virtualKeyboardPolicy="manual"
                   value={scanInputValue}
                   onChange={(e) => setScanInputValue(e.target.value)}
                   placeholder="Esperando escaneo de chip RFID (15 dígitos)..."

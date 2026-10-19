@@ -33,12 +33,7 @@ export default function VaqueriaModal({
         setObservations(initialData.observations || '');
       } else {
         const today = new Date();
-        const monthNames = [
-          'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-          'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
-        ];
-        const defaultName = `Vaquería ${monthNames[today.getMonth()]} ${today.getFullYear()}`;
-        setName(defaultName);
+        setName('Vaquería');
         setFarmId(initialFarmId || (farms.length > 0 ? farms[0].id : ''));
         setDate(today.toISOString().split('T')[0]);
         setObservations('');
@@ -164,9 +159,8 @@ export default function VaqueriaModal({
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Ej. Vaquería Octubre 2026"
+                  placeholder="Ej. Vaquería"
                   className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm font-bold text-neutral-800 placeholder-neutral-400 focus:bg-white focus:border-[#1B4820] focus:ring-2 focus:ring-[#1B4820]/15 outline-none transition-all"
-                  autoFocus
                 />
               </div>
             </div>

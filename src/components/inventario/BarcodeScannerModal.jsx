@@ -121,6 +121,10 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScanSuccess }) 
     playBeep();
     triggerVibrate();
 
+    if (typeof document !== 'undefined' && document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
+
     await stopScanner();
     if (onScanSuccessRef.current) {
       onScanSuccessRef.current(finalCode);
