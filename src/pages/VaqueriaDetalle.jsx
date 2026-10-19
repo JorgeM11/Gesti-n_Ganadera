@@ -127,12 +127,7 @@ export default function VaqueriaDetallePage() {
   const currentVaqueria = useLiveQuery(
     async () => {
       if (!vaqueriaId) return null;
-      let v = await db.vaquerias.get(vaqueriaId);
-      // En caso de navegación inmediata tras creación o micro-retraso de I/O en IndexedDB
-      if (!v) {
-        await new Promise(r => setTimeout(r, 120));
-        v = await db.vaquerias.get(vaqueriaId);
-      }
+      const v = await db.vaquerias.get(vaqueriaId);
       if (!v || v.deleted_at) return null;
       return v;
     },
@@ -140,13 +135,16 @@ export default function VaqueriaDetallePage() {
     initialVaqueria
   );
 
+  const effectiveVaqueria = currentVaqueria || initialVaqueria;
+
   const allVaquerias = useLiveQuery(
-    () => db.vaquerias.filter(v => !v.deleted_at).toArray()
+    () => db.vaquerias.filter(v => !v.deleted_at).toArray(),
+    []
   ) || [];
 
   const farm = useLiveQuery(
-    () => currentVaqueria?.farm_id ? db.farms.get(currentVaqueria.farm_id) : null,
-    [currentVaqueria?.farm_id]
+    () => effectiveVaqueria?.farm_id ? db.farms.get(effectiveVaqueria.farm_id) : null,
+    [effectiveVaqueria?.farm_id]
   );
 
   const presentRecords = useLiveQuery(
@@ -154,20 +152,32 @@ export default function VaqueriaDetallePage() {
     [vaqueriaId]
   ) || [];
 
+  // Buffer de persistencia para evitar micro-parpadeos de la lista durante reconciliaciones y sincronización
+  const lastPresentRecordsRef = useRef([]);
+  if (presentRecords && presentRecords.length > 0) {
+    lastPresentRecordsRef.current = presentRecords;
+  }
+  const effectivePresentRecords = (presentRecords && presentRecords.length > 0)
+    ? presentRecords
+    : (lastPresentRecordsRef.current && lastPresentRecordsRef.current.length > 0 && lastPresentRecordsRef.current[0]?.vaqueria_id === vaqueriaId
+      ? lastPresentRecordsRef.current
+      : presentRecords);
+
   const allAnimals = useLiveQuery(
-    () => db.animals.filter(a => !a.deleted_at).toArray()
+    () => db.animals.filter(a => !a.deleted_at).toArray(),
+    []
   ) || [];
 
   const farmAnimals = useMemo(() => {
-    if (!currentVaqueria?.farm_id) return [];
-    return allAnimals.filter(a => a.farm_id === currentVaqueria.farm_id);
-  }, [allAnimals, currentVaqueria?.farm_id]);
+    if (!effectiveVaqueria?.farm_id) return [];
+    return allAnimals.filter(a => a.farm_id === effectiveVaqueria.farm_id);
+  }, [allAnimals, effectiveVaqueria?.farm_id]);
 
   // Vaquería inmediatamente anterior de la misma finca
   const previousVaqueria = useMemo(() => {
-    if (!currentVaqueria) return null;
-    return getPreviousVaqueria(currentVaqueria, allVaquerias);
-  }, [currentVaqueria, allVaquerias]);
+    if (!effectiveVaqueria) return null;
+    return getPreviousVaqueria(effectiveVaqueria, allVaquerias);
+  }, [effectiveVaqueria, allVaquerias]);
 
   const previousRecords = useLiveQuery(
     () => previousVaqueria ? db.vaqueria_animals.where('vaqueria_id').equals(previousVaqueria.id).and(r => !r.deleted_at).toArray() : [],
@@ -176,16 +186,22 @@ export default function VaqueriaDetallePage() {
 
   // Cálculo del análisis de comparación y KPIs
   const analysis = useMemo(() => {
-    if (!currentVaqueria) return null;
+    if (!effectiveVaqueria) return null;
     return calculateVaqueriaAnalysis({
-      currentVaqueria,
-      presentRecords,
+      currentVaqueria: effectiveVaqueria,
+      presentRecords: effectivePresentRecords,
       previousVaqueria,
       previousRecords,
       farmAnimals,
       allAnimals
     });
-  }, [currentVaqueria, presentRecords, previousVaqueria, previousRecords, farmAnimals, allAnimals]);
+  }, [effectiveVaqueria, effectivePresentRecords, previousVaqueria, previousRecords, farmAnimals, allAnimals]);
+
+  const lastAnalysisRef = useRef(null);
+  if (analysis) {
+    lastAnalysisRef.current = analysis;
+  }
+  const activeAnalysis = analysis || lastAnalysisRef.current;
 
   // Mantener el input de escaneo siempre enfocado si no hay modales abiertos
   const isAnyModalOpen = isBarcodeOpen || isManualAddOpen || isEditVaqueriaOpen || Boolean(inactivatingAnimal) || Boolean(completingAnimalRecord) || Boolean(deletingRecord);
@@ -388,6 +404,7 @@ export default function VaqueriaDetallePage() {
   const handleConfirmRemove = async () => {
     if (!deletingRecord) return;
     try {
+      lastPresentRecordsRef.current = [];
       await removeAnimalFromVaqueria(deletingRecord.id);
       showToast('Animal retirado', 'El animal fue retirado de la asistencia de esta vaquería.', 'success');
     } catch (err) {
@@ -399,8 +416,8 @@ export default function VaqueriaDetallePage() {
 
   // Cambiar estatus de la vaquería (Finalizada / En progreso)
   const handleToggleStatus = async () => {
-    if (!currentVaqueria) return;
-    const isCurrentlyFinalized = currentVaqueria.status === 'Finalizada';
+    if (!effectiveVaqueria) return;
+    const isCurrentlyFinalized = effectiveVaqueria.status === 'Finalizada';
     const newStatus = isCurrentlyFinalized ? 'En progreso' : 'Finalizada';
 
     try {
@@ -408,13 +425,13 @@ export default function VaqueriaDetallePage() {
         // Tomar fotografía congelada (snapshot) del análisis actual
         const snapshotData = {
           finalized_at: new Date().toISOString(),
-          isComparisonWithInventory: Boolean(analysis?.isComparisonWithInventory),
+          isComparisonWithInventory: Boolean(activeAnalysis?.isComparisonWithInventory),
           previousVaqueria: previousVaqueria ? {
             id: previousVaqueria.id,
             name: previousVaqueria.name,
             date: previousVaqueria.date
           } : null,
-          classifiedPresent: (analysis?.classifiedPresent || []).map(p => ({
+          classifiedPresent: (activeAnalysis?.classifiedPresent || []).map(p => ({
             record: p.record ? {
               id: p.record.id,
               vaqueria_id: p.record.vaqueria_id,
@@ -443,7 +460,7 @@ export default function VaqueriaDetallePage() {
             displaySex: p.displaySex,
             displayBreed: p.displayBreed
           })),
-          missingAnimals: (analysis?.missingAnimals || []).map(m => ({
+          missingAnimals: (activeAnalysis?.missingAnimals || []).map(m => ({
             animal: m.animal ? {
               id: m.animal.id,
               number: m.animal.number,
@@ -465,10 +482,10 @@ export default function VaqueriaDetallePage() {
             badgeLabel: m.badgeLabel,
             badgeColor: m.badgeColor
           })),
-          kpis: analysis?.kpis || {}
+          kpis: activeAnalysis?.kpis || {}
         };
 
-        await updateVaqueria(currentVaqueria.id, {
+        await updateVaqueria(effectiveVaqueria.id, {
           status: 'Finalizada',
           snapshot_data: snapshotData
         });
@@ -479,7 +496,7 @@ export default function VaqueriaDetallePage() {
           'success'
         );
       } else {
-        await updateVaqueria(currentVaqueria.id, {
+        await updateVaqueria(effectiveVaqueria.id, {
           status: 'En progreso',
           snapshot_data: null
         });
@@ -495,8 +512,8 @@ export default function VaqueriaDetallePage() {
     }
   };
 
-  const isFinalized = currentVaqueria?.status === 'Finalizada';
-  const { classifiedPresent = [], missingAnimals = [], kpis = {} } = analysis || {};
+  const isFinalized = effectiveVaqueria?.status === 'Finalizada';
+  const { classifiedPresent = [], missingAnimals = [], kpis = {} } = activeAnalysis || {};
 
   // Filtrar presentes por término de búsqueda (siempre de primero los nuevos no registrados)
   const filteredPresent = useMemo(() => {
@@ -799,7 +816,7 @@ export default function VaqueriaDetallePage() {
             <div className="mt-2.5 pt-2 border-t border-neutral-100 flex flex-wrap items-center justify-between text-[11px] font-bold text-neutral-400 gap-2">
               <span className="flex items-center gap-1.5">
                 <Info className="w-3.5 h-3.5 text-[#1B4820]" />
-                {analysis?.isComparisonWithInventory
+                {activeAnalysis?.isComparisonWithInventory
                   ? 'Línea base: Rebaño activo de la finca en inventario (Primera vaquería)'
                   : `Línea base: Vaquería anterior (${previousVaqueria?.name || 'Previa'} - ${previousVaqueria?.date || ''})`}
               </span>

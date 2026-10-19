@@ -372,6 +372,11 @@ export async function pullFromServer() {
           // Si el registro está en cola pendiente de subida local, protegerlo siempre
           if (pendingIds.has(local.id)) continue;
 
+          // PROTECCIÓN VITAL: Si el registro fue creado localmente hace menos de 90 segundos,
+          // NUNCA eliminarlo en reconciliación (evita carreras de replicación o desfase al escanear/crear)
+          const createdAtTime = new Date(local.created_at || 0).getTime();
+          if (createdAtTime > 0 && (Date.now() - createdAtTime) < 90000) continue;
+
           if (!serverMap.has(local.id)) {
             // Borrado definitivo (Hard Delete) en Supabase: ya no existe en el servidor
             toDeleteLocally.push(local.id);

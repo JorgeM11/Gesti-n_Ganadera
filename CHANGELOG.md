@@ -4,6 +4,23 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.19-fix-vaqueria-sync-flicker] - 2026-10-18
+
+### Corregido (Persistencia Continua de Animales en Lista de Vaquería durante Sincronización)
+- **Eliminación de Desaparición Transitoria de Animales ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx), [`syncUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/syncUtils.js), [`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js))**:
+  - *Problema resuelto*: Al escanear un animal con el lector RFID, este se registraba y aparecía correctamente en la lista de presentes. Sin embargo, cuando el motor de sincronización iniciaba la subida y descarga en segundo plano (`syncStatus === 'SYNCING'`), el animal desaparecía momentáneamente de la pantalla y regresaba únicamente al finalizar la sincronización (`UP_TO_DATE`).
+  - *Causas identificadas*:
+    1. La consulta `useLiveQuery` de `currentVaqueria` utilizaba una promesa con `setTimeout(120)` interno, lo que rompía la zona de Dexie durante las operaciones `bulkPut` de la sincronización y devolvía transitoriamente `null`, provocando que `analysis` se reseteara a `null` y vaciara la lista (`classifiedPresent = []`).
+    2. La reconciliación de borrados en `syncUtils.js` (`pullFromServer`) no contaba con ventana de gracia para registros recién creados/escaneados tras su eliminación de la cola de subida (`sync_queue`), exponiéndolos a carreras temporales con Supabase.
+    3. `addAnimalToVaqueria` y `createVaqueria` guardaban localmente `user_id = workerId` para obreros en vez de `effectiveUserId` (el ID del administrador asignado), provocando que la sincronización con Supabase mutara el registro al descargarlo y reiniciara las consultas reactivas.
+  - *Solución integral implementada*:
+    1. **Eliminación del `setTimeout` en `useLiveQuery`**: La consulta de `currentVaqueria` ahora se ejecuta directamente sobre Dexie sin demoras artificiales, vinculándose a `effectiveVaqueria = currentVaqueria || initialVaqueria`.
+    2. **Buffers de Persistencia Reactiva (`lastPresentRecordsRef` y `lastAnalysisRef`)**: Si durante una ráfaga de escritura transaccional en IndexedDB `presentRecords` o `analysis` llegaran a evaluarse temporalmente vacíos, el componente mantiene en pantalla los registros activos de la vaquería actual hasta que la nueva evaluación confirme los datos.
+    3. **Protección en Reconciliación de Borrados**: Todo registro local creado en los últimos 90 segundos queda estrictamente protegido contra eliminación en `pullFromServer`, eliminando cualquier carrera temporal.
+    4. **Titularidad Consistente de Datos**: `createVaqueria` y `addAnimalToVaqueria` utilizan desde el momento de su inserción local el `effectiveUserId`, garantizando 100% de coherencia entre Dexie y Supabase.
+
+---
+
 ## [1.7.18-farm-isolation-vaqueria] - 2026-10-18
 
 ### Añadido y Validado (Aislamiento Estricto de Animales por Finca en Vaquería)

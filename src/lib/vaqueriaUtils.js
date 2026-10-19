@@ -30,12 +30,15 @@ export function normalizeText(text) {
  * Crea una nueva sesión de Vaquería
  */
 export async function createVaqueria({ farmId, name, date, observations = '' }) {
-  const userId = localStorage.getItem('ganadera_user_id') || '00000000-0000-0000-0000-000000000001';
+  const actualUserId = localStorage.getItem('ganadera_user_id') || '00000000-0000-0000-0000-000000000001';
+  const adminId = localStorage.getItem('ganadera_admin_id');
+  const role = localStorage.getItem('ganadera_user_role');
+  const effectiveUserId = ((role === 'obrero' || role === 'operador') && adminId) ? adminId : actualUserId;
   const now = new Date().toISOString();
 
   const newVaqueria = {
     id: uuidv4(),
-    user_id: userId,
+    user_id: effectiveUserId,
     farm_id: farmId,
     name: name?.trim() || `Vaquería ${date || new Date().toLocaleDateString('es-ES')}`,
     date: date || new Date().toISOString().split('T')[0],
@@ -377,7 +380,10 @@ export async function addAnimalToVaqueria({
   identificationType = 'auto', // 'auto' | 'chip' | 'arete' | 'name'
   manualAnimal = null // Objeto opcional si fue seleccionado directamente
 }) {
-  const userId = localStorage.getItem('ganadera_user_id') || '00000000-0000-0000-0000-000000000001';
+  const actualUserId = localStorage.getItem('ganadera_user_id') || '00000000-0000-0000-0000-000000000001';
+  const adminId = localStorage.getItem('ganadera_admin_id');
+  const role = localStorage.getItem('ganadera_user_role');
+  const effectiveUserId = ((role === 'obrero' || role === 'operador') && adminId) ? adminId : actualUserId;
   const cleanCode = (code || '').trim();
 
   let effectiveFarmId = farmId;
@@ -598,7 +604,7 @@ export async function addAnimalToVaqueria({
   const newRecord = {
     id: uuidv4(),
     vaqueria_id: vaqueriaId,
-    user_id: userId,
+    user_id: effectiveUserId,
     animal_id: targetAnimal ? targetAnimal.id : null,
     scanned_code: cleanCode,
     identification_type: finalIdentificationType,
