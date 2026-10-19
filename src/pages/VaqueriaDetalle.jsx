@@ -225,6 +225,14 @@ export default function VaqueriaDetallePage() {
   };
 
   useEffect(() => {
+    if (scanInputRef.current) {
+      try {
+        scanInputRef.current.virtualKeyboardPolicy = 'manual';
+      } catch {
+        // Ignorar si el navegador no expone la propiedad
+      }
+    }
+
     if (!isMobileOrTouchDevice()) {
       focusScanInput();
     }
@@ -810,7 +818,7 @@ export default function VaqueriaDetallePage() {
                   ref={scanInputRef}
                   type="text"
                   inputMode="none"
-                  virtualKeyboardPolicy="manual"
+                  virtualkeyboardpolicy="manual"
                   value={scanInputValue}
                   onChange={(e) => setScanInputValue(e.target.value)}
                   placeholder="Esperando escaneo de chip RFID (15 dígitos)..."
