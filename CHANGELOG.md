@@ -4,6 +4,17 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.21-mobile-farm-select-filter] - 2026-10-19
+
+### Añadido y Mejorado (Filtro Select de Finca en Móvil para Dashboard y Vaquerías)
+- **Filtro de Finca como `CustomSelect` en Móvil ([`Dashboard.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Dashboard.jsx), [`Vaquerias.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Vaquerias.jsx))**:
+  - *Comportamiento adaptable*: En pantallas móviles (`block md:hidden`), el selector de finca horizontal ahora se muestra como un selector estilizado flotante `CustomSelect` con los estilos estándar del sistema (fondo `bg-neutral-50`, bordes redondeados, menú animado y checkmark de selección).
+  - *Preservación en escritorio*: En pantallas de escritorio (`hidden md:flex` / `hidden md:block`), se preserva el carrusel de píldoras horizontales con conteo individual de cabezas y vaquerías.
+- **Reposicionamiento en Vaquería ([`Vaquerias.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/Vaquerias.jsx))**:
+  - En la vista de vaquerías para móviles, el selector `CustomSelect` de fincas se posicionó estratégicamente **por encima de la barra de búsqueda**, permitiendo delimitar primero la finca de trabajo antes de filtrar o buscar por texto.
+
+---
+
 ## [1.7.20-mobile-keyboard-and-vaqueria-defaults] - 2026-10-19
 
 ### Mejorado y Corregido (Experiencia Móvil y Formularios de Vaquería)

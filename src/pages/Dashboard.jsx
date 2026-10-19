@@ -502,6 +502,21 @@ export default function DashboardPage() {
     return allAnimals.filter(a => !a.farm_id).length;
   }, [allAnimals]);
 
+  // Opciones de finca para CustomSelect (versión móvil)
+  const farmSelectOptions = useMemo(() => {
+    const list = [
+      { value: 'ALL', label: `Todas las Fincas (${allAnimals.length})` }
+    ];
+    farms.forEach(f => {
+      const count = allAnimals.filter(a => a.farm_id === f.id).length;
+      list.push({ value: f.id, label: `${f.name} (${count})` });
+    });
+    if (sinFincaCount > 0) {
+      list.push({ value: 'NONE', label: `Sin Finca (${sinFincaCount})` });
+    }
+    return list;
+  }, [farms, allAnimals, sinFincaCount]);
+
   return (
     <main className="min-h-screen bg-[#F0F2EB] font-sans pb-28 relative">
       {/* SIDEBAR NAVIGATION DRAWER (HAMBURGUESA) */}
@@ -574,8 +589,19 @@ export default function DashboardPage() {
             )}
           </div>
 
-          {/* Pills de Fincas con Scroll Horizontal Fluido */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar scroll-smooth">
+          {/* Selector de Finca en Móvil (Solo visible en pantallas móviles) */}
+          <div className="block md:hidden relative z-20">
+            <CustomSelect
+              value={selectedFarmId}
+              onChange={setSelectedFarmId}
+              options={farmSelectOptions}
+              placeholder="Seleccionar Finca"
+              bgClass="bg-neutral-50"
+            />
+          </div>
+
+          {/* Pills de Fincas con Scroll Horizontal Fluido (Solo visible en desktop) */}
+          <div className="hidden md:flex items-center gap-2 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar scroll-smooth">
             {/* Todas las Fincas */}
             <button
               type="button"

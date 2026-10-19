@@ -27,6 +27,7 @@ import PotreroModal from '@/components/inventario/PotreroModal';
 import OwnerModal from '@/components/inventario/OwnerModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Toast from '@/components/ui/Toast';
+import CustomSelect from '@/components/ui/CustomSelect';
 import VaqueriaModal from '@/components/vaqueria/VaqueriaModal';
 import { useForceResync } from '@/hooks/useForceResync';
 
@@ -71,6 +72,14 @@ export default function VaqueriasPage() {
     const map = new Map();
     farms.forEach(f => map.set(f.id, f));
     return map;
+  }, [farms]);
+
+  // Opciones de finca para CustomSelect (versión móvil)
+  const farmSelectOptions = useMemo(() => {
+    return [
+      { value: 'ALL', label: 'Todas las Fincas' },
+      ...farms.map(f => ({ value: f.id, label: f.name }))
+    ];
   }, [farms]);
 
   // Contar presentes por vaquería
@@ -177,6 +186,20 @@ export default function VaqueriasPage() {
       <main className="max-w-7xl mx-auto w-full px-4 md:px-8 mt-5 md:mt-8 flex-1">
         {/* Barra de Filtros y Búsqueda */}
         <div className="bg-white rounded-3xl p-4 md:p-6 shadow-sm border border-neutral-200/70 mb-6 space-y-4">
+          {/* Selector de Finca en Móvil (Por encima de la barra de búsqueda) */}
+          <div className="block md:hidden relative z-20">
+            <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-[#1B4820]" /> Filtrar por Finca
+            </p>
+            <CustomSelect
+              value={selectedFarmId}
+              onChange={setSelectedFarmId}
+              options={farmSelectOptions}
+              placeholder="Filtrar por Finca"
+              bgClass="bg-neutral-50"
+            />
+          </div>
+
           <div>
             {/* Buscador */}
             <div className="relative w-full">
@@ -191,8 +214,8 @@ export default function VaqueriasPage() {
             </div>
           </div>
 
-          {/* Selector de Fincas (Pills Horizontales) */}
-          <div>
+          {/* Selector de Fincas en Desktop (Pills Horizontales) */}
+          <div className="hidden md:block">
             <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <Building2 className="w-3.5 h-3.5 text-[#1B4820]" /> Filtrar por Finca
             </p>
@@ -224,11 +247,11 @@ export default function VaqueriasPage() {
                 </button>
               ))}
             </div>
+          </div>
 
-            {/* Contador de Vaquerías (Abajo de los filtros de finca y a la izquierda en móvil) */}
-            <div className="text-left text-xs font-bold text-neutral-500 pt-2.5">
-              {filteredVaquerias.length} {filteredVaquerias.length === 1 ? 'vaquería' : 'vaquerías'}
-            </div>
+          {/* Contador de Vaquerías */}
+          <div className="text-left text-xs font-bold text-neutral-500 pt-1">
+            {filteredVaquerias.length} {filteredVaquerias.length === 1 ? 'vaquería' : 'vaquerías'}
           </div>
         </div>
 
