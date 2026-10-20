@@ -4,6 +4,16 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.22-fix-remove-last-vaqueria-animal] - 2026-10-19
+
+### Corregido (Eliminación Inmediata al Retirar el Último Animal de la Vaquería)
+- **Corrección de Eliminación al Primer Clic ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx), [`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js))**:
+  - *Problema resuelto*: Al retirar el último animal presente en una vaquería (cuando solo quedaba 1 registro en la lista), al pulsar "Quitar" el sistema iniciaba la sincronización pero el animal no desaparecía de la pantalla, requiriendo pulsar el botón de borrar una segunda vez para que se eliminara efectivamente. Cuando había varios animales, el problema no ocurría.
+  - *Causa raíz*: El buffer de persistencia reactiva (`lastPresentRecordsRef`) evaluaba `(presentRecords && presentRecords.length > 0) ? presentRecords : lastPresentRecordsRef.current`. Cuando se eliminaba el último animal, `presentRecords` pasaba legítimamente a tener longitud 0 (`[]`), pero la condición interpretaba el array vacío como un fallo transitorio y reinyectaba el animal en caché (`lastPresentRecordsRef.current`), impidiendo que la interfaz pasara a estado vacío hasta un segundo intento de borrado.
+  - *Solución*: Se eliminó la sobreescritura del buffer sobre listas vacías legítimas, enlazando `effectivePresentRecords` de manera directa a la consulta reactiva de Dexie (`presentRecords`). Ahora el último animal se retira instantáneamente en el primer clic y la pantalla muestra correctamente el estado vacío sin necesidad de confirmaciones repetidas. Se sincronizó también `updated_at` en el payload de actualización para Supabase.
+
+---
+
 ## [1.7.21-mobile-farm-select-filter] - 2026-10-19
 
 ### Añadido y Mejorado (Filtro Select de Finca en Móvil para Dashboard y Vaquerías)

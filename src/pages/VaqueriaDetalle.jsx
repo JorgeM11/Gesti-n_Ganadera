@@ -161,16 +161,7 @@ export default function VaqueriaDetallePage() {
     [vaqueriaId]
   ) || [];
 
-  // Buffer de persistencia para evitar micro-parpadeos de la lista durante reconciliaciones y sincronización
-  const lastPresentRecordsRef = useRef([]);
-  if (presentRecords && presentRecords.length > 0) {
-    lastPresentRecordsRef.current = presentRecords;
-  }
-  const effectivePresentRecords = (presentRecords && presentRecords.length > 0)
-    ? presentRecords
-    : (lastPresentRecordsRef.current && lastPresentRecordsRef.current.length > 0 && lastPresentRecordsRef.current[0]?.vaqueria_id === vaqueriaId
-      ? lastPresentRecordsRef.current
-      : presentRecords);
+  const effectivePresentRecords = presentRecords;
 
   const allAnimals = useLiveQuery(
     () => db.animals.filter(a => !a.deleted_at).toArray(),
@@ -448,7 +439,6 @@ export default function VaqueriaDetallePage() {
   const handleConfirmRemove = async () => {
     if (!deletingRecord) return;
     try {
-      lastPresentRecordsRef.current = [];
       await removeAnimalFromVaqueria(deletingRecord.id);
       showToast('Animal retirado', 'El animal fue retirado de la asistencia de esta vaquería.', 'success');
     } catch (err) {

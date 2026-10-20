@@ -654,7 +654,7 @@ export async function removeAnimalFromVaqueria(vaqueriaAnimalId) {
   };
 
   await db.vaqueria_animals.put(updated);
-  await addToSyncQueue('vaqueria_animals', 'PATCH', { id: vaqueriaAnimalId, deleted_at: now });
+  await addToSyncQueue('vaqueria_animals', 'PATCH', { id: vaqueriaAnimalId, deleted_at: now, updated_at: now });
 }
 
 /**
