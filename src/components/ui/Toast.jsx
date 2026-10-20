@@ -2,60 +2,62 @@ import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
-export default function Toast({ toast, onClose }) {
+export default function Toast({ toast, title, message, type, onClose }) {
+  const effectiveToast = toast || (title ? { title, message, type } : null);
+
   useEffect(() => {
-    if (!toast) return;
+    if (!effectiveToast) return;
     const timer = setTimeout(() => {
-      onClose();
+      if (typeof onClose === 'function') onClose();
     }, 4000);
     return () => clearTimeout(timer);
-  }, [toast, onClose]);
+  }, [effectiveToast, onClose]);
+
+  if (!effectiveToast) return null;
 
   return (
     <AnimatePresence>
-      {toast && (
-        <motion.div
-          initial={{ opacity: 0, y: -24, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -24, scale: 0.95 }}
-          transition={{ type: 'spring', damping: 24, stiffness: 350 }}
-          className="fixed top-5 left-1/2 -translate-x-1/2 z-[70] w-[92%] max-w-md pointer-events-auto"
-        >
-          <div className="bg-white rounded-2xl p-4 shadow-2xl border border-emerald-200/80 flex items-start justify-between gap-3 backdrop-blur-md">
-            <div className="flex items-start gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0 border border-emerald-200/60 mt-0.5">
-                {toast.type === 'error' ? (
-                  <AlertCircle className="w-5 h-5 text-red-600" />
-                ) : toast.type === 'info' ? (
-                  <Info className="w-5 h-5 text-blue-600" />
-                ) : (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                )}
-              </div>
-
-              <div className="min-w-0">
-                <h4 className="text-sm font-black text-neutral-900 leading-tight">
-                  {toast.title}
-                </h4>
-                {toast.message && (
-                  <p className="text-xs text-neutral-600 font-medium mt-0.5 leading-snug">
-                    {toast.message}
-                  </p>
-                )}
-              </div>
+      <motion.div
+        initial={{ opacity: 0, y: -24, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -24, scale: 0.95 }}
+        transition={{ type: 'spring', damping: 24, stiffness: 350 }}
+        className="fixed top-5 left-1/2 -translate-x-1/2 z-[200] w-[92%] max-w-md pointer-events-auto"
+      >
+        <div className="bg-white rounded-2xl p-4 shadow-2xl border border-emerald-200/80 flex items-start justify-between gap-3 backdrop-blur-md">
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 shrink-0 border border-emerald-200/60 mt-0.5">
+              {effectiveToast.type === 'error' ? (
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              ) : effectiveToast.type === 'info' ? (
+                <Info className="w-5 h-5 text-blue-600" />
+              ) : (
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+              )}
             </div>
 
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors shrink-0 cursor-pointer"
-              title="Cerrar notificación"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="min-w-0">
+              <h4 className="text-sm font-black text-neutral-900 leading-tight">
+                {effectiveToast.title}
+              </h4>
+              {effectiveToast.message && (
+                <p className="text-xs text-neutral-600 font-medium mt-0.5 leading-snug">
+                  {effectiveToast.message}
+                </p>
+              )}
+            </div>
           </div>
-        </motion.div>
-      )}
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors shrink-0 cursor-pointer"
+            title="Cerrar notificación"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </motion.div>
     </AnimatePresence>
   );
 }

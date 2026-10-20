@@ -471,6 +471,7 @@ export default function VaqueriasPage() {
       {toast && (
         <Toast
           key={toast.id}
+          toast={toast}
           title={toast.title}
           message={toast.message}
           type={toast.type}
