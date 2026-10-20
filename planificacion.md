@@ -246,14 +246,47 @@ flowchart TD
 
 ---
 
-### ⏳ Fase 4: Correcciones del Cliente y Nuevos Requerimientos (Programada para Mañana)
-> **Objetivo**: Atender la lista de observaciones, correcciones y ajustes operativos que reporte el cliente tras las pruebas en campo del sistema desplegado, así como dar inicio al siguiente paquete de requerimientos.
+### ⏳ Fase 4: Nuevos Requerimientos y Evolución del Sistema (Planificación Consolidada)
+> **Objetivo**: Incorporar el paquete de 13 nuevas funcionalidades, ajustes de roles y permisos, auditoría y evolución del módulo de vaquerías hacia eventos integrales solicitados por el cliente para la siguiente etapa de desarrollo.
 
-- **Estado**: En espera de las observaciones y correcciones del cliente.
-- **Fecha de inicio programada**: 2026-10-20 (Mañana).
-- [ ] Recepción y consolidación del feedback del cliente sobre el despliegue actual.
-- [ ] Planificación y priorización de ajustes solicitados.
-- [ ] Desarrollo, pruebas y despliegue del paquete de correcciones y mejoras de la Fase 4.
+- **Estado**: Planificación consolidada / En espera de inicio de implementación.
+- **Fecha de registro**: 2026-10-20.
+
+#### 📦 Desglose de Requerimientos de la Fase 4:
+
+1. **Gestión de Ganado e Inventario**:
+   - [ ] **Selección de múltiples animales (Acciones por lote)**:
+     - Checkboxes y modo de selección múltiple en la lista de inventario.
+     - Barra flotante de acciones masivas (ej. traslado masivo de potrero, cambio de lote, asignación de estado o exportación).
+   - [ ] **Módulo de animales inactivos**:
+     - Vista/pantalla dedicada e independiente para consultar y auditar el histórico exclusivo de bajas e inactivos (muerte, venta, pérdida, descarte, traslado).
+     - Visualización de fecha de baja, motivo detallado, notas y filtros específicos por causa.
+   - [ ] **Filtro y detección de animales repetidos**:
+     - Filtro rápido o sección de auditoría para detectar duplicados por número de arete, microchip RFID o nombre en la base de datos de la finca.
+   - [ ] **Corrección integral de filtros**:
+     - Homologación y depuración reactiva de filtros en Inventario, Dashboard y Vaquerías (potreros dependientes de finca seleccionada, estatus activo/inactivo, propietarios y reseteo).
+
+2. **Evolución del Módulo de Vaquería a Eventos**:
+   - [ ] **Redefinición y cambio de nombre de "Vaquería" por "Eventos"**:
+     - Evolucionar el concepto de "Vaquería" a "Eventos de Manejo" (para registrar no solo asistencia general, sino también eventos operativos específicos como baños, pesajes, vacunaciones masivas o curaciones).
+   - [ ] **Edición rápida de animal desde lista de vaquería / evento**:
+     - Botón de edición directa en las filas de las pestañas (Presentes / Faltantes) para modificar datos del animal sin necesidad de salir de la vaquería en curso.
+   - [ ] **Fecha de finalización de vaquería**:
+     - Campo explícito para registrar la fecha y hora exacta de culminación de la vaquería (almacenada tanto en snapshot como en metadatos del registro).
+   - [ ] **Confirmación obligatoria al finalizar vaquería**:
+     - Modal de confirmación y advertencia ("¿Estás seguro de finalizar la vaquería?") para prevenir cierres involuntarios o congelamientos accidentales de snapshots.
+   - [ ] **Resaltado visual de animales al reabrir vaquería**:
+     - Indicador visual destacado para distinguir claramente los animales que ya estaban registrados o validados antes de reabrir la sesión.
+   - [ ] **Comparación entre vaquerías / eventos**:
+     - Herramienta y pantalla de análisis comparativo histórico (Vaquería A vs Vaquería B) para visualizar fluctuaciones de rebaño, variaciones de asistencia, bajas y nuevos ingresos entre fechas.
+
+3. **Usuarios, Roles y Control de Acceso**:
+   - [ ] **Módulo de gestión de Usuarios y Fincas**:
+     - Interfaz administrativa para que el administrador pueda dar de alta usuarios, consultar el equipo y asignar o revocar fincas autorizadas a cada operador/obrero.
+   - [ ] **Nuevo rol: Usuario Operador**:
+     - Incorporación formal del rol `operador`, estructurando su alcance de permisos intermedios entre administrador y obrero de campo.
+   - [ ] **Restricción de montos totales para Obrero**:
+     - Ocultar montos económicos, valorizaciones de rebaño y cifras financieras en todas las pantallas cuando la sesión activa corresponda a un usuario con rol `obrero`.
 
 ---
 
@@ -276,5 +309,5 @@ flowchart TD
 | **Parte 3 - Apartado 2: Instantánea Inmutable (Snapshot)** | 2026-10-18 | **Completado** | Antigravity AI & Usuario | Congelamiento absoluto de listas y métricas al finalizar la vaquería con soporte cloud en Supabase (`snapshot_data JSONB`). |
 | **Parte 3 - Apartado 3: Sistema de Roles** | 2026-10-18 | **Completado (Software)** | Antigravity AI & Usuario | Restricciones completas de perfil obrero/operador: asignación de fincas relacional en Supabase y Dexie v9, acceso exclusivo a inventario, bloqueo de Dashboard y Vaquería, filtros restringidos a fincas asignadas y dueños con animales presentes, formularios de registro protegidos y titularidad de datos centralizada en admin. |
 | **Despliegue en Producción y Pruebas Iniciales** | 2026-10-19 | **Completado** | Antigravity AI & Usuario | Despliegue completado con éxito. Pruebas de campo iniciales realizadas en móvil y escáner, con ajustes aplicados (supresión de teclado virtual, CustomSelect de fincas y buffer reactivo sin parpadeo). |
-| **Fase 4: Correcciones del Cliente y Nuevos Requerimientos** | 2026-10-20 (Mañana) | **En Espera** | Antigravity AI & Usuario | A la espera de las observaciones y correcciones del cliente tras sus pruebas de campo para dar inicio a la Fase 4 el día de mañana. |
+| **Fase 4: Consolidación de Requerimientos** | 2026-10-20 | **Planificado** | Antigravity AI & Usuario | Registrados y estructurados los 13 requerimientos de la Fase 4: selección múltiple, módulo de inactivos, usuarios y fincas, corrección de filtros, edición en vaquería, fecha fin vaquería, animales resaltados al reabrir, usuario operador, confirmación al finalizar, vaquería por eventos, filtro de repetidos, comparación de vaquerías y ocultar montos a obreros. |
 
