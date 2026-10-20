@@ -700,6 +700,9 @@ export async function completeUnregisteredAnimal({
   const now = new Date().toISOString();
   const newAnimalId = uuidv4();
 
+  const cleanNumber = (animalData.number || '').trim();
+  const cleanChip = (animalData.chip_number || '').trim();
+
   const newAnimal = {
     id: newAnimalId,
     user_id: effectiveUserId,
@@ -708,8 +711,8 @@ export async function completeUnregisteredAnimal({
     farm_id: animalData.farm_id || null,
     potrero_id: animalData.potrero_id || null,
     owner_id: animalData.owner_id || null,
-    number: animalData.number.trim(),
-    chip_number: animalData.chip_number?.trim() || null,
+    number: cleanNumber,
+    chip_number: cleanChip || null,
     name: animalData.name?.trim() || null,
     sex: animalData.sex || 'Hembra',
     birth_date: animalData.birth_date || null,
@@ -732,9 +735,12 @@ export async function completeUnregisteredAnimal({
     const updatedVaqAnimal = {
       ...vaqAnimal,
       animal_id: newAnimalId,
-      number: newAnimal.number,
-      chip_number: newAnimal.chip_number,
-      name: newAnimal.name,
+      number: newAnimal.number || null,
+      chip_number: newAnimal.chip_number || null,
+      name: newAnimal.name || null,
+      identification_type: newAnimal.number
+        ? (vaqAnimal.identification_type === 'chip' ? 'chip' : 'arete')
+        : (newAnimal.chip_number ? 'chip' : (vaqAnimal.identification_type || 'arete')),
       is_unregistered: false,
       updated_at: now
     };

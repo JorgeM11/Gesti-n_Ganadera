@@ -984,7 +984,9 @@ export default function VaqueriaDetallePage() {
                             <span className="text-xs sm:text-sm font-black text-neutral-900 truncate">
                               {item.displayNumber && item.displayNumber !== '---'
                                 ? `#${item.displayNumber}`
-                                : (item.displayName && item.displayName !== 'Sin nombre' ? item.displayName : 'Sin arete')}
+                                : (item.displayName && item.displayName !== 'Sin nombre' 
+                                    ? item.displayName 
+                                    : (item.displayChip && item.displayChip !== '---' ? `Chip ${item.displayChip}` : 'Sin arete'))}
                             </span>
                           </div>
                           {item.displayNumber && item.displayNumber !== '---' && item.displayName && item.displayName !== 'Sin nombre' && (
@@ -1158,7 +1160,7 @@ export default function VaqueriaDetallePage() {
                       <span className="text-xs sm:text-sm font-black text-neutral-900 min-w-[80px] sm:min-w-[120px] shrink-0 truncate">
                         {item.record.name 
                           ? item.record.name 
-                          : (item.record.number ? `Arete #${item.record.number}` : 'Sin arete')}
+                          : (item.record.number ? `Arete #${item.record.number}` : (item.record.chip_number ? `Chip ${item.record.chip_number}` : 'Sin arete'))}
                       </span>
 
                       {item.record.chip_number && (
@@ -1297,7 +1299,8 @@ export default function VaqueriaDetallePage() {
         vaqueriaAnimal={completingAnimalRecord}
         farmId={currentVaqueria.farm_id}
         onSuccess={(created) => {
-          showToast('Animal Registrado', `Arete #${created.number} ha sido registrado e incorporado al inventario.`, 'success');
+          const ident = created.number ? `Arete #${created.number}` : (created.chip_number ? `Microchip ${created.chip_number}` : (created.name || 'El animal'));
+          showToast('Animal Registrado', `${ident} ha sido registrado e incorporado al inventario.`, 'success');
         }}
       />
 

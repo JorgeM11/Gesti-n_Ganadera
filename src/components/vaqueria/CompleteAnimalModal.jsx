@@ -54,13 +54,18 @@ export default function CompleteAnimalModal({
     if (isOpen && vaqueriaAnimal) {
       setError('');
       if (vaqueriaAnimal.identification_type === 'name') {
-        setName(vaqueriaAnimal.name || vaqueriaAnimal.number || '');
-        setNumber(vaqueriaAnimal.name ? (vaqueriaAnimal.number || '') : '');
-      } else {
+        setName(vaqueriaAnimal.name || vaqueriaAnimal.scanned_code || '');
+        setNumber(vaqueriaAnimal.number || '');
+        setChipNumber(vaqueriaAnimal.chip_number || '');
+      } else if (vaqueriaAnimal.identification_type === 'chip') {
+        setChipNumber(vaqueriaAnimal.chip_number || vaqueriaAnimal.scanned_code || '');
         setNumber(vaqueriaAnimal.number || '');
         setName(vaqueriaAnimal.name || '');
+      } else {
+        setNumber(vaqueriaAnimal.number || vaqueriaAnimal.scanned_code || '');
+        setName(vaqueriaAnimal.name || '');
+        setChipNumber(vaqueriaAnimal.chip_number || '');
       }
-      setChipNumber(vaqueriaAnimal.chip_number || '');
       setSex('Hembra');
       setBreed('Mestizo');
       setColor('');
@@ -90,26 +95,47 @@ export default function CompleteAnimalModal({
       if (typeof e.stopPropagation === 'function') e.stopPropagation();
     }
 
-    if (!number.trim()) {
-      setError('El número de arete es obligatorio para registrar al animal.');
+    const cleanNumber = number.trim();
+    const cleanChip = chipNumber.trim();
+    const cleanName = name.trim();
+
+    // Validar que se suministre al menos uno: Arete o Microchip
+    if (!cleanNumber && !cleanChip) {
+      setError('Debes ingresar al menos el Número de Arete o el Microchip RFID.');
       return;
     }
 
-    if (chipNumber.trim() && !isValidChipNumber(chipNumber.trim())) {
+    // Si se proporciona microchip, validar formato de 15 dígitos
+    if (cleanChip && !isValidChipNumber(cleanChip)) {
       setError('El microchip RFID debe tener exactamente 15 dígitos numéricos.');
       return;
     }
 
-    // Comprobar que el arete no esté duplicado en la misma finca
-    const existingSameNumber = await db.animals
-      .where('farm_id')
-      .equals(farmId)
-      .and(a => !a.deleted_at && a.number.trim().toLowerCase() === number.trim().toLowerCase())
-      .first();
+    // Comprobar que el arete no esté duplicado en la misma finca (solo si se especificó arete)
+    if (cleanNumber) {
+      const existingSameNumber = await db.animals
+        .where('farm_id')
+        .equals(farmId)
+        .and(a => !a.deleted_at && a.number && a.number.trim().toLowerCase() === cleanNumber.toLowerCase())
+        .first();
 
-    if (existingSameNumber) {
-      setError(`Ya existe un animal con el arete #${number.trim()} en esta finca.`);
-      return;
+      if (existingSameNumber) {
+        setError(`Ya existe un animal con el arete #${cleanNumber} en esta finca.`);
+        return;
+      }
+    }
+
+    // Comprobar que el chip no esté duplicado globalmente (solo si se especificó chip)
+    if (cleanChip) {
+      const existingSameChip = await db.animals
+        .filter(a => !a.deleted_at && a.chip_number && a.chip_number.trim() === cleanChip)
+        .first();
+
+      if (existingSameChip) {
+        const ident = existingSameChip.number ? `#${existingSameChip.number}` : (existingSameChip.name || 'registrado en inventario');
+        setError(`El microchip ${cleanChip} ya está asignado al animal ${ident}.`);
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -122,9 +148,9 @@ export default function CompleteAnimalModal({
           farm_id: farmId,
           potrero_id: potreroId || null,
           owner_id: ownerId || null,
-          number: number.trim(),
-          chip_number: chipNumber.trim() || null,
-          name: name.trim() || null,
+          number: cleanNumber,
+          chip_number: cleanChip || null,
+          name: cleanName || null,
           sex,
           breed,
           color: color.trim() || null,
@@ -171,6 +197,13 @@ export default function CompleteAnimalModal({
                 <h3 className="text-lg font-black text-neutral-900 leading-tight">
                   Completar Registro
                 </h3>
+                <p className="text-xs text-neutral-500 font-medium">
+                  {vaqueriaAnimal.identification_type === 'chip'
+                    ? `Microchip: ${vaqueriaAnimal.chip_number || vaqueriaAnimal.scanned_code}`
+                    : (vaqueriaAnimal.identification_type === 'name' && (vaqueriaAnimal.name || vaqueriaAnimal.scanned_code)
+                        ? `Animal: ${vaqueriaAnimal.name || vaqueriaAnimal.scanned_code}`
+                        : `Arete: #${vaqueriaAnimal.number || vaqueriaAnimal.scanned_code}`)}
+                </p>
               </div>
             </div>
 
@@ -195,8 +228,15 @@ export default function CompleteAnimalModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Arete */}
               <div>
-                <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                  <Tag className="w-3.5 h-3.5 text-[#1B4820]" /> Número de Arete *
+                <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-[#1B4820]" /> Número de Arete
+                  </span>
+                  {!chipNumber.trim() && (
+                    <span className="text-[10px] text-amber-700 font-semibold lowercase bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                      o chip
+                    </span>
+                  )}
                 </label>
                 <input
                   type="text"
@@ -209,8 +249,15 @@ export default function CompleteAnimalModal({
 
               {/* Chip */}
               <div>
-                <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                  <Cpu className="w-3.5 h-3.5 text-[#1B4820]" /> Microchip
+                <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5">
+                    <Cpu className="w-3.5 h-3.5 text-[#1B4820]" /> Microchip RFID
+                  </span>
+                  {!number.trim() && (
+                    <span className="text-[10px] text-amber-700 font-semibold lowercase bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                      o arete
+                    </span>
+                  )}
                 </label>
                 <input
                   type="tel"
@@ -221,6 +268,9 @@ export default function CompleteAnimalModal({
                 />
               </div>
             </div>
+            <p className="text-[11px] text-neutral-500 font-medium -mt-2">
+              * Identificación requerida: ingresa número de arete, microchip RFID, o ambos.
+            </p>
 
             {/* Nombre y Sexo */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -295,7 +345,7 @@ export default function CompleteAnimalModal({
                   value={color}
                   onChange={(e) => setColor(e.target.value)}
                   placeholder="Ej. Blanco con manchas negras"
-                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm font-bold text-neutral-900 focus:bg-white focus:border-[#1B4820] focus:ring-2 focus:ring-[#1B4820]/15 outline-none transition-all"
+                  className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm font-bold text-neutral-900 focus:bg-white border-[#1B4820] focus:ring-2 focus:ring-[#1B4820]/15 outline-none transition-all"
                 />
               </div>
             </div>

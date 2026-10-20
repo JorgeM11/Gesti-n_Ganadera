@@ -4,6 +4,23 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.23-complete-animal-arete-o-chip] - 2026-10-19
+
+### Corregido (Identificación Flexible: Arete o Microchip Alternativo al Completar Animal en Vaquería)
+- **Validación Alternativa de Identificadores ([`CompleteAnimalModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/CompleteAnimalModal.jsx), [`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js))**:
+  - *Problema resuelto*: El modal para completar información de un animal no registrado en vaquería exigía obligatoriamente el número de arete (`if (!number.trim())`), bloqueando el guardado de animales que únicamente cuentan con microchip RFID o que fueron escaneados por primera vez mediante chip.
+  - *Comportamiento corregido*: Siguiendo la regla global del sistema (establecida en [`AnimalForm.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/inventario/AnimalForm.jsx)), el animal ahora puede registrarse con **número de arete, con microchip RFID (15 dígitos), o con ambos**. Solo se bloquea si ambos campos están vacíos.
+  - *Validación inteligente de duplicados*:
+    - Si se ingresa arete: se valida que no exista otro animal activo con el mismo arete en la finca.
+    - Si se ingresa microchip: se valida su longitud de 15 dígitos numéricos y que ningún otro animal en el sistema tenga ese chip asignado.
+  - *Prellenado según tipo de escaneo*: Al abrir el modal, si el animal fue detectado por chip (`identification_type === 'chip'`), el microchip se coloca automáticamente en el campo de chip y el campo de arete queda libre para que el usuario decida si asignarle uno o no.
+  - *Interfaz y visualización ([`CompleteAnimalModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/CompleteAnimalModal.jsx), [`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))*:
+    - Etiquetas contextuales (`o chip` / `o arete`) e indicación visible de que al menos uno de los dos es requerido.
+    - Subtítulo del modal y notificación de éxito adaptados dinámicamente según el identificador provisto (`Arete #...` o `Microchip ...`).
+    - En la lista de presentes de la vaquería, si un animal solo tiene microchip, se muestra claramente como `Chip ...` en lugar de `Sin arete`.
+
+---
+
 ## [1.7.22-fix-remove-last-vaqueria-animal] - 2026-10-19
 
 ### Corregido (Eliminación Inmediata al Retirar el Último Animal de la Vaquería)
