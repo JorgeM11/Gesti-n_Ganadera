@@ -14,10 +14,9 @@ El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/
     - Si se ingresa arete: se valida que no exista otro animal activo con el mismo arete en la finca.
     - Si se ingresa microchip: se valida su longitud de 15 dígitos numéricos y que ningún otro animal en el sistema tenga ese chip asignado.
   - *Prellenado según tipo de escaneo*: Al abrir el modal, si el animal fue detectado por chip (`identification_type === 'chip'`), el microchip se coloca automáticamente en el campo de chip y el campo de arete queda libre para que el usuario decida si asignarle uno o no.
-  - *Interfaz y visualización ([`CompleteAnimalModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/CompleteAnimalModal.jsx), [`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))*:
-    - Etiquetas contextuales (`o chip` / `o arete`) e indicación visible de que al menos uno de los dos es requerido.
-    - Subtítulo del modal y notificación de éxito adaptados dinámicamente según el identificador provisto (`Arete #...` o `Microchip ...`).
-    - En la lista de presentes de la vaquería, si un animal solo tiene microchip, se muestra claramente como `Chip ...` en lugar de `Sin arete`.
+  - *Interfaz limpia y visualización sin duplicación ([`CompleteAnimalModal.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/components/vaqueria/CompleteAnimalModal.jsx), [`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))*:
+    - En el modal de completar registro se mantuvo la interfaz minimalista y limpia original (sin textos adicionales, subtítulos ni badges en las etiquetas), removiendo el asterisco de requerimiento obligatorio del campo de arete.
+    - En el listado de animales de vaquería (tanto en escritorio como en móvil), si un animal no posee número de arete se muestra `Sin arete` en el espacio de identificación del arete y su microchip se renderiza exclusivamente en su correspondiente badge de chip, evitando cualquier duplicación visual del chip.
 
 ---
 

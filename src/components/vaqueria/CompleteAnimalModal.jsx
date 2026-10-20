@@ -101,7 +101,7 @@ export default function CompleteAnimalModal({
 
     // Validar que se suministre al menos uno: Arete o Microchip
     if (!cleanNumber && !cleanChip) {
-      setError('Debes ingresar al menos el Número de Arete o el Microchip RFID.');
+      setError('Debes ingresar al menos el número de arete o el microchip.');
       return;
     }
 
@@ -197,13 +197,6 @@ export default function CompleteAnimalModal({
                 <h3 className="text-lg font-black text-neutral-900 leading-tight">
                   Completar Registro
                 </h3>
-                <p className="text-xs text-neutral-500 font-medium">
-                  {vaqueriaAnimal.identification_type === 'chip'
-                    ? `Microchip: ${vaqueriaAnimal.chip_number || vaqueriaAnimal.scanned_code}`
-                    : (vaqueriaAnimal.identification_type === 'name' && (vaqueriaAnimal.name || vaqueriaAnimal.scanned_code)
-                        ? `Animal: ${vaqueriaAnimal.name || vaqueriaAnimal.scanned_code}`
-                        : `Arete: #${vaqueriaAnimal.number || vaqueriaAnimal.scanned_code}`)}
-                </p>
               </div>
             </div>
 
@@ -228,15 +221,8 @@ export default function CompleteAnimalModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Arete */}
               <div>
-                <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Tag className="w-3.5 h-3.5 text-[#1B4820]" /> Número de Arete
-                  </span>
-                  {!chipNumber.trim() && (
-                    <span className="text-[10px] text-amber-700 font-semibold lowercase bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                      o chip
-                    </span>
-                  )}
+                <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <Tag className="w-3.5 h-3.5 text-[#1B4820]" /> Número de Arete
                 </label>
                 <input
                   type="text"
@@ -249,15 +235,8 @@ export default function CompleteAnimalModal({
 
               {/* Chip */}
               <div>
-                <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5">
-                    <Cpu className="w-3.5 h-3.5 text-[#1B4820]" /> Microchip RFID
-                  </span>
-                  {!number.trim() && (
-                    <span className="text-[10px] text-amber-700 font-semibold lowercase bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                      o arete
-                    </span>
-                  )}
+                <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <Cpu className="w-3.5 h-3.5 text-[#1B4820]" /> Microchip
                 </label>
                 <input
                   type="tel"
@@ -268,9 +247,6 @@ export default function CompleteAnimalModal({
                 />
               </div>
             </div>
-            <p className="text-[11px] text-neutral-500 font-medium -mt-2">
-              * Identificación requerida: ingresa número de arete, microchip RFID, o ambos.
-            </p>
 
             {/* Nombre y Sexo */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
