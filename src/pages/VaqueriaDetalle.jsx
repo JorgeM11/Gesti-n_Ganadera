@@ -1286,7 +1286,8 @@ export default function VaqueriaDetallePage() {
         onClose={() => setInactivatingAnimal(null)}
         animal={inactivatingAnimal}
         onSuccess={(updated) => {
-          showToast('Animal Inactivado', `El animal Arete #${updated.number} fue marcado como inactivo.`, 'success');
+          const ident = updated.number ? `Arete #${updated.number}` : (updated.chip_number ? `Chip ${updated.chip_number}` : (updated.name || 'El animal'));
+          showToast('Animal Inactivado', `${ident} se inactivó con éxito y se quitó de faltantes.`, 'success');
         }}
       />
 

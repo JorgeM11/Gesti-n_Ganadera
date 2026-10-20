@@ -4,6 +4,18 @@ Este documento registra de forma cronológica todas las modificaciones, mejoras,
 
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/) y este proyecto se adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
+## [1.7.24-simplified-vaqueria-expected-and-inactivation] - 2026-10-20
+
+### Simplificado y Corregido (Rebaño Esperado y Descarte Inmediato al Inactivar en Faltantes)
+- **Rebaño Esperado Basado en Animales Activos de la Finca ([`vaqueriaUtils.js`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/lib/vaqueriaUtils.js))**:
+  - *Lógica directa y unificada*: El rebaño esperado de la vaquería ahora comprende a todos los animales de la finca que se encuentren **Activos** (`status === 'Activo'`) al momento de la fecha de la sesión, hayan faltado o asistido a vaquerías anteriores.
+  - *Exclusión de inactivos*: Los animales con estatus `Inactivo` no figuran en el rebaño esperado ni en la lista de faltantes de ninguna vaquería en progreso o nueva.
+  - *Descarte reactivo al inactivar*: Al marcar como inactivo a un animal faltante mediante el botón "Inactivar", el animal cambia a estatus `Inactivo` y se retira de forma inmediata y automática de la lista de faltantes.
+  - *Notificación informativa ([`VaqueriaDetalle.jsx`](file:///C:/Users/joses/appganadera/gestion-ganadera/src/pages/VaqueriaDetalle.jsx))*: Al inactivar exitosamente desde faltantes se presenta la notificación: `"{Arete/Chip/Nombre} se inactivó con éxito y se quitó de faltantes."`.
+  - *Inmutabilidad preservada*: Las vaquerías con estatus `Finalizada` mantienen de forma intacta su fotografía histórica (`snapshot_data`), garantizando que los registros del pasado no se alteren retroactivamente.
+
+---
+
 ## [1.7.23-complete-animal-arete-o-chip] - 2026-10-19
 
 ### Corregido (Identificación Flexible: Arete o Microchip Alternativo al Completar Animal en Vaquería)

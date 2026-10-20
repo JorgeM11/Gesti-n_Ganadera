@@ -164,75 +164,27 @@ export function calculateVaqueriaAnalysis({
   });
 
   // 1. Determinar el REBAÑO ESPERADO (Línea base)
-  let expectedAnimals = [];
-  let isComparisonWithInventory = false;
+  // Regla acordada: Todos los animales de la finca que se encuentren ACTIVOS son esperados en la vaquería,
+  // hayan faltado o no a vaquerías anteriores.
+  // Los animales inactivos NO aparecen en la lista de faltantes ni en el rebaño esperado.
+  // Solo se excluyen animales cuya fecha de creación sea estrictamente posterior a la fecha de la vaquería.
+  const isComparisonWithInventory = !previousVaqueria || previousRecords.length === 0;
+  const vaqDate = currentVaqueria?.date || '';
 
-  if (previousVaqueria && previousRecords.length > 0) {
-    // Comparación con la Vaquería anterior:
-    // 1. Animales que estuvieron presentes en la vaquería anterior
-    const expectedIds = new Set();
-    previousRecords.forEach(rec => {
-      if (rec.animal_id && animalsById.has(rec.animal_id)) {
-        expectedIds.add(rec.animal_id);
-      }
-    });
+  const expectedAnimals = farmAnimals.filter(a => {
+    if (a.deleted_at) return false;
+    if (a.status !== 'Activo') return false;
 
-    // 2. Animales activos creados/incorporados a la finca DESPUÉS de la vaquería previa y antes o en la fecha de la actual
-    const prevDate = previousVaqueria?.date || '';
-    const prevCreatedAt = previousVaqueria?.created_at || '';
-    const vaqDate = currentVaqueria?.date || '';
-    const vaqCreatedAt = currentVaqueria?.created_at || '';
+    const animalCreatedAt = a.created_at || '';
+    const animalCreatedDate = animalCreatedAt.slice(0, 10);
 
-    farmAnimals.forEach(a => {
-      if (a.deleted_at || a.status === 'Inactivo') return;
-      const aCreated = a.created_at || '';
-      const aDate = aCreated.slice(0, 10);
+    // Si la fecha de creación del animal es posterior a la fecha de la vaquería, no había llegado aún
+    if (vaqDate && animalCreatedDate && animalCreatedDate > vaqDate) {
+      return false;
+    }
 
-      // Si fue creado después de la vaquería previa
-      const isAfterPrev = 
-        (prevDate && aDate && aDate > prevDate) ||
-        (prevCreatedAt && aCreated && aCreated > prevCreatedAt);
-
-      // Y antes o al momento de la vaquería actual
-      const isBeforeOrAtCurrent =
-        (!vaqDate || !aDate || aDate <= vaqDate) &&
-        (!vaqCreatedAt || !aCreated || aCreated <= vaqCreatedAt);
-
-      if (isAfterPrev && isBeforeOrAtCurrent) {
-        expectedIds.add(a.id);
-      }
-    });
-
-    expectedAnimals = Array.from(expectedIds)
-      .map(id => animalsById.get(id))
-      .filter(Boolean);
-  } else {
-    // Si no existe vaquería anterior para esta finca, se compara contra los animales de la finca en inventario (activos e inactivos)
-    // Regla: Solo incluir animales que ya existían o habían llegado a la finca al momento de esta vaquería.
-    // Si un animal fue creado o incorporado después, no formaba parte del rebaño en esa fecha y NO debe figurar como faltante.
-    isComparisonWithInventory = true;
-    const vaqDate = currentVaqueria?.date || '';
-    const vaqCreatedAt = currentVaqueria?.created_at || '';
-
-    expectedAnimals = farmAnimals.filter(a => {
-      if (a.deleted_at) return false;
-
-      const animalCreatedAt = a.created_at || '';
-      const animalCreatedDate = animalCreatedAt.slice(0, 10);
-
-      // Si la fecha de creación del animal es posterior a la fecha de la vaquería, no había llegado aún
-      if (vaqDate && animalCreatedDate && animalCreatedDate > vaqDate) {
-        return false;
-      }
-
-      // Si tienen la misma fecha o no hay vaqDate, comparar timestamps exactos de creación
-      if (vaqCreatedAt && animalCreatedAt && animalCreatedAt > vaqCreatedAt) {
-        return false;
-      }
-
-      return true;
-    });
-  }
+    return true;
+  });
 
   const expectedIdsSet = new Set(expectedAnimals.map(a => a.id));
 
