@@ -304,7 +304,7 @@ export default function BulkEditModal({
               </div>
               <div>
                 <h3 className="text-base sm:text-lg font-black text-neutral-900 leading-tight">
-                  Edición Masiva de Animales
+                  Edición Masiva
                 </h3>
                 <p className="text-xs text-neutral-500 font-medium">
                   Modificando <span className="font-black text-[#1B4820]">{selectedCount}</span> {selectedCount === 1 ? 'animal seleccionado' : 'animales seleccionados'}
@@ -471,9 +471,7 @@ export default function BulkEditModal({
 
                   {fieldsToEdit.birthYear && (
                     <div className="mt-3 space-y-2">
-                      <label className="text-[11px] font-bold text-neutral-700 uppercase tracking-wider block">
-                        Año de Nacimiento:
-                      </label>
+                      
                       <CustomSelect
                         value={String(selectedYear)}
                         onChange={(val) => setSelectedYear(Number(val))}
@@ -659,7 +657,7 @@ export default function BulkEditModal({
               ) : (
                 <>
                   <Pencil className="w-4 h-4" />
-                  <span>Guardar Cambios Masivos</span>
+                  <span>Guardar Cambios</span>
                 </>
               )}
             </button>
