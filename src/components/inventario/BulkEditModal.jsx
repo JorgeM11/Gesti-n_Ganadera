@@ -278,23 +278,25 @@ export default function BulkEditModal({
 
   const modalContent = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-        {/* Backdrop */}
+      {/* 1. Contenedor principal: Actúa como el límite estricto de la pantalla real */}
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 overflow-hidden">
+        
+        {/* Backdrop: Ahora absolute para rellenar perfectamente el contenedor padre */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={handleClose}
-          className="fixed inset-0 bg-black/60 backdrop-blur-xs cursor-pointer"
+          className="absolute inset-0 bg-black/60 backdrop-blur-xs cursor-pointer"
         />
 
-        {/* Modal Window: Contenedor principal con flex flex-col max-h-[88vh] sm:max-h-[90vh] */}
+        {/* Modal Window: max-h-full obliga a usar el espacio que el padre le cede, solucionando el bug de vh */}
         <motion.div
           initial={{ scale: 0.95, opacity: 0, y: 15 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 15 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="relative w-full max-w-xl md:max-w-3xl bg-white rounded-3xl shadow-2xl z-10 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden"
+          className="relative w-full max-w-xl md:max-w-3xl bg-white rounded-3xl shadow-2xl z-10 flex flex-col max-h-full overflow-hidden"
         >
           {/* 1. Header (Fijo arriba, fuera del contenedor con scroll) */}
           <div className="p-4 sm:p-6 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/80 shrink-0">
@@ -654,8 +656,8 @@ export default function BulkEditModal({
               </div>
             </form>
 
-          {/* 3. Footer de Acciones (Fijo abajo, fuera del contenedor con scroll) */}
-          <div className="p-3.5 sm:p-5 border-t border-neutral-100 flex items-center justify-end gap-2 sm:gap-2.5 shrink-0 bg-neutral-50/80">
+          {/* 3. Footer de Acciones: El 'mt-auto' fuerza a este contenedor a irse al final del bloque blanco incondicionalmente */}
+          <div className="mt-auto p-3.5 sm:p-5 border-t border-neutral-100 flex items-center justify-end gap-2 sm:gap-2.5 shrink-0 bg-neutral-50/80">
             <button
               type="button"
               onClick={handleClose}
