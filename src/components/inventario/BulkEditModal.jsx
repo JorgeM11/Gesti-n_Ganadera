@@ -288,47 +288,46 @@ export default function BulkEditModal({
           className="fixed inset-0 bg-black/60 backdrop-blur-xs cursor-pointer"
         />
 
-        {/* Modal Window: Ancho optimizado en desktop (max-w-3xl) y altura dinámica controlada */}
+        {/* Modal Window: Contenedor principal con flex flex-col max-h-[88vh] sm:max-h-[90vh] */}
         <motion.div
           initial={{ scale: 0.95, opacity: 0, y: 15 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 15 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="relative w-full max-w-xl md:max-w-3xl bg-white rounded-3xl shadow-2xl z-10 overflow-hidden max-h-[90dvh] my-auto"
+          className="relative w-full max-w-xl md:max-w-3xl bg-white rounded-3xl shadow-2xl z-10 flex flex-col max-h-[88vh] sm:max-h-[90vh] overflow-hidden"
         >
-          {/* Formulario contenedor con CSS Grid: Header(auto) - Body(1fr min-h-0) - Footer(auto) */}
-          <form 
-            onSubmit={handleSubmit} 
-            className="grid grid-rows-[auto_1fr_auto] max-h-[90dvh] overflow-hidden"
-          >
-            {/* 1. Header Fijo */}
-            <div className="p-4 sm:p-6 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/80">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-[#1B4820] flex items-center justify-center shrink-0 shadow-xs border border-emerald-200">
-                  <Layers className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base sm:text-lg font-black text-neutral-900 leading-tight">
-                    Edición Masiva de Animales
-                  </h3>
-                  <p className="text-xs text-neutral-500 font-medium">
-                    Modificando <span className="font-black text-[#1B4820]">{selectedCount}</span> {selectedCount === 1 ? 'animal seleccionado' : 'animales seleccionados'}
-                  </p>
-                </div>
+          {/* 1. Header (Fijo arriba, fuera del contenedor con scroll) */}
+          <div className="p-4 sm:p-6 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/80 shrink-0">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-[#1B4820] flex items-center justify-center shrink-0 shadow-xs border border-emerald-200">
+                <Layers className="w-5 h-5" />
               </div>
-
-              <button
-                type="button"
-                onClick={handleClose}
-                className="w-8 h-8 rounded-full bg-neutral-200/60 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center transition-colors cursor-pointer"
-                title="Cerrar ventana"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div>
+                <h3 className="text-base sm:text-lg font-black text-neutral-900 leading-tight">
+                  Edición Masiva de Animales
+                </h3>
+                <p className="text-xs text-neutral-500 font-medium">
+                  Modificando <span className="font-black text-[#1B4820]">{selectedCount}</span> {selectedCount === 1 ? 'animal seleccionado' : 'animales seleccionados'}
+                </p>
+              </div>
             </div>
 
-            {/* 2. Form Body con Scroll: Ocupa todo el espacio disponible dinámicamente sin colapsar ni dejar huecos */}
-            <div className="p-4 sm:p-6 overflow-y-auto min-h-0 space-y-4">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="w-8 h-8 rounded-full bg-neutral-200/60 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center transition-colors cursor-pointer"
+              title="Cerrar ventana"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* 2. Cuerpo del modal / Lista de opciones (flex-1 overflow-y-auto para que solo scrollee esta seccion) */}
+          <form 
+            id="bulk-edit-form"
+            onSubmit={handleSubmit} 
+            className="p-4 sm:p-6 overflow-y-auto flex-1 min-h-0 space-y-4"
+          >
               {error && (
                 <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 text-red-800 text-xs font-bold">
                   <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
@@ -653,38 +652,39 @@ export default function BulkEditModal({
                   )}
                 </div>
               </div>
-            </div>
+            </form>
 
-            {/* 3. Footer de Acciones FIJO al fondo de la cuadrícula */}
-            <div className="p-3.5 sm:p-5 border-t border-neutral-100 flex items-center justify-end gap-2 sm:gap-2.5 bg-neutral-50/80">
-              <button
-                type="button"
-                onClick={handleClose}
-                disabled={isSubmitting}
-                className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold text-neutral-600 hover:bg-neutral-200/60 transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
+          {/* 3. Footer de Acciones (Fijo abajo, fuera del contenedor con scroll) */}
+          <div className="p-3.5 sm:p-5 border-t border-neutral-100 flex items-center justify-end gap-2 sm:gap-2.5 shrink-0 bg-neutral-50/80">
+            <button
+              type="button"
+              onClick={handleClose}
+              disabled={isSubmitting}
+              className="px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold text-neutral-600 hover:bg-neutral-200/60 transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
 
-              <button
-                type="submit"
-                disabled={isSubmitting || !Object.values(fieldsToEdit).some(Boolean)}
-                className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black bg-[#1B4820] hover:bg-[#143618] text-white transition-all cursor-pointer shadow-md shadow-[#1B4820]/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {isSubmitting ? (
-                  <>
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>Guardando cambios...</span>
-                  </>
-                ) : (
-                  <>
-                    <Pencil className="w-4 h-4" />
-                    <span>Guardar Cambios Masivos</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+            <button
+              type="submit"
+              form="bulk-edit-form"
+              onClick={handleSubmit}
+              disabled={isSubmitting || !Object.values(fieldsToEdit).some(Boolean)}
+              className="px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black bg-[#1B4820] hover:bg-[#143618] text-white transition-all cursor-pointer shadow-md shadow-[#1B4820]/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Guardando cambios...</span>
+                </>
+              ) : (
+                <>
+                  <Pencil className="w-4 h-4" />
+                  <span>Guardar Cambios Masivos</span>
+                </>
+              )}
+            </button>
+          </div>
         </motion.div>
       </div>
     </AnimatePresence>
