@@ -22,9 +22,7 @@ const INACTIVITY_REASONS = [
   'Muerte',
   'Venta',
   'Descarte',
-  'Pérdida / Extravío',
-  'Traslado a otra finca',
-  'Otro motivo'
+  'Pérdida / Extravío'
 ];
 
 export default function BulkEditModal({
@@ -337,12 +335,7 @@ export default function BulkEditModal({
                 </div>
               )}
 
-              <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-2xl p-3 flex items-start gap-2.5">
-                <Info className="w-4 h-4 text-[#1B4820] shrink-0 mt-0.5" />
-                <p className="text-xs text-[#1B4820] font-medium leading-relaxed">
-                  Marca la casilla del campo que deseas actualizar en todos los animales seleccionados. Los campos desmarcados permanecerán sin cambios.
-                </p>
-              </div>
+              
 
               {/* Grid Responsivo: 1 columna en móvil, 2 columnas equilibradas en desktop */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
@@ -390,9 +383,7 @@ export default function BulkEditModal({
                         searchPlaceholder="Buscar finca..."
                       />
 
-                      <p className="text-[11px] font-medium text-amber-800 bg-amber-50 border border-amber-200/80 rounded-xl p-2.5">
-                        <strong>Nota:</strong> Si seleccionas una nueva finca y no especificas un potrero, los animales quedarán sin potrero asignado.
-                      </p>
+                      
                     </div>
                   )}
                 </div>
@@ -445,18 +436,6 @@ export default function BulkEditModal({
                         searchable
                         searchPlaceholder="Buscar potrero..."
                       />
-
-                      {selectedPotreroId && (
-                        (() => {
-                          const pot = potreros.find(p => p.id === selectedPotreroId);
-                          const fName = pot?.farm_id ? farms.find(f => f.id === pot.farm_id)?.name : null;
-                          return fName ? (
-                            <p className="text-[11px] font-medium text-emerald-800 bg-emerald-50 border border-emerald-200/80 rounded-xl p-2.5">
-                              <strong>Finca vinculada:</strong> Este potrero pertenece a <strong>"{fName}"</strong>. Los animales se asignarán automáticamente a dicha finca.
-                            </p>
-                          ) : null;
-                        })()
-                      )}
                     </div>
                   )}
                 </div>
@@ -504,9 +483,7 @@ export default function BulkEditModal({
                         searchable
                         searchPlaceholder="Buscar año..."
                       />
-                      <p className="text-[11px] font-medium text-neutral-500">
-                        * Se registrará como <strong>01/01/{selectedYear}</strong>.
-                      </p>
+                     
                     </div>
                   )}
                 </div>
@@ -618,7 +595,7 @@ export default function BulkEditModal({
                           <label className="block text-[11px] font-black text-neutral-700 uppercase tracking-wider">
                             Motivo de Inactivación:
                           </label>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             {INACTIVITY_REASONS.map(r => (
                               <button
                                 key={r}
