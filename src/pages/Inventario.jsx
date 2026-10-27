@@ -22,7 +22,9 @@ import {
   LayoutGrid,
   List,
   ChevronRight,
-  FileText
+  FileText,
+  Pencil,
+  CheckSquare
 } from 'lucide-react';
 import { FaMars, FaVenus } from 'react-icons/fa6';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -39,6 +41,7 @@ import OwnerModal from '@/components/inventario/OwnerModal';
 import BarcodeScannerModal from '@/components/inventario/BarcodeScannerModal';
 import NavigationDrawer from '@/components/inventario/NavigationDrawer';
 import AnimalCardSkeleton from '@/components/inventario/AnimalCardSkeleton';
+import BulkEditModal from '@/components/inventario/BulkEditModal';
 import Toast from '@/components/ui/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForceResync } from '@/hooks/useForceResync';
@@ -357,6 +360,86 @@ export default function InventarioPage() {
     setToast({ id: Date.now(), title, message, type });
   };
 
+  // --- ESTADO Y MANEJO DE SELECCIÓN MÚLTIPLE (FASE 4 - REQ 1) ---
+  const [selectedAnimalIds, setSelectedAnimalIds] = useState(() => new Set());
+  const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
+
+  const touchTimerRef = useRef(null);
+  const isLongPressRef = useRef(false);
+  const touchStartPosRef = useRef({ x: 0, y: 0 });
+
+  const toggleAnimalSelection = (animalId) => {
+    setSelectedAnimalIds(prev => {
+      const next = new Set(prev);
+      if (next.has(animalId)) {
+        next.delete(animalId);
+      } else {
+        next.add(animalId);
+      }
+      return next;
+    });
+  };
+
+  const handleTouchStart = (animalId, e) => {
+    isLongPressRef.current = false;
+    const touch = e.touches[0];
+    if (touch) {
+      touchStartPosRef.current = { x: touch.clientX, y: touch.clientY };
+    }
+    if (touchTimerRef.current) clearTimeout(touchTimerRef.current);
+    touchTimerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      if (navigator.vibrate) {
+        try { navigator.vibrate(60); } catch (_) {}
+      }
+      toggleAnimalSelection(animalId);
+    }, 450);
+  };
+
+  const handleTouchMove = (e) => {
+    if (!touchTimerRef.current) return;
+    const touch = e.touches[0];
+    if (touch) {
+      const dx = Math.abs(touch.clientX - touchStartPosRef.current.x);
+      const dy = Math.abs(touch.clientY - touchStartPosRef.current.y);
+      if (dx > 10 || dy > 10) {
+        clearTimeout(touchTimerRef.current);
+        touchTimerRef.current = null;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (touchTimerRef.current) {
+      clearTimeout(touchTimerRef.current);
+      touchTimerRef.current = null;
+    }
+  };
+
+  const handleCardClick = (animalId, e) => {
+    if (isLongPressRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      isLongPressRef.current = false;
+      return;
+    }
+    if (selectedAnimalIds.size > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleAnimalSelection(animalId);
+    }
+  };
+
+  const handleCheckboxClick = (animalId, e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleAnimalSelection(animalId);
+  };
+
+  const handleCancelSelection = () => {
+    setSelectedAnimalIds(new Set());
+  };
+
   const isWorker = isCurrentUserWorker();
   const currentUserId = localStorage.getItem('ganadera_user_id');
 
@@ -573,6 +656,24 @@ export default function InventarioPage() {
       return matchesSearch && matchesSex && matchesStatus && matchesCategory && matchesFarm && matchesPotrero && matchesOwner && matchesBreed && matchesObservations;
     });
   }, [allAnimals, searchTerm, filters, selectedFarmFilter, selectedPotreroFilter, selectedOwnerFilter, ownerMap]);
+
+  // --- SELECCIÓN DE TODOS LOS FILTRADOS (FASE 4 - REQ 1) ---
+  const isAllFilteredSelected = useMemo(() => {
+    if (!filteredAnimals || filteredAnimals.length === 0) return false;
+    return filteredAnimals.every(a => selectedAnimalIds.has(a.id));
+  }, [filteredAnimals, selectedAnimalIds]);
+
+  const handleSelectAllFiltered = () => {
+    setSelectedAnimalIds(prev => {
+      const next = new Set(prev);
+      if (isAllFilteredSelected) {
+        filteredAnimals.forEach(a => next.delete(a.id));
+      } else {
+        filteredAnimals.forEach(a => next.add(a.id));
+      }
+      return next;
+    });
+  };
 
   // --- REINICIAR PAGINACION AL FILTRAR O BUSCAR ---
   useEffect(() => {
@@ -1121,7 +1222,7 @@ export default function InventarioPage() {
           <>
             {/* TOOLBAR SUPERIOR: CONTEO DE RESULTADOS Y SELECTOR DE VISTA */}
             <div className="flex items-center justify-between gap-3 mb-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs sm:text-sm font-bold text-neutral-600">
                   <span className="text-neutral-900 font-black">{filteredAnimals.length}</span> {filteredAnimals.length === 1 ? 'animal' : 'animales'}
                   {allAnimals && filteredAnimals.length !== allAnimals.length && (
@@ -1130,36 +1231,55 @@ export default function InventarioPage() {
                     </span>
                   )}
                 </span>
+
+                {selectedAnimalIds.size > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-[#1B4820] text-white shadow-2xs">
+                    {selectedAnimalIds.size} seleccionados
+                  </span>
+                )}
               </div>
 
-              {/* Selector de modo de vista: Tarjetas vs Lista */}
-              <div className="inline-flex items-center bg-white border border-neutral-200/90 rounded-2xl p-1 shadow-2xs">
+              <div className="flex items-center gap-2">
+                {/* Botón rápido Seleccionar Todo en Desktop */}
                 <button
                   type="button"
-                  onClick={() => handleViewModeChange('cards')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    viewMode === 'cards'
-                      ? 'bg-[#1B4820] text-white shadow-xs'
-                      : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
-                  }`}
-                  title="Vista Cuadrícula / Tarjetas"
+                  onClick={handleSelectAllFiltered}
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-neutral-600 hover:text-[#1B4820] hover:bg-neutral-100 transition-all cursor-pointer border border-neutral-200/80 bg-white"
+                  title={isAllFilteredSelected ? "Deseleccionar todo" : "Seleccionar todo"}
                 >
-                  <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
-                  <span className="hidden sm:inline">Tarjetas</span>
+                  <CheckSquare className="w-3.5 h-3.5 text-[#1B4820]" />
+                  <span>{isAllFilteredSelected ? 'Deseleccionar' : 'Seleccionar todo'}</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => handleViewModeChange('list')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                    viewMode === 'list'
-                      ? 'bg-[#1B4820] text-white shadow-xs'
-                      : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
-                  }`}
-                  title="Vista Lista (sin imágenes)"
-                >
-                  <List className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
-                  <span className="hidden sm:inline">Lista</span>
-                </button>
+
+                {/* Selector de modo de vista: Tarjetas vs Lista */}
+                <div className="inline-flex items-center bg-white border border-neutral-200/90 rounded-2xl p-1 shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => handleViewModeChange('cards')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      viewMode === 'cards'
+                        ? 'bg-[#1B4820] text-white shadow-xs'
+                        : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                    }`}
+                    title="Vista Cuadrícula / Tarjetas"
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
+                    <span className="hidden sm:inline">Tarjetas</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleViewModeChange('list')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      viewMode === 'list'
+                        ? 'bg-[#1B4820] text-white shadow-xs'
+                        : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                    }`}
+                    title="Vista Lista (sin imágenes)"
+                  >
+                    <List className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.2]" />
+                    <span className="hidden sm:inline">Lista</span>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1170,10 +1290,17 @@ export default function InventarioPage() {
                 className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6"
               >
                 {paginatedAnimals.map((animal) => {
+                  const isSelected = selectedAnimalIds.has(animal.id);
+                  const isSelectionMode = selectedAnimalIds.size > 0;
+
                   const CardContent = (
                     <motion.article 
                       whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                      className="relative bg-white rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full cursor-pointer group border-2 border-neutral-200/80 hover:border-neutral-300"
+                      className={`relative bg-white rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full cursor-pointer group border-2 ${
+                        isSelected 
+                          ? 'border-[#1B4820] ring-2 ring-[#1B4820]/40 shadow-md bg-emerald-50/15' 
+                          : 'border-neutral-200/80 hover:border-neutral-300'
+                      }`}
                     >
 
                       {/* SECCIÓN DE IMAGEN */}
@@ -1185,10 +1312,31 @@ export default function InventarioPage() {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
 
+                        {/* Checkbox de Selección Masiva (Hover en desktop / Visible permanente en selección / Long press en móvil) */}
+                        <button
+                          type="button"
+                          onClick={(e) => handleCheckboxClick(animal.id, e)}
+                          title={isSelected ? "Deseleccionar animal" : "Seleccionar animal"}
+                          aria-label={isSelected ? "Deseleccionar animal" : "Seleccionar animal"}
+                          className={`absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-20 w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center transition-all duration-200 cursor-pointer shadow-md ${
+                            isSelected
+                              ? 'bg-[#1B4820] text-white ring-2 ring-white scale-100 opacity-100'
+                              : isSelectionMode
+                                ? 'bg-black/45 hover:bg-black/65 text-white backdrop-blur-md border border-white/80 opacity-100'
+                                : 'bg-black/45 hover:bg-black/65 text-white backdrop-blur-md border border-white/80 opacity-0 group-hover:opacity-100'
+                          }`}
+                        >
+                          {isSelected ? (
+                            <Check className="w-4 h-4 sm:w-4.5 sm:h-4.5 stroke-[3]" />
+                          ) : (
+                            <div className="w-3.5 h-3.5 rounded-[4px] border-[1.5px] border-white/90" />
+                          )}
+                        </button>
+
                         {/* Barra Superior de Badges Alineados (Género y Activo/Inactivo) */}
-                        <div className="absolute top-2 inset-x-2 sm:top-2.5 sm:inset-x-2.5 flex items-center justify-between z-10 pointer-events-none gap-1.5">
+                        <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center justify-end z-10 pointer-events-none gap-1 sm:gap-1.5 max-w-[calc(100%-44px)]">
                           {/* Pill de Género */}
-                          <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none ${
+                          <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none shrink-0 ${
                             animal.sex === 'Hembra' ? 'bg-pink-600/90' : 'bg-blue-700/90'
                           }`}>
                             {animal.sex === 'Hembra' ? (
@@ -1200,7 +1348,7 @@ export default function InventarioPage() {
                           </span>
 
                           {/* Pill de Status (Activo / Inactivo) */}
-                          <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none ${
+                          <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none shrink-0 ${
                             animal.status === 'Inactivo' ? 'bg-neutral-800/85' : 'bg-emerald-600/90'
                           }`}>
                             {animal.status === 'Inactivo' ? (
@@ -1282,8 +1430,15 @@ export default function InventarioPage() {
                       initial={{ opacity: 0, y: 15 }}
                       animate={{ opacity: 1, y: 0 }}
                       key={animal.id}
+                      onTouchStart={(e) => handleTouchStart(animal.id, e)}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
                     >
-                      <Link to={`/inventario/perfil?id=${animal.id}`} className="block h-full cursor-pointer">
+                      <Link 
+                        to={`/inventario/perfil?id=${animal.id}`}
+                        onClick={(e) => handleCardClick(animal.id, e)}
+                        className="block h-full cursor-pointer select-none"
+                      >
                         {CardContent}
                       </Link>
                     </motion.div>
@@ -1294,7 +1449,21 @@ export default function InventarioPage() {
               /* VISTA TIPO LISTA (SIN IMÁGENES, CÓMODA Y COMPACTA PARA MÓVIL Y ESCRITORIO) */
               <div className="space-y-2.5">
                 {/* Cabecera de columnas exclusiva para Desktop */}
-                <div className="hidden lg:grid lg:grid-cols-[170px_150px_85px_90px_110px_1fr_140px_28px] gap-3 px-5 py-2.5 text-[11px] font-black uppercase tracking-wider text-neutral-500 bg-white/70 backdrop-blur-xs rounded-xl border border-neutral-200/60 select-none">
+                <div className="hidden lg:grid lg:grid-cols-[36px_160px_140px_85px_90px_105px_1fr_130px_24px] gap-3 px-5 py-2.5 text-[11px] font-black uppercase tracking-wider text-neutral-500 bg-white/70 backdrop-blur-xs rounded-xl border border-neutral-200/60 select-none items-center">
+                  <div className="flex items-center justify-center">
+                    <button
+                      type="button"
+                      onClick={handleSelectAllFiltered}
+                      title={isAllFilteredSelected ? "Deseleccionar todos" : "Seleccionar todos"}
+                      className={`w-5 h-5 rounded-[6px] border-[1.5px] flex items-center justify-center transition-all cursor-pointer ${
+                        isAllFilteredSelected
+                          ? 'bg-[#1B4820] border-[#1B4820] text-white'
+                          : 'border-neutral-300 hover:border-[#1B4820]'
+                      }`}
+                    >
+                      {isAllFilteredSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                    </button>
+                  </div>
                   <div>Arete / Nombre</div>
                   <div>Microchip</div>
                   <div>Sexo</div>
@@ -1307,19 +1476,49 @@ export default function InventarioPage() {
 
                 {/* Filas de la Lista */}
                 {paginatedAnimals.map((animal) => {
+                  const isSelected = selectedAnimalIds.has(animal.id);
+                  const isSelectionMode = selectedAnimalIds.size > 0;
+
                   return (
                     <motion.div
                       layout
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       key={animal.id}
+                      onTouchStart={(e) => handleTouchStart(animal.id, e)}
+                      onTouchMove={handleTouchMove}
+                      onTouchEnd={handleTouchEnd}
                     >
                       <Link
                         to={`/inventario/perfil?id=${animal.id}`}
-                        className="group block bg-white rounded-2xl border border-neutral-200/90 hover:border-[#1B4820]/40 hover:bg-neutral-50/60 transition-all duration-200 shadow-2xs hover:shadow-md cursor-pointer p-3.5 sm:p-4"
+                        onClick={(e) => handleCardClick(animal.id, e)}
+                        className={`group block bg-white rounded-2xl border transition-all duration-200 shadow-2xs hover:shadow-md cursor-pointer p-3.5 sm:p-4 select-none ${
+                          isSelected 
+                            ? 'border-[#1B4820] ring-2 ring-[#1B4820]/40 bg-emerald-50/20' 
+                            : 'border-neutral-200/90 hover:border-[#1B4820]/40 hover:bg-neutral-50/60'
+                        }`}
                       >
                         {/* 1. Vista Desktop (Grid horizontal de columnas alineadas) */}
-                        <div className="hidden lg:grid lg:grid-cols-[170px_150px_85px_90px_110px_1fr_140px_28px] gap-3 items-center w-full">
+                        <div className="hidden lg:grid lg:grid-cols-[36px_160px_140px_85px_90px_105px_1fr_130px_24px] gap-3 items-center w-full">
+                          {/* Checkbox en Desktop */}
+                          <div className="flex items-center justify-center">
+                            <button
+                              type="button"
+                              onClick={(e) => handleCheckboxClick(animal.id, e)}
+                              title={isSelected ? "Deseleccionar" : "Seleccionar"}
+                              aria-label={isSelected ? "Deseleccionar" : "Seleccionar"}
+                              className={`w-5 h-5 rounded-[6px] border-[1.5px] flex items-center justify-center transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-[#1B4820] border-[#1B4820] text-white opacity-100'
+                                  : isSelectionMode
+                                    ? 'border-neutral-300 hover:border-[#1B4820] opacity-100'
+                                    : 'border-neutral-300 hover:border-[#1B4820] opacity-0 group-hover:opacity-100'
+                              }`}
+                            >
+                              {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                            </button>
+                          </div>
+
                           {/* Arete / Nombre */}
                           <div className="min-w-0">
                             <div className="flex items-center gap-1.5">
@@ -1403,9 +1602,22 @@ export default function InventarioPage() {
 
                         {/* 2. Vista Móvil y Tablet (Fila compacta sin scroll horizontal) */}
                         <div className="lg:hidden flex flex-col gap-2.5 w-full">
-                          {/* Fila A: Número (más grande), Nombre, 8M alert y Badges (solo icono y color) */}
+                          {/* Fila A: Checkbox (si modo selección o seleccionado), Número, Nombre, 8M alert y Badges */}
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-2 min-w-0">
+                              {(isSelectionMode || isSelected) && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleCheckboxClick(animal.id, e)}
+                                  className={`w-6 h-6 rounded-lg border-[1.5px] flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                                    isSelected
+                                      ? 'bg-[#1B4820] border-[#1B4820] text-white shadow-2xs'
+                                      : 'border-neutral-300 bg-neutral-100'
+                                  }`}
+                                >
+                                  {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                                </button>
+                              )}
                               <span className="text-lg sm:text-xl font-black text-[#1B4820] truncate">
                                 {animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'Sin arete'))}
                               </span>
@@ -1545,10 +1757,67 @@ export default function InventarioPage() {
         )}
       </div>
 
+      {/* BARRA FLOTANTE DE ACCIONES PARA SELECCIÓN MÚLTIPLE (FASE 4 - REQ 1) */}
+      <AnimatePresence>
+        {selectedAnimalIds.size > 0 && (
+          <motion.div
+            initial={{ y: 80, opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: 80, opacity: 0, scale: 0.95 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed bottom-4 sm:bottom-6 inset-x-0 mx-auto z-40 px-3 sm:px-4 w-full max-w-lg pointer-events-none"
+          >
+            <div className="pointer-events-auto bg-[#1B4820] text-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-4 flex items-center justify-between gap-3 border border-emerald-800/80 backdrop-blur-md">
+              {/* Información y Deseleccionar / Seleccionar todo */}
+              <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/15 text-white flex items-center justify-center shrink-0 font-black text-xs sm:text-base border border-white/20">
+                  {selectedAnimalIds.size}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-black text-white leading-tight truncate">
+                    {selectedAnimalIds.size} {selectedAnimalIds.size === 1 ? 'seleccionado' : 'seleccionados'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleSelectAllFiltered}
+                    className="text-[11px] sm:text-xs text-emerald-300 hover:text-white underline font-bold transition-colors cursor-pointer text-left block truncate"
+                  >
+                    {isAllFilteredSelected 
+                      ? 'Deseleccionar todo' 
+                      : `Seleccionar todos (${filteredAnimals.length})`}
+                  </button>
+                </div>
+              </div>
+
+              {/* Botones de Acción: Cancelar y Editar */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleCancelSelection}
+                  className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer border border-white/10"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsBulkEditOpen(true)}
+                  className="flex items-center gap-1.5 px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-black bg-emerald-400 hover:bg-emerald-300 text-neutral-950 shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                >
+                  <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
+                  <span>Editar</span>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* BOTÓN FLOTANTE DIRECTO A NUEVO REGISTRO */}
       <Link
         to="/inventario/nuevo"
-        className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-50 bg-[#1B4820] p-4 rounded-full text-white shadow-2xl transform transition-transform duration-300 hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer"
+        className={`fixed bottom-6 right-6 md:bottom-8 md:right-8 z-40 bg-[#1B4820] p-4 rounded-full text-white shadow-2xl transform transition-transform duration-300 hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer ${
+          selectedAnimalIds.size > 0 ? 'hidden sm:flex' : ''
+        }`}
         title="Registrar nuevo animal"
       >
         <Plus className="w-7 h-7" strokeWidth={2.5} />
@@ -1613,6 +1882,23 @@ export default function InventarioPage() {
         onScanSuccess={(scannedCode) => {
           setSearchTerm(scannedCode);
           showToast('Código escaneado', `Buscando animal con código: ${scannedCode}`);
+        }}
+      />
+
+      {/* MODAL DE EDICIÓN MASIVA EN LOTE (FASE 4 - REQ 1) */}
+      <BulkEditModal
+        isOpen={isBulkEditOpen}
+        onClose={() => setIsBulkEditOpen(false)}
+        selectedAnimalIds={selectedAnimalIds}
+        farms={farms}
+        potreros={potreros}
+        owners={owners}
+        onSuccess={(count) => {
+          setSelectedAnimalIds(new Set());
+          showToast(
+            '¡Edición masiva completada!',
+            `Se actualizaron exitosamente ${count} ${count === 1 ? 'animal' : 'animales'} en lote.`
+          );
         }}
       />
 
