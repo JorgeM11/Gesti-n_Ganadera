@@ -118,11 +118,14 @@ export default function BulkEditModal({
 
   const potreroOptions = useMemo(() => [
     { value: '', label: 'Sin potrero asignado' },
-    ...availablePotreros.map(p => ({
-      value: p.id,
-      label: `${p.name} ${!fieldsToEdit.farm && p.farm_id ? `(${farms.find(f => f.id === p.farm_id)?.name || 'Finca'})` : ''}`
-    }))
-  ], [availablePotreros, fieldsToEdit.farm, farms]);
+    ...availablePotreros.map(p => {
+      const farmName = farms.find(f => f.id === p.farm_id)?.name;
+      return {
+        value: p.id,
+        label: farmName ? `${p.name} (Finca: ${farmName})` : p.name
+      };
+    })
+  ], [availablePotreros, farms]);
 
   const yearOptions = useMemo(() => availableYears.map(yr => ({
     value: String(yr),
@@ -199,8 +202,20 @@ export default function BulkEditModal({
 
         // 2. Potrero
         if (fieldsToEdit.potrero) {
-          updated.potrero_id = selectedPotreroId || null;
-          patchPayload.potrero_id = selectedPotreroId || null;
+          if (selectedPotreroId) {
+            const pot = potreros.find(p => p.id === selectedPotreroId);
+            updated.potrero_id = selectedPotreroId;
+            patchPayload.potrero_id = selectedPotreroId;
+
+            // Validación: Si se selecciona un potrero, los animales se pasan a la finca de ese potrero
+            if (pot && pot.farm_id) {
+              updated.farm_id = pot.farm_id;
+              patchPayload.farm_id = pot.farm_id;
+            }
+          } else {
+            updated.potrero_id = null;
+            patchPayload.potrero_id = null;
+          }
         }
 
         // 3. Edad (Año de nacimiento -> se almacena como 1ro de enero del año seleccionado)
@@ -404,16 +419,36 @@ export default function BulkEditModal({
               </div>
 
               {fieldsToEdit.potrero && (
-                <div className="mt-3">
+                <div className="mt-3 space-y-2">
                   <CustomSelect
                     value={selectedPotreroId}
-                    onChange={(val) => setSelectedPotreroId(val)}
+                    onChange={(val) => {
+                      setSelectedPotreroId(val);
+                      if (val) {
+                        const pot = potreros.find(p => p.id === val);
+                        if (pot && pot.farm_id) {
+                          setSelectedFarmId(pot.farm_id);
+                        }
+                      }
+                    }}
                     options={potreroOptions}
                     placeholder={availablePotreros.length === 0 ? "Sin potreros disponibles" : "Selecciona potrero..."}
                     bgClass="bg-white"
                     searchable
                     searchPlaceholder="Buscar potrero..."
                   />
+
+                  {selectedPotreroId && (
+                    (() => {
+                      const pot = potreros.find(p => p.id === selectedPotreroId);
+                      const fName = pot?.farm_id ? farms.find(f => f.id === pot.farm_id)?.name : null;
+                      return fName ? (
+                        <p className="text-[11px] font-medium text-emerald-800 bg-emerald-50 border border-emerald-200/80 rounded-xl p-2.5">
+                          <strong>Finca vinculada:</strong> Este potrero pertenece a la finca <strong>"{fName}"</strong>. Los animales seleccionados se pasarán automáticamente a esta finca.
+                        </p>
+                      ) : null;
+                    })()
+                  )}
                 </div>
               )}
             </div>
