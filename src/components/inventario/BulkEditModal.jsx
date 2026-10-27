@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { db } from '@/lib/db';
 import { addToSyncQueue } from '@/lib/syncUtils';
+import CustomSelect from '@/components/ui/CustomSelect';
 
 const INACTIVITY_REASONS = [
   'Muerte',
@@ -58,6 +59,36 @@ export default function BulkEditModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Limpiar y resetear el formulario cada vez que se abra o cierre
+  const resetForm = () => {
+    setFieldsToEdit({
+      farm: false,
+      potrero: false,
+      birthYear: false,
+      owner: false,
+      status: false,
+    });
+    setSelectedFarmId('');
+    setSelectedPotreroId('');
+    setSelectedYear(new Date().getFullYear());
+    setSelectedOwnerId('');
+    setSelectedStatus('Inactivo');
+    setInactivityReason('Muerte');
+    setCustomInactivityNotes('');
+    setError('');
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
   // Generar lista de años (año actual hasta 30 años atrás)
   const availableYears = useMemo(() => {
     const currentYear = new Date().getFullYear();
@@ -75,6 +106,36 @@ export default function BulkEditModal({
     }
     return potreros;
   }, [potreros, fieldsToEdit.farm, selectedFarmId]);
+
+  // Opciones formateadas para CustomSelect
+  const farmOptions = useMemo(() => [
+    { value: '', label: 'Selecciona una finca...' },
+    ...farms.map(f => ({
+      value: f.id,
+      label: `${f.name}${f.location ? ` (${f.location})` : ''}`
+    }))
+  ], [farms]);
+
+  const potreroOptions = useMemo(() => [
+    { value: '', label: 'Sin potrero asignado' },
+    ...availablePotreros.map(p => ({
+      value: p.id,
+      label: `${p.name} ${!fieldsToEdit.farm && p.farm_id ? `(${farms.find(f => f.id === p.farm_id)?.name || 'Finca'})` : ''}`
+    }))
+  ], [availablePotreros, fieldsToEdit.farm, farms]);
+
+  const yearOptions = useMemo(() => availableYears.map(yr => ({
+    value: String(yr),
+    label: `Año ${yr}`
+  })), [availableYears]);
+
+  const ownerOptions = useMemo(() => [
+    { value: '', label: 'Sin dueño asignado' },
+    ...owners.map(o => ({
+      value: o.id,
+      label: o.name
+    }))
+  ], [owners]);
 
   if (!isOpen || selectedCount === 0) return null;
 
@@ -113,70 +174,81 @@ export default function BulkEditModal({
 
     try {
       const now = new Date().toISOString();
-      const actualUserId = localStorage.getItem('ganadera_user_id') || '00000000-0000-0000-0000-000000000001';
       const targetIds = Array.from(selectedAnimalIds);
 
       // Traer los animales seleccionados desde IndexedDB
       const targetAnimals = await db.animals.where('id').anyOf(targetIds).toArray();
       const updatedAnimals = [];
+      const syncPatches = [];
 
       for (const animal of targetAnimals) {
         if (!animal) continue;
         const updated = { ...animal };
+        const patchPayload = { id: updated.id, updated_at: now };
 
         // 1. Finca
         if (fieldsToEdit.farm) {
           updated.farm_id = selectedFarmId || null;
+          patchPayload.farm_id = selectedFarmId || null;
           // Regla: si se selecciona nueva finca y NO se selecciona nuevo potrero, quedan sin potrero asignado
           if (!fieldsToEdit.potrero) {
             updated.potrero_id = null;
+            patchPayload.potrero_id = null;
           }
         }
 
         // 2. Potrero
         if (fieldsToEdit.potrero) {
           updated.potrero_id = selectedPotreroId || null;
+          patchPayload.potrero_id = selectedPotreroId || null;
         }
 
         // 3. Edad (Año de nacimiento -> se almacena como 1ro de enero del año seleccionado)
         if (fieldsToEdit.birthYear) {
-          updated.birth_date = `${selectedYear}-01-01`;
+          const birthDate = `${selectedYear}-01-01`;
+          updated.birth_date = birthDate;
+          patchPayload.birth_date = birthDate;
         }
 
         // 4. Dueño
         if (fieldsToEdit.owner) {
           updated.owner_id = selectedOwnerId || null;
+          patchPayload.owner_id = selectedOwnerId || null;
         }
 
         // 5. Estado (Status)
         if (fieldsToEdit.status) {
           updated.status = selectedStatus;
+          patchPayload.status = selectedStatus;
           if (selectedStatus === 'Inactivo') {
             const fullReason = customInactivityNotes.trim()
               ? `${inactivityReason}: ${customInactivityNotes.trim()}`
               : inactivityReason;
             updated.inactivity_reason = fullReason;
-            updated.inactivated_at = now;
+            patchPayload.inactivity_reason = fullReason;
           } else {
             updated.inactivity_reason = null;
-            updated.inactivated_at = null;
+            patchPayload.inactivity_reason = null;
           }
         }
 
-        updated.updated_by_user_id = actualUserId;
+        // Limpieza de campos inexistentes en Supabase
+        delete updated.inactivated_at;
         updated.updated_at = now;
 
         updatedAnimals.push(updated);
+        syncPatches.push(patchPayload);
       }
 
       // Guardar en bloque en Dexie (100% offline-first)
       await db.animals.bulkPut(updatedAnimals);
 
-      // Encolar para sincronización con Supabase
-      for (const updated of updatedAnimals) {
-        await addToSyncQueue('animals', 'UPDATE', updated);
+      // Encolar patches limpios para sincronización con Supabase (HTTP PATCH)
+      for (const patch of syncPatches) {
+        await addToSyncQueue('animals', 'PATCH', patch);
       }
 
+      resetForm();
       if (onSuccess) {
         onSuccess(updatedAnimals.length);
       }
@@ -197,7 +269,7 @@ export default function BulkEditModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose}
+          onClick={handleClose}
           className="fixed inset-0 bg-black/60 backdrop-blur-xs cursor-pointer"
         />
 
@@ -219,52 +291,57 @@ export default function BulkEditModal({
                 <h3 className="text-base sm:text-lg font-black text-neutral-900 leading-tight">
                   Edición Masiva de Animales
                 </h3>
-                <p className="text-xs font-bold text-neutral-500 mt-0.5">
-                  Modificando <span className="text-[#1B4820] font-black">{selectedCount}</span> {selectedCount === 1 ? 'animal seleccionado' : 'animales seleccionados'}
+                <p className="text-xs text-neutral-500 font-medium">
+                  Modificando <span className="font-black text-[#1B4820]">{selectedCount}</span> {selectedCount === 1 ? 'animal seleccionado' : 'animales seleccionados'}
                 </p>
               </div>
             </div>
 
             <button
               type="button"
-              onClick={onClose}
-              className="p-2 text-neutral-400 hover:text-neutral-700 hover:bg-neutral-200/50 rounded-xl transition-colors cursor-pointer"
-              title="Cerrar modal"
+              onClick={handleClose}
+              className="w-8 h-8 rounded-full bg-neutral-200/60 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center transition-colors cursor-pointer"
+              title="Cerrar ventana"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Body Form */}
-          <form onSubmit={handleSubmit} className="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5 text-sm">
+          {/* Form Body con Scroll */}
+          <form onSubmit={handleSubmit} className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
             {error && (
-              <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs font-bold text-rose-700 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
+              <div className="p-3.5 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-3 text-red-800 text-xs font-bold">
+                <AlertTriangle className="w-4 h-4 text-red-600 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
-            <div className="p-3 bg-neutral-50 border border-neutral-200/80 rounded-2xl flex items-start gap-2.5 text-xs text-neutral-600">
+            <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-2xl p-3 flex items-start gap-2.5">
               <Info className="w-4 h-4 text-[#1B4820] shrink-0 mt-0.5" />
-              <span>
-                Activa la casilla de cada dato que deseas modificar en lote. Los campos que no marques mantendrán el valor actual de cada animal.
-              </span>
+              <p className="text-xs text-[#1B4820] font-medium leading-relaxed">
+                Marca la casilla del campo que deseas actualizar en todos los animales seleccionados. Los campos desmarcados permanecerán sin cambios.
+              </p>
             </div>
 
             {/* 1. FINCA */}
-            <div className={`p-3.5 sm:p-4 rounded-2xl border transition-all ${
-              fieldsToEdit.farm ? 'bg-emerald-50/20 border-emerald-300 shadow-xs' : 'bg-white border-neutral-200'
+            <div className={`p-4 rounded-2xl border transition-all ${
+              fieldsToEdit.farm ? 'bg-emerald-50/25 border-[#1B4820]/40 ring-1 ring-[#1B4820]/20 shadow-xs' : 'bg-neutral-50/60 border-neutral-200/80'
             }`}>
               <div className="flex items-center justify-between gap-2 mb-2">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <div className={`w-5 h-5 rounded-[6px] border-[1.5px] flex items-center justify-center transition-all shrink-0 ${
+                    fieldsToEdit.farm ? 'bg-[#1B4820] border-[#1B4820]' : 'border-neutral-300 bg-white'
+                  }`}>
+                    {fieldsToEdit.farm && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                  </div>
                   <input
                     type="checkbox"
                     checked={fieldsToEdit.farm}
                     onChange={() => toggleField('farm')}
-                    className="w-4 h-4 rounded text-[#1B4820] focus:ring-[#1B4820] accent-[#1B4820] cursor-pointer"
+                    className="sr-only"
                   />
                   <span className="font-black text-xs uppercase tracking-wider text-neutral-800 flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-[#1B4820]" />
+                    <MapPin className="w-4 h-4 text-[#1B4820]" />
                     Modificar Finca
                   </span>
                 </label>
@@ -277,19 +354,18 @@ export default function BulkEditModal({
 
               {fieldsToEdit.farm && (
                 <div className="mt-3 space-y-2">
-                  <select
+                  <CustomSelect
                     value={selectedFarmId}
-                    onChange={(e) => {
-                      setSelectedFarmId(e.target.value);
+                    onChange={(val) => {
+                      setSelectedFarmId(val);
                       setSelectedPotreroId('');
                     }}
-                    className="w-full bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs font-bold text-neutral-800 focus:outline-none focus:border-[#1B4820] shadow-xs cursor-pointer"
-                  >
-                    <option value="">Selecciona la nueva finca...</option>
-                    {farms.map(f => (
-                      <option key={f.id} value={f.id}>{f.name}</option>
-                    ))}
-                  </select>
+                    options={farmOptions}
+                    placeholder="Selecciona la nueva finca..."
+                    bgClass="bg-white"
+                    searchable
+                    searchPlaceholder="Buscar finca..."
+                  />
 
                   <p className="text-[11px] font-medium text-amber-800 bg-amber-50 border border-amber-200/80 rounded-xl p-2.5">
                     <strong>Nota:</strong> Si seleccionas una nueva finca y no especificas un potrero abajo, los animales quedarán sin potrero asignado.
@@ -299,19 +375,24 @@ export default function BulkEditModal({
             </div>
 
             {/* 2. POTRERO */}
-            <div className={`p-3.5 sm:p-4 rounded-2xl border transition-all ${
-              fieldsToEdit.potrero ? 'bg-emerald-50/20 border-emerald-300 shadow-xs' : 'bg-white border-neutral-200'
+            <div className={`p-4 rounded-2xl border transition-all ${
+              fieldsToEdit.potrero ? 'bg-emerald-50/25 border-[#1B4820]/40 ring-1 ring-[#1B4820]/20 shadow-xs' : 'bg-neutral-50/60 border-neutral-200/80'
             }`}>
               <div className="flex items-center justify-between gap-2 mb-2">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <div className={`w-5 h-5 rounded-[6px] border-[1.5px] flex items-center justify-center transition-all shrink-0 ${
+                    fieldsToEdit.potrero ? 'bg-[#1B4820] border-[#1B4820]' : 'border-neutral-300 bg-white'
+                  }`}>
+                    {fieldsToEdit.potrero && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                  </div>
                   <input
                     type="checkbox"
                     checked={fieldsToEdit.potrero}
                     onChange={() => toggleField('potrero')}
-                    className="w-4 h-4 rounded text-[#1B4820] focus:ring-[#1B4820] accent-[#1B4820] cursor-pointer"
+                    className="sr-only"
                   />
                   <span className="font-black text-xs uppercase tracking-wider text-neutral-800 flex items-center gap-1.5">
-                    <Fence className="w-3.5 h-3.5 text-[#1B4820]" />
+                    <Fence className="w-4 h-4 text-[#1B4820]" />
                     Modificar Potrero
                   </span>
                 </label>
@@ -324,36 +405,38 @@ export default function BulkEditModal({
 
               {fieldsToEdit.potrero && (
                 <div className="mt-3">
-                  <select
+                  <CustomSelect
                     value={selectedPotreroId}
-                    onChange={(e) => setSelectedPotreroId(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs font-bold text-neutral-800 focus:outline-none focus:border-[#1B4820] shadow-xs cursor-pointer"
-                  >
-                    <option value="">Sin potrero asignado</option>
-                    {availablePotreros.map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} {!fieldsToEdit.farm && p.farm_id ? `(${farms.find(f => f.id === p.farm_id)?.name || 'Finca'})` : ''}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setSelectedPotreroId(val)}
+                    options={potreroOptions}
+                    placeholder={availablePotreros.length === 0 ? "Sin potreros disponibles" : "Selecciona potrero..."}
+                    bgClass="bg-white"
+                    searchable
+                    searchPlaceholder="Buscar potrero..."
+                  />
                 </div>
               )}
             </div>
 
             {/* 3. EDAD (AÑO DE NACIMIENTO) */}
-            <div className={`p-3.5 sm:p-4 rounded-2xl border transition-all ${
-              fieldsToEdit.birthYear ? 'bg-emerald-50/20 border-emerald-300 shadow-xs' : 'bg-white border-neutral-200'
+            <div className={`p-4 rounded-2xl border transition-all ${
+              fieldsToEdit.birthYear ? 'bg-emerald-50/25 border-[#1B4820]/40 ring-1 ring-[#1B4820]/20 shadow-xs' : 'bg-neutral-50/60 border-neutral-200/80'
             }`}>
               <div className="flex items-center justify-between gap-2 mb-2">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <div className={`w-5 h-5 rounded-[6px] border-[1.5px] flex items-center justify-center transition-all shrink-0 ${
+                    fieldsToEdit.birthYear ? 'bg-[#1B4820] border-[#1B4820]' : 'border-neutral-300 bg-white'
+                  }`}>
+                    {fieldsToEdit.birthYear && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                  </div>
                   <input
                     type="checkbox"
                     checked={fieldsToEdit.birthYear}
                     onChange={() => toggleField('birthYear')}
-                    className="w-4 h-4 rounded text-[#1B4820] focus:ring-[#1B4820] accent-[#1B4820] cursor-pointer"
+                    className="sr-only"
                   />
                   <span className="font-black text-xs uppercase tracking-wider text-neutral-800 flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-[#1B4820]" />
+                    <Calendar className="w-4 h-4 text-[#1B4820]" />
                     Modificar Edad (Año de Nacimiento)
                   </span>
                 </label>
@@ -366,18 +449,18 @@ export default function BulkEditModal({
 
               {fieldsToEdit.birthYear && (
                 <div className="mt-3 space-y-2">
-                  <label className="block text-[11px] font-bold text-neutral-600">
+                  <label className="text-[11px] font-bold text-neutral-700 uppercase tracking-wider block">
                     Selecciona el Año de Nacimiento:
                   </label>
-                  <select
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(Number(e.target.value))}
-                    className="w-full bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs font-bold text-neutral-800 focus:outline-none focus:border-[#1B4820] shadow-xs cursor-pointer"
-                  >
-                    {availableYears.map(yr => (
-                      <option key={yr} value={yr}>Año {yr}</option>
-                    ))}
-                  </select>
+                  <CustomSelect
+                    value={String(selectedYear)}
+                    onChange={(val) => setSelectedYear(Number(val))}
+                    options={yearOptions}
+                    placeholder="Selecciona año..."
+                    bgClass="bg-white"
+                    searchable
+                    searchPlaceholder="Buscar año..."
+                  />
                   <p className="text-[11px] font-medium text-neutral-500">
                     * En el sistema se registrará automáticamente como <strong>01 de enero de {selectedYear} (01/01/{selectedYear})</strong>.
                   </p>
@@ -386,19 +469,24 @@ export default function BulkEditModal({
             </div>
 
             {/* 4. DUEÑO */}
-            <div className={`p-3.5 sm:p-4 rounded-2xl border transition-all ${
-              fieldsToEdit.owner ? 'bg-emerald-50/20 border-emerald-300 shadow-xs' : 'bg-white border-neutral-200'
+            <div className={`p-4 rounded-2xl border transition-all ${
+              fieldsToEdit.owner ? 'bg-emerald-50/25 border-[#1B4820]/40 ring-1 ring-[#1B4820]/20 shadow-xs' : 'bg-neutral-50/60 border-neutral-200/80'
             }`}>
               <div className="flex items-center justify-between gap-2 mb-2">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <div className={`w-5 h-5 rounded-[6px] border-[1.5px] flex items-center justify-center transition-all shrink-0 ${
+                    fieldsToEdit.owner ? 'bg-[#1B4820] border-[#1B4820]' : 'border-neutral-300 bg-white'
+                  }`}>
+                    {fieldsToEdit.owner && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                  </div>
                   <input
                     type="checkbox"
                     checked={fieldsToEdit.owner}
                     onChange={() => toggleField('owner')}
-                    className="w-4 h-4 rounded text-[#1B4820] focus:ring-[#1B4820] accent-[#1B4820] cursor-pointer"
+                    className="sr-only"
                   />
                   <span className="font-black text-xs uppercase tracking-wider text-neutral-800 flex items-center gap-1.5">
-                    <UserCheck className="w-3.5 h-3.5 text-[#1B4820]" />
+                    <UserCheck className="w-4 h-4 text-[#1B4820]" />
                     Modificar Dueño
                   </span>
                 </label>
@@ -411,34 +499,38 @@ export default function BulkEditModal({
 
               {fieldsToEdit.owner && (
                 <div className="mt-3">
-                  <select
+                  <CustomSelect
                     value={selectedOwnerId}
-                    onChange={(e) => setSelectedOwnerId(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs font-bold text-neutral-800 focus:outline-none focus:border-[#1B4820] shadow-xs cursor-pointer"
-                  >
-                    <option value="">Sin dueño asignado</option>
-                    {owners.map(o => (
-                      <option key={o.id} value={o.id}>{o.name}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setSelectedOwnerId(val)}
+                    options={ownerOptions}
+                    placeholder="Selecciona dueño..."
+                    bgClass="bg-white"
+                    searchable
+                    searchPlaceholder="Buscar dueño..."
+                  />
                 </div>
               )}
             </div>
 
             {/* 5. STATUS / ESTADO */}
-            <div className={`p-3.5 sm:p-4 rounded-2xl border transition-all ${
-              fieldsToEdit.status ? 'bg-emerald-50/20 border-emerald-300 shadow-xs' : 'bg-white border-neutral-200'
+            <div className={`p-4 rounded-2xl border transition-all ${
+              fieldsToEdit.status ? 'bg-emerald-50/25 border-[#1B4820]/40 ring-1 ring-[#1B4820]/20 shadow-xs' : 'bg-neutral-50/60 border-neutral-200/80'
             }`}>
               <div className="flex items-center justify-between gap-2 mb-2">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <div className={`w-5 h-5 rounded-[6px] border-[1.5px] flex items-center justify-center transition-all shrink-0 ${
+                    fieldsToEdit.status ? 'bg-[#1B4820] border-[#1B4820]' : 'border-neutral-300 bg-white'
+                  }`}>
+                    {fieldsToEdit.status && <Check className="w-3.5 h-3.5 text-white stroke-[3]" />}
+                  </div>
                   <input
                     type="checkbox"
                     checked={fieldsToEdit.status}
                     onChange={() => toggleField('status')}
-                    className="w-4 h-4 rounded text-[#1B4820] focus:ring-[#1B4820] accent-[#1B4820] cursor-pointer"
+                    className="sr-only"
                   />
                   <span className="font-black text-xs uppercase tracking-wider text-neutral-800 flex items-center gap-1.5">
-                    <Activity className="w-3.5 h-3.5 text-[#1B4820]" />
+                    <Activity className="w-4 h-4 text-[#1B4820]" />
                     Modificar Estado (Status)
                   </span>
                 </label>
@@ -451,15 +543,15 @@ export default function BulkEditModal({
 
               {fieldsToEdit.status && (
                 <div className="mt-3 space-y-3">
-                  {/* Selector Activo / Inactivo */}
-                  <div className="flex items-center gap-2">
+                  {/* Selector Activo / Inactivo con estilo idéntico al resto de la app */}
+                  <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => setSelectedStatus('Inactivo')}
-                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer border ${
+                      className={`py-3 px-4 rounded-2xl border-2 font-black text-xs sm:text-sm transition-all cursor-pointer ${
                         selectedStatus === 'Inactivo'
-                          ? 'bg-neutral-800 text-white border-neutral-900 shadow-xs'
-                          : 'bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50'
+                          ? 'bg-neutral-800 border-neutral-900 text-white shadow-xs'
+                          : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50'
                       }`}
                     >
                       Inactivo
@@ -467,10 +559,10 @@ export default function BulkEditModal({
                     <button
                       type="button"
                       onClick={() => setSelectedStatus('Activo')}
-                      className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition-all cursor-pointer border ${
+                      className={`py-3 px-4 rounded-2xl border-2 font-black text-xs sm:text-sm transition-all cursor-pointer ${
                         selectedStatus === 'Activo'
-                          ? 'bg-emerald-600 text-white border-emerald-700 shadow-xs'
-                          : 'bg-white text-neutral-600 border-neutral-200 hover:bg-neutral-50'
+                          ? 'bg-[#1B4820] border-[#1B4820] text-white shadow-xs'
+                          : 'bg-white border-neutral-200 text-neutral-600 hover:bg-neutral-50'
                       }`}
                     >
                       Activo
@@ -479,8 +571,8 @@ export default function BulkEditModal({
 
                   {/* Motivos de inactivación si se selecciona Inactivo */}
                   {selectedStatus === 'Inactivo' && (
-                    <div className="space-y-2.5 pt-1">
-                      <label className="block text-[11px] font-bold text-neutral-600 uppercase tracking-wider">
+                    <div className="space-y-2.5 pt-1 animate-in fade-in">
+                      <label className="block text-[11px] font-black text-neutral-700 uppercase tracking-wider">
                         Motivo de Inactivación:
                       </label>
                       <div className="grid grid-cols-2 gap-2">
@@ -489,25 +581,28 @@ export default function BulkEditModal({
                             key={r}
                             type="button"
                             onClick={() => setInactivityReason(r)}
-                            className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
+                            className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
                               inactivityReason === r
-                                ? 'border-amber-600 bg-amber-50 text-amber-900 shadow-xs'
+                                ? 'border-amber-600 bg-amber-50 text-amber-900 shadow-xs ring-1 ring-amber-600/30'
                                 : 'border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50'
                             }`}
                           >
                             <span>{r}</span>
-                            {inactivityReason === r && <Check className="w-3.5 h-3.5 text-amber-600 stroke-[3]" />}
+                            {inactivityReason === r && <Check className="w-4 h-4 text-amber-600 stroke-[3]" />}
                           </button>
                         ))}
                       </div>
 
                       <div>
+                        <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-1.5 block">
+                          Detalles o Notas (Opcional):
+                        </label>
                         <input
                           type="text"
-                          placeholder="Detalles adicionales o notas del motivo (opcional)..."
+                          placeholder="Ej. Vendido a productor vecino, muerte súbita..."
                           value={customInactivityNotes}
                           onChange={(e) => setCustomInactivityNotes(e.target.value)}
-                          className="w-full bg-white border border-neutral-300 rounded-xl px-3 py-2 text-xs font-medium text-neutral-800 focus:outline-none focus:border-[#1B4820]"
+                          className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-xs sm:text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all placeholder:text-neutral-400"
                         />
                       </div>
                     </div>
@@ -520,7 +615,7 @@ export default function BulkEditModal({
             <div className="pt-2 sm:pt-4 border-t border-neutral-100 flex items-center justify-end gap-2.5 shrink-0">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 disabled={isSubmitting}
                 className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-neutral-600 hover:bg-neutral-100 transition-colors cursor-pointer"
               >
@@ -539,8 +634,8 @@ export default function BulkEditModal({
                   </>
                 ) : (
                   <>
-                    <Pencil className="w-4 h-4 stroke-[2.5]" />
-                    <span>Guardar en {selectedCount} {selectedCount === 1 ? 'Animal' : 'Animales'}</span>
+                    <Pencil className="w-4 h-4" />
+                    <span>Guardar Cambios Masivos</span>
                   </>
                 )}
               </button>
@@ -551,5 +646,5 @@ export default function BulkEditModal({
     </AnimatePresence>
   );
 
-  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null;
+  return createPortal(modalContent, document.body);
 }

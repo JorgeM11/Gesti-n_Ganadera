@@ -1232,24 +1232,21 @@ export default function InventarioPage() {
                   )}
                 </span>
 
+                {/* Si hay animales seleccionados: botón Seleccionar todos / Deseleccionar al lado de la cantidad */}
                 {selectedAnimalIds.size > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-[#1B4820] text-white shadow-2xs">
-                    {selectedAnimalIds.size} seleccionados
-                  </span>
+                  <button
+                    type="button"
+                    onClick={handleSelectAllFiltered}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-black bg-emerald-100 hover:bg-emerald-200 text-[#1B4820] transition-colors cursor-pointer border border-emerald-300/70 shadow-2xs"
+                    title={isAllFilteredSelected ? "Deseleccionar todos" : "Seleccionar todos"}
+                  >
+                    <CheckSquare className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <span>{isAllFilteredSelected ? 'Deseleccionar todos' : 'Seleccionar todos'}</span>
+                  </button>
                 )}
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Botón rápido Seleccionar Todo en Desktop */}
-                <button
-                  type="button"
-                  onClick={handleSelectAllFiltered}
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-neutral-600 hover:text-[#1B4820] hover:bg-neutral-100 transition-all cursor-pointer border border-neutral-200/80 bg-white"
-                  title={isAllFilteredSelected ? "Deseleccionar todo" : "Seleccionar todo"}
-                >
-                  <CheckSquare className="w-3.5 h-3.5 text-[#1B4820]" />
-                  <span>{isAllFilteredSelected ? 'Deseleccionar' : 'Seleccionar todo'}</span>
-                </button>
 
                 {/* Selector de modo de vista: Tarjetas vs Lista */}
                 <div className="inline-flex items-center bg-white border border-neutral-200/90 rounded-2xl p-1 shadow-2xs">
@@ -1768,25 +1765,14 @@ export default function InventarioPage() {
             className="fixed bottom-4 sm:bottom-6 inset-x-0 mx-auto z-40 px-3 sm:px-4 w-full max-w-lg pointer-events-none"
           >
             <div className="pointer-events-auto bg-[#1B4820] text-white rounded-2xl sm:rounded-3xl shadow-2xl p-3 sm:p-4 flex items-center justify-between gap-3 border border-emerald-800/80 backdrop-blur-md">
-              {/* Información y Deseleccionar / Seleccionar todo */}
+              {/* Información de seleccionados */}
               <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/15 text-white flex items-center justify-center shrink-0 font-black text-xs sm:text-base border border-white/20">
                   {selectedAnimalIds.size}
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs sm:text-sm font-black text-white leading-tight truncate">
-                    {selectedAnimalIds.size} {selectedAnimalIds.size === 1 ? 'seleccionado' : 'seleccionados'}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleSelectAllFiltered}
-                    className="text-[11px] sm:text-xs text-emerald-300 hover:text-white underline font-bold transition-colors cursor-pointer text-left block truncate"
-                  >
-                    {isAllFilteredSelected 
-                      ? 'Deseleccionar todo' 
-                      : `Seleccionar todos (${filteredAnimals.length})`}
-                  </button>
-                </div>
+                <p className="text-xs sm:text-sm font-black text-white leading-tight truncate">
+                  {selectedAnimalIds.size} {selectedAnimalIds.size === 1 ? 'seleccionado' : 'seleccionados'}
+                </p>
               </div>
 
               {/* Botones de Acción: Cancelar y Editar */}

@@ -66,6 +66,21 @@ export async function processSyncQueue() {
     try {
       const payloadToUpload = { ...item.payload };
 
+      // --- SANEAMIENTO PROACTIVO PARA animals ---
+      if (item.table_name === 'animals' && payloadToUpload) {
+        delete payloadToUpload.inactivated_at;
+        delete payloadToUpload.updated_by_user_id;
+
+        if (item.payload && (item.payload.inactivated_at !== undefined || item.payload.updated_by_user_id !== undefined)) {
+          const cleanedPayload = { ...item.payload };
+          delete cleanedPayload.inactivated_at;
+          delete cleanedPayload.updated_by_user_id;
+          try {
+            await db.sync_queue.update(item.id, { payload: cleanedPayload });
+          } catch (_) {}
+        }
+      }
+
       // --- SANEAMIENTO PROACTIVO PARA vaqueria_animals ---
       if (item.table_name === 'vaqueria_animals' && payloadToUpload) {
         const validTypes = ['chip', 'arete', 'name', 'manual'];
