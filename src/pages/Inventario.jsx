@@ -389,7 +389,7 @@ export default function InventarioPage() {
     if (touchTimerRef.current) clearTimeout(touchTimerRef.current);
     touchTimerRef.current = setTimeout(() => {
       isLongPressRef.current = true;
-      if (navigator.vibrate) {
+      if (navigator.vibrate && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) {
         try { navigator.vibrate(60); } catch (_) {}
       }
       toggleAnimalSelection(animalId);
