@@ -1151,34 +1151,6 @@ export default function InventarioPage() {
                 </div>
               </div>
 
-              {/* 4. Filtro por Animales Repetidos (Fase 4 - Req 3) */}
-              <div>
-                <h4 className="text-sm font-black text-neutral-900 mb-2 uppercase tracking-wider flex items-center gap-1.5">
-                  <Copy className="w-3.5 h-3.5 text-amber-600 stroke-[2.5]" />
-                  <span>Animales Repetidos</span>
-                </h4>
-                <div className="space-y-0.5">
-                  <FilterCheckbox 
-                    label="Arete o Nombre repetido" 
-                    count={getCount('duplicates', 'any')} 
-                    checked={filters.duplicates.includes('any')} 
-                    onChange={() => toggleDuplicateFilter('any')} 
-                  />
-                  <FilterCheckbox 
-                    label="Número de arete repetido" 
-                    count={getCount('duplicates', 'number')} 
-                    checked={filters.duplicates.includes('number')} 
-                    onChange={() => toggleDuplicateFilter('number')} 
-                  />
-                  <FilterCheckbox 
-                    label="Nombre repetido" 
-                    count={getCount('duplicates', 'name')} 
-                    checked={filters.duplicates.includes('name')} 
-                    onChange={() => toggleDuplicateFilter('name')} 
-                  />
-                </div>
-              </div>
-
               {/* 2. Filtro por Raza */}
               <div>
                 <h4 className="text-sm font-black text-neutral-900 mb-2 uppercase tracking-wider">Raza</h4>
@@ -1242,6 +1214,34 @@ export default function InventarioPage() {
                     count={getCount('observations', 'without')} 
                     checked={filters.observations.includes('without')} 
                     onChange={() => toggleFilter('observations', 'without')} 
+                  />
+                </div>
+              </div>
+
+              {/* 4. Filtro por Animales Repetidos (Fase 4 - Req 3) */}
+              <div>
+                <h4 className="text-sm font-black text-neutral-900 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                  <Copy className="w-3.5 h-3.5 text-amber-600 stroke-[2.5]" />
+                  <span>Animales Repetidos</span>
+                </h4>
+                <div className="space-y-0.5">
+                  <FilterCheckbox 
+                    label="Arete o Nombre repetido" 
+                    count={getCount('duplicates', 'any')} 
+                    checked={filters.duplicates.includes('any')} 
+                    onChange={() => toggleDuplicateFilter('any')} 
+                  />
+                  <FilterCheckbox 
+                    label="Número de arete repetido" 
+                    count={getCount('duplicates', 'number')} 
+                    checked={filters.duplicates.includes('number')} 
+                    onChange={() => toggleDuplicateFilter('number')} 
+                  />
+                  <FilterCheckbox 
+                    label="Nombre repetido" 
+                    count={getCount('duplicates', 'name')} 
+                    checked={filters.duplicates.includes('name')} 
+                    onChange={() => toggleDuplicateFilter('name')} 
                   />
                 </div>
               </div>
