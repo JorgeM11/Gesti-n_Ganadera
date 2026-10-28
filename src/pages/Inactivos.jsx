@@ -1359,7 +1359,7 @@ export default function InactivosPage() {
 
                         {/* Pill de Status / Motivo (Esquina superior derecha) */}
                         <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 z-10 pointer-events-none">
-                          <span className="inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none shrink-0 bg-neutral-800/85">
+                          <span className="inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none shrink-0 bg-neutral-800/85">
                             <XCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-300 shrink-0" />
                             <span className="truncate max-w-[90px] sm:max-w-[120px]">{getGeneralInactivityReason(animal.inactivity_reason)}</span>
                           </span>
