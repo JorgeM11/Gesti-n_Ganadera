@@ -129,26 +129,6 @@ export default function NavigationDrawer({
                   <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/inventario') ? 'text-white' : 'text-neutral-400'}`} />
                 </button>
 
-                {/* 3. Animales Inactivos */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigate('/inactivos');
-                    onClose();
-                  }}
-                  className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold transition-all cursor-pointer ${
-                    isCurrentRoute('/inactivos')
-                      ? 'bg-[#1B4820] text-white shadow-lg shadow-[#1B4820]/20'
-                      : 'text-neutral-700 hover:bg-neutral-100'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <UserX className={`w-5 h-5 ${isCurrentRoute('/inactivos') ? 'text-white' : 'text-[#1B4820]'}`} />
-                    <span>Animales Inactivos</span>
-                  </div>
-                  <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/inactivos') ? 'text-white' : 'text-neutral-400'}`} />
-                </button>
-
                 {/* 3. Vaquería (Solo administradores) */}
                 {!isWorker && (
                   <button
@@ -233,6 +213,26 @@ export default function NavigationDrawer({
                     )}
                   </button>
                 )}
+
+                {/* 7. Animales Inactivos */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigate('/inactivos');
+                    onClose();
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold transition-all cursor-pointer ${
+                    isCurrentRoute('/inactivos')
+                      ? 'bg-[#1B4820] text-white shadow-lg shadow-[#1B4820]/20'
+                      : 'text-neutral-700 hover:bg-neutral-100'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <UserX className={`w-5 h-5 ${isCurrentRoute('/inactivos') ? 'text-white' : 'text-[#1B4820]'}`} />
+                    <span>Animales Inactivos</span>
+                  </div>
+                  <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/inactivos') ? 'text-white' : 'text-neutral-400'}`} />
+                </button>
 
                 {/* Separador sutil */}
                 <div className="my-2 border-t border-neutral-100" />
