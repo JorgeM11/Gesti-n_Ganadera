@@ -262,7 +262,7 @@ flowchart TD
    - [x] **2. Módulo de animales inactivos**:
      - Vista/pantalla dedicada e independiente para consultar y auditar el histórico exclusivo de bajas e inactivos (muerte, venta, pérdida, descarte, traslado).
      - Visualización de fecha de baja, motivo detallado, notas y filtros específicos por causa.
-   - [ ] **3. Filtro y detección de animales repetidos**:
+   - [x] **3. Filtro y detección de animales repetidos**:
      - Filtro rápido o sección de auditoría para detectar duplicados por número de arete, microchip RFID o nombre en la base de datos de la finca.
    - [ ] **4. Nuevo módulo: Vista de inventario por finca**:
      - Módulo o pantalla especializada para consultar y visualizar el inventario de animales segmentado y agrupado directamente por cada finca.
@@ -324,3 +324,4 @@ flowchart TD
 | **Despliegue en Producción y Pruebas Iniciales** | 2026-10-19 | **Completado** | Antigravity AI & Usuario | Despliegue completado con éxito. Pruebas de campo iniciales realizadas en móvil y escáner, con ajustes aplicados (supresión de teclado virtual, CustomSelect de fincas y buffer reactivo sin parpadeo). |
 | **Fase 4: Consolidación de Requerimientos** | 2026-10-26 | **Planificado** | Antigravity AI & Usuario | Actualizado el alcance total a 19 requerimientos: vista de inventario por finca, ocultar total de animales al obrero, roles cría/reproductor, muerte con foto/descripción, recortador de fotos, origen, destino en venta, evento de muerte en evolución y las mejoras previas de vaquería/eventos y multi-selección. |
 | **Fase 4 - Req 2: Módulo de Inactivos** | 2026-10-27 | **Completado** | Antigravity AI & Usuario | Módulo independiente de Inactivos 100% operativo, con interfaz idéntica a Inventario, filtros por motivo, tarjetas equilibradas, segregación de activos y retorno contextual. |
+| **Fase 4 - Req 3: Detección de Repetidos** | 2026-10-28 | **Completado** | Antigravity AI & Usuario | Filtro de animales repetidos por arete y nombre, orden contiguo lado a lado, icono naranja Copy y ubicado bajo Observaciones. |
