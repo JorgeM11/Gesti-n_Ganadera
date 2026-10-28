@@ -21,7 +21,10 @@ import { AnimatePresence, motion } from 'framer-motion';
 function ProfileContent() {
   const [searchParams, setSearchParams] = useSearchParams();
   // CAPTURAMOS EL ID Y EL TAB DIRECTAMENTE DE LA URL (?id=...&tab=...)
-  const animalId = searchParams.get("id"); 
+  const animalId = searchParams.get("id");
+  const fromSource = searchParams.get("from");
+  const backUrl = fromSource === 'inactivos' ? '/inactivos' : '/inventario';
+  const backLabel = fromSource === 'inactivos' ? 'VOLVER A INACTIVOS' : 'VOLVER AL INVENTARIO';
   const initialTab = searchParams.get("tab") || 'details';
   
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -119,8 +122,8 @@ function ProfileContent() {
       <div className="min-h-screen bg-[#F7F7F2] flex flex-col items-center justify-center text-[#1B4820] px-6 text-center">
         <h2 className="text-2xl font-black mb-2">Animal no encontrado</h2>
         <p className="text-sm text-neutral-500 mb-6 font-medium">El registro que buscas no existe o fue eliminado.</p>
-        <Link to="/inventario" className="bg-[#1B4820] text-white px-8 py-3 rounded-full font-bold text-sm">
-          VOLVER AL INVENTARIO
+        <Link to={backUrl} className="bg-[#1B4820] text-white px-8 py-3 rounded-full font-bold text-sm">
+          {backLabel}
         </Link>
       </div>
     );
@@ -142,7 +145,7 @@ function ProfileContent() {
     <main className="min-h-screen bg-[#F7F7F2] font-sans pb-24 md:pb-8 relative">
       {/* HEADER FIJO */}
       <header className="bg-[#F7F7F2] px-4 py-4 sticky top-0 z-30 flex items-center gap-4 border-b border-neutral-100 md:border-none">
-        <Link to="/inventario" className="p-2 -ml-2 hover:bg-neutral-200 rounded-full transition-colors cursor-pointer shrink-0">
+        <Link to={backUrl} className="p-2 -ml-2 hover:bg-neutral-200 rounded-full transition-colors cursor-pointer shrink-0" title={fromSource === 'inactivos' ? 'Volver a Inactivos' : 'Volver al Inventario'}>
           <ArrowLeft className="w-6 h-6 text-[#1B4820]" />
         </Link>
         <div className="overflow-hidden">

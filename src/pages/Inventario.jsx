@@ -524,7 +524,6 @@ export default function InventarioPage() {
 
   const [filters, setFilters] = useState({
     sex: [],
-    status: [],
     category: [],
     breed: [],
     observations: []
@@ -535,7 +534,7 @@ export default function InventarioPage() {
       let animals = await db.animals
         .orderBy('updated_at')
         .reverse()
-        .filter(a => !a.deleted_at)
+        .filter(a => !a.deleted_at && (a.status || 'Activo') !== 'Inactivo')
         .toArray();
 
       if (isWorker && currentUserId) {
@@ -588,7 +587,7 @@ export default function InventarioPage() {
   };
 
   const clearFilters = () => {
-    setFilters({ sex: [], status: [], category: [], breed: [], observations: [] });
+    setFilters({ sex: [], category: [], breed: [], observations: [] });
     setSelectedFarmFilter('ALL');
     setSelectedPotreroFilter('ALL');
     setSelectedOwnerFilter('ALL');
@@ -596,7 +595,6 @@ export default function InventarioPage() {
 
   const activeFiltersCount = 
     filters.sex.length + 
-    filters.status.length + 
     filters.category.length + 
     filters.breed.length + 
     filters.observations.length + 
@@ -628,8 +626,6 @@ export default function InventarioPage() {
         String(a.id || '').toLowerCase().includes(term);
       
       const matchesSex = filters.sex.length === 0 || filters.sex.includes(a.sex);
-      const currentStatus = a.status || 'Activo';
-      const matchesStatus = filters.status.length === 0 || filters.status.includes(currentStatus);
       const matchesFarm = selectedFarmFilter === 'ALL' 
         ? true 
         : selectedFarmFilter === 'NONE'
@@ -653,7 +649,7 @@ export default function InventarioPage() {
         (filters.observations.includes('with') && hasObs) ||
         (filters.observations.includes('without') && !hasObs);
 
-      return matchesSearch && matchesSex && matchesStatus && matchesCategory && matchesFarm && matchesPotrero && matchesOwner && matchesBreed && matchesObservations;
+      return matchesSearch && matchesSex && matchesCategory && matchesFarm && matchesPotrero && matchesOwner && matchesBreed && matchesObservations;
     });
   }, [allAnimals, searchTerm, filters, selectedFarmFilter, selectedPotreroFilter, selectedOwnerFilter, ownerMap]);
 
@@ -691,7 +687,6 @@ export default function InventarioPage() {
     if (!allAnimals) return 0;
     return allAnimals.filter(a => {
       if (type === 'sex') return a.sex === value;
-      if (type === 'status') return (a.status || 'Activo') === value;
       if (type === 'breed') return ((a.breed || '').trim() || 'Sin raza') === value;
       if (type === 'category') {
         const cat = getAnimalAgeCategory(a);
@@ -1018,16 +1013,7 @@ export default function InventarioPage() {
                 </div>
               </div>
 
-              {/* 3. Estatus */}
-              <div>
-                <h4 className="text-sm font-black text-neutral-900 mb-2 uppercase tracking-wider">Estatus del Animal</h4>
-                <div className="space-y-0.5">
-                  <FilterCheckbox label="Activos en finca" count={getCount('status', 'Activo')} checked={filters.status.includes('Activo')} onChange={() => toggleFilter('status', 'Activo')} />
-                  <FilterCheckbox label="Inactivos (Vendidos/Fallecidos)" count={getCount('status', 'Inactivo')} checked={filters.status.includes('Inactivo')} onChange={() => toggleFilter('status', 'Inactivo')} />
-                </div>
-              </div>
-
-              {/* 4. Género */}
+              {/* 3. Género */}
               <div>
                 <h4 className="text-sm font-black text-neutral-900 mb-2 uppercase tracking-wider">Género</h4>
                 <div className="space-y-0.5">
@@ -1182,12 +1168,6 @@ export default function InventarioPage() {
                 <span key={s} className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 shadow-2xs">
                   <span>{s}</span>
                   <button type="button" onClick={() => toggleFilter('sex', s)} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
-                </span>
-              ))}
-              {filters.status.map(st => (
-                <span key={st} className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 shadow-2xs">
-                  <span>{st}</span>
-                  <button type="button" onClick={() => toggleFilter('status', st)} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
                 </span>
               ))}
               {filters.breed.map(b => (
