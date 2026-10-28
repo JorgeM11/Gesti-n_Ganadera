@@ -1537,11 +1537,13 @@ export default function InventarioPage() {
                             </h2>
                             {(() => {
                               const rawNum = String(animal.number || '').trim().toLowerCase();
-                              if (rawNum && duplicateAnalysis.duplicateNumbers.has(rawNum)) {
+                              const hasDupNum = rawNum && duplicateAnalysis.duplicateNumbers.has(rawNum);
+                              const rawName = String(animal.name || '').trim().toLowerCase();
+                              const hasDupName = !animal.number && rawName && duplicateAnalysis.duplicateNames.has(rawName);
+                              if (hasDupNum || hasDupName) {
                                 return (
-                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black uppercase tracking-wider shrink-0" title="Número de arete repetido">
-                                    <Copy className="w-2.5 h-2.5 text-amber-700" />
-                                    <span>Arete Repetido</span>
+                                  <span title={hasDupNum ? "Número de arete repetido" : "Nombre repetido"} className="shrink-0 inline-flex items-center">
+                                    <Copy className="w-4 h-4 text-orange-500 stroke-[2.5]" />
                                   </span>
                                 );
                               }
@@ -1563,9 +1565,8 @@ export default function InventarioPage() {
                                 const rawName = String(animal.name || '').trim().toLowerCase();
                                 if (rawName && duplicateAnalysis.duplicateNames.has(rawName)) {
                                   return (
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black uppercase tracking-wider shrink-0" title="Nombre repetido">
-                                      <Copy className="w-2.5 h-2.5 text-amber-700" />
-                                      <span>Nombre Repetido</span>
+                                    <span title="Nombre repetido" className="shrink-0 inline-flex items-center">
+                                      <Copy className="w-3.5 h-3.5 text-orange-500 stroke-[2.5]" />
                                     </span>
                                   );
                                 }
@@ -1724,9 +1725,8 @@ export default function InventarioPage() {
                                 const rawNum = String(animal.number || '').trim().toLowerCase();
                                 if (rawNum && duplicateAnalysis.duplicateNumbers.has(rawNum)) {
                                   return (
-                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black uppercase tracking-wider shrink-0" title="Número de arete repetido">
-                                      <Copy className="w-2.5 h-2.5 text-amber-700" />
-                                      <span>Arete Repetido</span>
+                                    <span title="Número de arete repetido" className="shrink-0 inline-flex items-center">
+                                      <Copy className="w-4 h-4 text-orange-500 stroke-[2.5]" />
                                     </span>
                                   );
                                 }
@@ -1830,11 +1830,13 @@ export default function InventarioPage() {
                               </span>
                               {(() => {
                                 const rawNum = String(animal.number || '').trim().toLowerCase();
-                                if (rawNum && duplicateAnalysis.duplicateNumbers.has(rawNum)) {
+                                const hasDupNum = rawNum && duplicateAnalysis.duplicateNumbers.has(rawNum);
+                                const rawName = String(animal.name || '').trim().toLowerCase();
+                                const hasDupName = rawName && duplicateAnalysis.duplicateNames.has(rawName);
+                                if (hasDupNum || hasDupName) {
                                   return (
-                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black uppercase tracking-wider shrink-0">
-                                      <Copy className="w-2.5 h-2.5 text-amber-700" />
-                                      <span>Repetido</span>
+                                    <span title={hasDupNum ? "Número de arete repetido" : "Nombre repetido"} className="shrink-0 inline-flex items-center">
+                                      <Copy className="w-4 h-4 text-orange-500 stroke-[2.5]" />
                                     </span>
                                   );
                                 }
