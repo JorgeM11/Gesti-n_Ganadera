@@ -88,6 +88,18 @@ export function getAnimalAgeCategory(animal) {
   return 'Adulto';
 }
 
+export function getGeneralInactivityReason(reason) {
+  if (!reason) return 'Inactivo';
+  const trimmed = reason.trim();
+  if (trimmed.includes(':')) {
+    return trimmed.split(':')[0].trim();
+  }
+  if (trimmed.includes(' - ')) {
+    return trimmed.split(' - ')[0].trim();
+  }
+  return trimmed;
+}
+
 // --- COMPONENTE DE CHECKBOX ---
 const FilterCheckbox = ({ label, count, checked, onChange }) => (
   <button
@@ -1344,7 +1356,7 @@ export default function InactivosPage() {
                           {/* Pill de Status / Motivo */}
                           <span className="inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none shrink-0 bg-neutral-800/85">
                             <XCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-300 shrink-0" />
-                            <span className="truncate max-w-[80px] sm:max-w-[110px]">{animal.inactivity_reason || 'Inactivo'}</span>
+                            <span className="truncate max-w-[80px] sm:max-w-[110px]">{getGeneralInactivityReason(animal.inactivity_reason)}</span>
                           </span>
                         </div>
                       </div>
@@ -1551,7 +1563,7 @@ export default function InactivosPage() {
                           <div>
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-neutral-200 text-neutral-700 border border-neutral-300">
                               <XCircle className="w-2.5 h-2.5 text-red-500" />
-                              <span className="truncate max-w-[80px]">{animal.inactivity_reason || 'Inactivo'}</span>
+                              <span className="truncate max-w-[80px]">{getGeneralInactivityReason(animal.inactivity_reason)}</span>
                             </span>
                           </div>
 
@@ -1636,7 +1648,7 @@ export default function InactivosPage() {
                               </span>
 
                               <span
-                                title={animal.inactivity_reason || 'Inactivo'}
+                                title={getGeneralInactivityReason(animal.inactivity_reason)}
                                 className="w-6 h-6 rounded-full flex items-center justify-center border shadow-2xs bg-neutral-200 text-neutral-700 border-neutral-300"
                               >
                                 <XCircle className="w-3.5 h-3.5 text-red-500" />
