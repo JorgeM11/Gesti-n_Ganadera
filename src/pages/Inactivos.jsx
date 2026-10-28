@@ -1118,7 +1118,7 @@ export default function InactivosPage() {
                 <Menu className="w-6 h-6 text-[#1B4820] md:text-white" />
               </button>
               <h1 className="text-xl md:text-3xl font-black text-[#1B4820] md:text-white tracking-tight whitespace-nowrap">
-                Animales Inactivos
+                Inactivos
               </h1>
             </div>
 
