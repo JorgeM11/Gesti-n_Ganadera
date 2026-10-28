@@ -255,9 +255,10 @@ flowchart TD
 #### 📦 Desglose de Requerimientos de la Fase 4 (19 Puntos):
 
 1. **Gestión de Ganado, Ficha del Animal e Inventario**:
-   - [ ] **1. Selección de múltiples animales (Acciones por lote)**:
-     - Checkboxes y modo de selección múltiple en la lista de inventario.
-     - Barra flotante de acciones masivas (ej. traslado masivo de potrero, cambio de lote, asignación de estado o exportación).
+   - [x] **1. Selección de múltiples animales (Acciones por lote)**:
+     - Checkboxes y modo de selección múltiple en la lista de inventario (pulsación larga en móvil y hover en laptop).
+     - Barra flotante de acciones masivas y modal con opciones de cambio en bloque (Finca, Potrero, Año de nacimiento, Dueño y Estado/Motivo).
+     - Validación de potrero-finca automática, offline-first y soporte de sincronización PATCH.
    - [ ] **2. Módulo de animales inactivos**:
      - Vista/pantalla dedicada e independiente para consultar y auditar el histórico exclusivo de bajas e inactivos (muerte, venta, pérdida, descarte, traslado).
      - Visualización de fecha de baja, motivo detallado, notas y filtros específicos por causa.
