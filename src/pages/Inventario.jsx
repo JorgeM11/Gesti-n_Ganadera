@@ -523,6 +523,7 @@ export default function InventarioPage() {
   };
 
   const [filters, setFilters] = useState({
+    duplicates: [],
     sex: [],
     category: [],
     breed: [],
@@ -566,6 +567,88 @@ export default function InventarioPage() {
     return rawOwners.filter(o => accessibleOwnerIds.has(o.id));
   }, [isWorker, accessibleOwnerIds, rawOwners]);
 
+  // Detección y agrupamiento de animales duplicados (Fase 4 - Req 3)
+  const duplicateAnalysis = useMemo(() => {
+    if (!allAnimals || allAnimals.length === 0) {
+      return {
+        duplicateNumbers: new Set(),
+        duplicateNames: new Set(),
+        animalsWithDupNumber: new Set(),
+        animalsWithDupName: new Set(),
+        animalsWithDupAny: new Set()
+      };
+    }
+
+    const numberCounts = new Map();
+    const nameCounts = new Map();
+
+    allAnimals.forEach(a => {
+      const rawNum = String(a.number || '').trim().toLowerCase();
+      if (rawNum && rawNum !== 's/n' && rawNum !== 'sin arete' && rawNum !== '0') {
+        numberCounts.set(rawNum, (numberCounts.get(rawNum) || 0) + 1);
+      }
+
+      const rawName = String(a.name || '').trim().toLowerCase();
+      if (rawName && rawName !== 'sin nombre' && rawName !== 's/n' && rawName.length >= 2) {
+        nameCounts.set(rawName, (nameCounts.get(rawName) || 0) + 1);
+      }
+    });
+
+    const duplicateNumbers = new Set();
+    numberCounts.forEach((count, key) => {
+      if (count > 1) duplicateNumbers.add(key);
+    });
+
+    const duplicateNames = new Set();
+    nameCounts.forEach((count, key) => {
+      if (count > 1) duplicateNames.add(key);
+    });
+
+    const animalsWithDupNumber = new Set();
+    const animalsWithDupName = new Set();
+    const animalsWithDupAny = new Set();
+
+    allAnimals.forEach(a => {
+      const rawNum = String(a.number || '').trim().toLowerCase();
+      const hasDupNum = rawNum && duplicateNumbers.has(rawNum);
+
+      const rawName = String(a.name || '').trim().toLowerCase();
+      const hasDupName = rawName && duplicateNames.has(rawName);
+
+      if (hasDupNum) animalsWithDupNumber.add(a.id);
+      if (hasDupName) animalsWithDupName.add(a.id);
+      if (hasDupNum || hasDupName) animalsWithDupAny.add(a.id);
+    });
+
+    return {
+      duplicateNumbers,
+      duplicateNames,
+      animalsWithDupNumber,
+      animalsWithDupName,
+      animalsWithDupAny
+    };
+  }, [allAnimals]);
+
+  const toggleDuplicateFilter = (val) => {
+    setFilters(prev => {
+      const cur = prev.duplicates || [];
+      if (val === 'any') {
+        return {
+          ...prev,
+          duplicates: cur.includes('any') ? [] : ['any']
+        };
+      }
+      const withoutAny = cur.filter(x => x !== 'any');
+      const next = withoutAny.includes(val)
+        ? withoutAny.filter(x => x !== val)
+        : [...withoutAny, val];
+      return {
+        ...prev,
+        duplicates: next
+      };
+    });
+  };
+
   // Extraer todas las razas presentes en los animales
   const availableBreeds = useMemo(() => {
     if (!allAnimals) return [];
@@ -587,13 +670,14 @@ export default function InventarioPage() {
   };
 
   const clearFilters = () => {
-    setFilters({ sex: [], category: [], breed: [], observations: [] });
+    setFilters({ duplicates: [], sex: [], category: [], breed: [], observations: [] });
     setSelectedFarmFilter('ALL');
     setSelectedPotreroFilter('ALL');
     setSelectedOwnerFilter('ALL');
   };
 
   const activeFiltersCount = 
+    (filters.duplicates?.length || 0) +
     filters.sex.length + 
     filters.category.length + 
     filters.breed.length + 
@@ -605,7 +689,7 @@ export default function InventarioPage() {
   const filteredAnimals = useMemo(() => {
     if (!allAnimals) return [];
 
-    return allAnimals.filter(a => {
+    const result = allAnimals.filter(a => {
       const term = searchTerm.toLowerCase().trim();
       const termClean = term.replace(/[\s-]/g, '');
       const animalName = (a.name || '').toLowerCase().trim();
@@ -649,9 +733,62 @@ export default function InventarioPage() {
         (filters.observations.includes('with') && hasObs) ||
         (filters.observations.includes('without') && !hasObs);
 
-      return matchesSearch && matchesSex && matchesCategory && matchesFarm && matchesPotrero && matchesOwner && matchesBreed && matchesObservations;
+      const isDuplicatesFilterActive = filters.duplicates && filters.duplicates.length > 0;
+      let matchesDuplicates = true;
+      if (isDuplicatesFilterActive) {
+        const wantsAny = filters.duplicates.includes('any');
+        const wantsNumber = filters.duplicates.includes('number');
+        const wantsName = filters.duplicates.includes('name');
+
+        if (wantsAny) {
+          matchesDuplicates = duplicateAnalysis.animalsWithDupAny.has(a.id);
+        } else if (wantsNumber && wantsName) {
+          matchesDuplicates = duplicateAnalysis.animalsWithDupNumber.has(a.id) || duplicateAnalysis.animalsWithDupName.has(a.id);
+        } else if (wantsNumber) {
+          matchesDuplicates = duplicateAnalysis.animalsWithDupNumber.has(a.id);
+        } else if (wantsName) {
+          matchesDuplicates = duplicateAnalysis.animalsWithDupName.has(a.id);
+        }
+      }
+
+      return matchesSearch && matchesSex && matchesCategory && matchesFarm && matchesPotrero && matchesOwner && matchesBreed && matchesObservations && matchesDuplicates;
     });
-  }, [allAnimals, searchTerm, filters, selectedFarmFilter, selectedPotreroFilter, selectedOwnerFilter, ownerMap]);
+
+    const isDuplicatesFilterActive = filters.duplicates && filters.duplicates.length > 0;
+    if (isDuplicatesFilterActive) {
+      result.sort((a, b) => {
+        const getGroupKey = (animal) => {
+          const rawNum = String(animal.number || '').trim().toLowerCase();
+          const hasDupNum = rawNum && duplicateAnalysis.duplicateNumbers.has(rawNum);
+
+          const rawName = String(animal.name || '').trim().toLowerCase();
+          const hasDupName = rawName && duplicateAnalysis.duplicateNames.has(rawName);
+
+          const wantsNumber = filters.duplicates.includes('number') || filters.duplicates.includes('any');
+          const wantsName = filters.duplicates.includes('name') || filters.duplicates.includes('any');
+
+          if (wantsNumber && hasDupNum) {
+            const paddedNum = /^\d+$/.test(rawNum) ? rawNum.padStart(10, '0') : rawNum;
+            return `A_num_${paddedNum}`;
+          }
+          if (wantsName && hasDupName) {
+            return `B_name_${rawName}`;
+          }
+          return `Z_other_${animal.id}`;
+        };
+
+        const keyA = getGroupKey(a);
+        const keyB = getGroupKey(b);
+
+        if (keyA !== keyB) {
+          return keyA.localeCompare(keyB);
+        }
+        return (a.id || '').localeCompare(b.id || '');
+      });
+    }
+
+    return result;
+  }, [allAnimals, searchTerm, filters, selectedFarmFilter, selectedPotreroFilter, selectedOwnerFilter, ownerMap, duplicateAnalysis]);
 
   // --- SELECCIÓN DE TODOS LOS FILTRADOS (FASE 4 - REQ 1) ---
   const isAllFilteredSelected = useMemo(() => {
@@ -685,6 +822,12 @@ export default function InventarioPage() {
 
   const getCount = (type, value) => {
     if (!allAnimals) return 0;
+    if (type === 'duplicates') {
+      if (value === 'any') return duplicateAnalysis.animalsWithDupAny.size;
+      if (value === 'number') return duplicateAnalysis.animalsWithDupNumber.size;
+      if (value === 'name') return duplicateAnalysis.animalsWithDupName.size;
+      return 0;
+    }
     return allAnimals.filter(a => {
       if (type === 'sex') return a.sex === value;
       if (type === 'breed') return ((a.breed || '').trim() || 'Sin raza') === value;
@@ -787,7 +930,21 @@ export default function InventarioPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-sm font-black text-neutral-900 uppercase tracking-wider">Finca</h4>
-                  {selectedFarmFilter !== 'ALL' && (
+                  {filters.duplicates.map(d => {
+                const label = d === 'any' 
+                  ? 'Repetidos: Arete o Nombre' 
+                  : d === 'number' 
+                    ? 'Repetidos: Arete' 
+                    : 'Repetidos: Nombre';
+                return (
+                  <span key={d} className="inline-flex items-center gap-1 bg-amber-50 text-amber-950 px-2.5 py-1 rounded-lg text-[11px] font-bold border border-amber-300 shadow-2xs">
+                    <Copy className="w-3 h-3 text-amber-700 stroke-[2.5]" />
+                    <span>{label}</span>
+                    <button type="button" onClick={() => toggleDuplicateFilter(d)} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
+                  </span>
+                );
+              })}
+              {selectedFarmFilter !== 'ALL' && (
                     <button
                       type="button"
                       onClick={() => {
@@ -990,6 +1147,34 @@ export default function InventarioPage() {
                       </button>
                     );
                   })()}
+                </div>
+              </div>
+
+              {/* 4. Filtro por Animales Repetidos (Fase 4 - Req 3) */}
+              <div>
+                <h4 className="text-sm font-black text-neutral-900 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                  <Copy className="w-3.5 h-3.5 text-amber-600 stroke-[2.5]" />
+                  <span>Animales Repetidos</span>
+                </h4>
+                <div className="space-y-0.5">
+                  <FilterCheckbox 
+                    label="Arete o Nombre repetido" 
+                    count={getCount('duplicates', 'any')} 
+                    checked={filters.duplicates.includes('any')} 
+                    onChange={() => toggleDuplicateFilter('any')} 
+                  />
+                  <FilterCheckbox 
+                    label="Número de arete repetido" 
+                    count={getCount('duplicates', 'number')} 
+                    checked={filters.duplicates.includes('number')} 
+                    onChange={() => toggleDuplicateFilter('number')} 
+                  />
+                  <FilterCheckbox 
+                    label="Nombre repetido" 
+                    count={getCount('duplicates', 'name')} 
+                    checked={filters.duplicates.includes('name')} 
+                    onChange={() => toggleDuplicateFilter('name')} 
+                  />
                 </div>
               </div>
 
@@ -1343,12 +1528,24 @@ export default function InventarioPage() {
                       <div className="p-3 sm:p-5 flex flex-col justify-between flex-1 gap-2 sm:gap-3">
                         <div>
                           {/* Código de Arete */}
-                          <div className="mb-1 sm:mb-1.5">
+                          <div className="mb-1 sm:mb-1.5 flex items-center gap-1.5 flex-wrap">
                             <h2 
                               className="text-base sm:text-lg font-black text-[#1B4820] leading-tight truncate"
                             >
                               {animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'Sin arete'))}
                             </h2>
+                            {(() => {
+                              const rawNum = String(animal.number || '').trim().toLowerCase();
+                              if (rawNum && duplicateAnalysis.duplicateNumbers.has(rawNum)) {
+                                return (
+                                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black uppercase tracking-wider shrink-0" title="Número de arete repetido">
+                                    <Copy className="w-2.5 h-2.5 text-amber-700" />
+                                    <span>Arete Repetido</span>
+                                  </span>
+                                );
+                              }
+                              return null;
+                            })()}
                           </div>
 
                           {/* Chip (solo el dato) */}
@@ -1356,6 +1553,25 @@ export default function InventarioPage() {
                             <Cpu className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                             <span className="truncate font-bold text-neutral-900">{animal.chip_number || 'Sin chip'}</span>
                           </div>
+
+                          {/* Nombre del animal (si tiene) */}
+                          {animal.name && (
+                            <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs text-neutral-600 py-0.5 truncate">
+                              <span className="truncate font-bold text-neutral-700">"{animal.name}"</span>
+                              {(() => {
+                                const rawName = String(animal.name || '').trim().toLowerCase();
+                                if (rawName && duplicateAnalysis.duplicateNames.has(rawName)) {
+                                  return (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black uppercase tracking-wider shrink-0" title="Nombre repetido">
+                                      <Copy className="w-2.5 h-2.5 text-amber-700" />
+                                      <span>Nombre Repetido</span>
+                                    </span>
+                                  );
+                                }
+                                return null;
+                              })()}
+                            </div>
+                          )}
 
                           {/* Raza (solo el dato) */}
                           <div className="flex items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs font-semibold text-neutral-700 py-0.5 truncate">
@@ -1503,6 +1719,18 @@ export default function InventarioPage() {
                               <span className="text-base font-black text-[#1B4820] truncate">
                                 {animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'Sin arete'))}
                               </span>
+                              {(() => {
+                                const rawNum = String(animal.number || '').trim().toLowerCase();
+                                if (rawNum && duplicateAnalysis.duplicateNumbers.has(rawNum)) {
+                                  return (
+                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black uppercase tracking-wider shrink-0" title="Número de arete repetido">
+                                      <Copy className="w-2.5 h-2.5 text-amber-700" />
+                                      <span>Arete Repetido</span>
+                                    </span>
+                                  );
+                                }
+                                return null;
+                              })()}
                               {Boolean(animal.observations && animal.observations.trim()) && (
                                 <span 
                                   title={`Observación: ${animal.observations}`} 
@@ -1599,6 +1827,18 @@ export default function InventarioPage() {
                               <span className="text-lg sm:text-xl font-black text-[#1B4820] truncate">
                                 {animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'Sin arete'))}
                               </span>
+                              {(() => {
+                                const rawNum = String(animal.number || '').trim().toLowerCase();
+                                if (rawNum && duplicateAnalysis.duplicateNumbers.has(rawNum)) {
+                                  return (
+                                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[9px] font-black uppercase tracking-wider shrink-0">
+                                      <Copy className="w-2.5 h-2.5 text-amber-700" />
+                                      <span>Repetido</span>
+                                    </span>
+                                  );
+                                }
+                                return null;
+                              })()}
                               {Boolean(animal.observations && animal.observations.trim()) && (
                                 <span 
                                   title={`Observación: ${animal.observations}`} 
