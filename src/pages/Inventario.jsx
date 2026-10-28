@@ -1310,9 +1310,8 @@ export default function InventarioPage() {
                           )}
                         </button>
 
-                        {/* Barra Superior de Badges Alineados (Género y Activo/Inactivo) */}
-                        <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center justify-end z-10 pointer-events-none gap-1 sm:gap-1.5 max-w-[calc(100%-44px)]">
-                          {/* Pill de Género */}
+                        {/* Pill de Género (Esquina superior izquierda) */}
+                        <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-10 pointer-events-none">
                           <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none shrink-0 ${
                             animal.sex === 'Hembra' ? 'bg-pink-600/90' : 'bg-blue-700/90'
                           }`}>
@@ -1323,8 +1322,10 @@ export default function InventarioPage() {
                             )}
                             <span>{animal.sex || 'Bovino'}</span>
                           </span>
+                        </div>
 
-                          {/* Pill de Status (Activo / Inactivo) */}
+                        {/* Pill de Status (Esquina superior derecha) */}
+                        <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 z-10 pointer-events-none">
                           <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none shrink-0 ${
                             animal.status === 'Inactivo' ? 'bg-neutral-800/85' : 'bg-emerald-600/90'
                           }`}>

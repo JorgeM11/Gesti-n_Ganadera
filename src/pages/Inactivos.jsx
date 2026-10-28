@@ -90,12 +90,16 @@ export function getAnimalAgeCategory(animal) {
 
 export function getGeneralInactivityReason(reason) {
   if (!reason) return 'Inactivo';
-  const trimmed = reason.trim();
+  let trimmed = reason.trim();
   if (trimmed.includes(':')) {
-    return trimmed.split(':')[0].trim();
+    trimmed = trimmed.split(':')[0].trim();
   }
   if (trimmed.includes(' - ')) {
-    return trimmed.split(' - ')[0].trim();
+    trimmed = trimmed.split(' - ')[0].trim();
+  }
+  const lower = trimmed.toLowerCase();
+  if (lower.includes('perdida') || lower.includes('pérdida') || lower.includes('extravio') || lower.includes('extravío')) {
+    return 'Extravío';
   }
   return trimmed;
 }
@@ -1339,9 +1343,8 @@ export default function InactivosPage() {
                           )}
                         </button>
 
-                        {/* Barra Superior de Badges Alineados (Género y Motivo de Inactivación) */}
-                        <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center justify-end z-10 pointer-events-none gap-1 sm:gap-1.5 max-w-[calc(100%-44px)]">
-                          {/* Pill de Género */}
+                        {/* Pill de Género (Esquina superior izquierda) */}
+                        <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-10 pointer-events-none">
                           <span className={`inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none shrink-0 ${
                             animal.sex === 'Hembra' ? 'bg-pink-600/90' : 'bg-blue-700/90'
                           }`}>
@@ -1352,11 +1355,13 @@ export default function InactivosPage() {
                             )}
                             <span>{animal.sex || 'Bovino'}</span>
                           </span>
+                        </div>
 
-                          {/* Pill de Status / Motivo */}
+                        {/* Pill de Status / Motivo (Esquina superior derecha) */}
+                        <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 z-10 pointer-events-none">
                           <span className="inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none shrink-0 bg-neutral-800/85">
                             <XCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-300 shrink-0" />
-                            <span className="truncate max-w-[80px] sm:max-w-[110px]">{getGeneralInactivityReason(animal.inactivity_reason)}</span>
+                            <span className="truncate max-w-[90px] sm:max-w-[120px]">{getGeneralInactivityReason(animal.inactivity_reason)}</span>
                           </span>
                         </div>
                       </div>
