@@ -72,6 +72,8 @@ export default function App() {
         <Route path="/inventario/perfil" element={<ProtectedRoute><PerfilAnimal /></ProtectedRoute>} />
         <Route path="/inventario/perfil/evento" element={<ProtectedRoute><PerfilEvento /></ProtectedRoute>} />
         <Route path="/inventario/perfil/tratamiento" element={<ProtectedRoute><PerfilTratamiento /></ProtectedRoute>} />
+        <Route path="/eventos" element={<AdminOnlyRoute><Vaquerias /></AdminOnlyRoute>} />
+        <Route path="/eventos/:id" element={<AdminOnlyRoute><VaqueriaDetalle /></AdminOnlyRoute>} />
         <Route path="/vaquerias" element={<AdminOnlyRoute><Vaquerias /></AdminOnlyRoute>} />
         <Route path="/vaquerias/:id" element={<AdminOnlyRoute><VaqueriaDetalle /></AdminOnlyRoute>} />
 

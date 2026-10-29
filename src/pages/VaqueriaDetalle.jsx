@@ -440,7 +440,7 @@ export default function VaqueriaDetallePage() {
     if (!deletingRecord) return;
     try {
       await removeAnimalFromVaqueria(deletingRecord.id);
-      showToast('Animal retirado', 'El animal fue retirado de la asistencia de esta vaquería.', 'success');
+      showToast('Animal retirado', 'El animal fue retirado de la asistencia de este evento.', 'success');
     } catch (err) {
       showToast('Error', err.message || 'No se pudo retirar el animal.', 'error');
     } finally {
@@ -525,8 +525,8 @@ export default function VaqueriaDetallePage() {
         });
 
         showToast(
-          'Vaquería Finalizada',
-          'La vaquería se cerró exitosamente y todas sus listas quedaron congeladas de forma inmutable.',
+          'Evento Finalizado',
+          'El evento se cerró exitosamente y todas sus listas quedaron congeladas de forma inmutable.',
           'success'
         );
       } else {
@@ -536,7 +536,7 @@ export default function VaqueriaDetallePage() {
         });
 
         showToast(
-          'Vaquería Reabierta',
+          'Evento Reabierto',
           'La sesión está de nuevo en progreso y reactiva.',
           'success'
         );
@@ -632,7 +632,7 @@ export default function VaqueriaDetallePage() {
       <div className="min-h-screen bg-[#F0F2EB] flex flex-col items-center justify-center p-4">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-[#1B4820] border-t-transparent rounded-full animate-spin" />
-          <p className="text-xs font-bold text-neutral-600">Cargando vaquería...</p>
+          <p className="text-xs font-bold text-neutral-600">Cargando evento...</p>
         </div>
       </div>
     );
@@ -646,16 +646,16 @@ export default function VaqueriaDetallePage() {
           <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto mb-4">
             <AlertTriangle className="w-6 h-6" />
           </div>
-          <h2 className="text-base font-black text-neutral-900 mb-2">Vaquería no encontrada</h2>
+          <h2 className="text-base font-black text-neutral-900 mb-2">Evento no encontrado</h2>
           <p className="text-xs font-medium text-neutral-500 mb-6">
             La sesión solicitada no existe o fue eliminada previamente.
           </p>
           <button
             type="button"
-            onClick={() => navigate('/vaquerias')}
+            onClick={() => navigate('/eventos')}
             className="w-full py-3 bg-[#1B4820] text-white rounded-2xl text-xs font-black shadow-md cursor-pointer"
           >
-            Volver a Vaquerías
+            Volver a Eventos
           </button>
         </div>
       </div>
@@ -670,7 +670,7 @@ export default function VaqueriaDetallePage() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => navigate('/vaquerias')}
+              onClick={() => navigate('/eventos')}
               className="p-2 -ml-2 rounded-xl text-neutral-700 md:text-white hover:bg-neutral-100 md:hover:bg-white/10 transition-colors cursor-pointer"
               title="Volver a lista"
             >
@@ -722,7 +722,7 @@ export default function VaqueriaDetallePage() {
                   : 'bg-[#1B4820] text-white hover:bg-[#143618]'
               }`}
             >
-              {currentVaqueria.status === 'Finalizada' ? 'Reabrir Vaquería' : 'Finalizar Vaquería'}
+              {currentVaqueria.status === 'Finalizada' ? 'Reabrir Evento' : 'Finalizar Evento'}
             </button>
           </div>
         </div>
@@ -788,10 +788,10 @@ export default function VaqueriaDetallePage() {
               </div>
               <div>
                 <h4 className="text-xs md:text-sm font-black text-neutral-800">
-                  Vaquería Finalizada (Listas Inmutables)
+                  Evento Finalizado (Listas Inmutables)
                 </h4>
                 <p className="text-[11px] font-medium text-neutral-500">
-                  Todas las listas de asistencia, faltantes y métricas están congeladas históricamente. Para realizar modificaciones, pulse "Reabrir Vaquería".
+                  Todas las listas de asistencia, faltantes y métricas están congeladas históricamente. Para realizar modificaciones, pulse "Reabrir Evento".
                 </p>
               </div>
             </div>
@@ -852,8 +852,8 @@ export default function VaqueriaDetallePage() {
               <span className="flex items-center gap-1.5">
                 <Info className="w-3.5 h-3.5 text-[#1B4820]" />
                 {activeAnalysis?.isComparisonWithInventory
-                  ? 'Línea base: Rebaño activo de la finca en inventario (Primera vaquería)'
-                  : `Línea base: Vaquería anterior (${previousVaqueria?.name || 'Previa'} - ${previousVaqueria?.date || ''})`}
+                  ? 'Línea base: Rebaño activo de la finca en inventario (Primer evento)'
+                  : `Línea base: Evento anterior (${previousVaqueria?.name || 'Previa'} - ${previousVaqueria?.date || ''})`}
               </span>
             </div>
           </div>
@@ -1040,7 +1040,7 @@ export default function VaqueriaDetallePage() {
                             type="button"
                             onClick={() => setDeletingRecord(item.record)}
                             className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                            title="Quitar de esta vaquería"
+                            title="Quitar de este evento"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -1064,7 +1064,7 @@ export default function VaqueriaDetallePage() {
                 <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto mb-2" />
                 <h4 className="text-sm font-black text-neutral-800">¡No hay animales faltantes!</h4>
                 <p className="text-xs text-neutral-400 max-w-sm mx-auto mt-1">
-                  Todos los animales esperados de la finca han respondido presente en esta vaquería.
+                  Todos los animales esperados de la finca han respondido presente en este evento.
                 </p>
               </div>
             ) : (
@@ -1276,7 +1276,7 @@ export default function VaqueriaDetallePage() {
         onClose={() => setIsEditVaqueriaOpen(false)}
         initialData={currentVaqueria}
         onSuccess={(updated) => {
-          showToast('Vaquería actualizada', `"${updated.name}" guardada exitosamente.`, 'success');
+          showToast('Evento actualizado', `"${updated.name}" guardada exitosamente.`, 'success');
         }}
       />
 
@@ -1306,7 +1306,7 @@ export default function VaqueriaDetallePage() {
       {/* Confirmación para Quitar Animal de la Lista */}
       <ConfirmDialog
         isOpen={Boolean(deletingRecord)}
-        title="¿Quitar animal de esta vaquería?"
+        title="¿Quitar animal de este evento?"
         message={`¿Estás seguro de quitar al animal ${deletingRecord?.number ? `Arete #${deletingRecord.number}` : (deletingRecord?.chip_number ? `Chip ${deletingRecord.chip_number}` : 'seleccionado')} de la asistencia de esta sesión?`}
         confirmText="Quitar"
         cancelText="Conservar"

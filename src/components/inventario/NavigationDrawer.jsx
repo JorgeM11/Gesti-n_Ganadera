@@ -129,25 +129,25 @@ export default function NavigationDrawer({
                   <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/inventario') ? 'text-white' : 'text-neutral-400'}`} />
                 </button>
 
-                {/* 3. Vaquería (Solo administradores) */}
+                {/* 3. Eventos (Solo administradores) */}
                 {!isWorker && (
                   <button
                     type="button"
                     onClick={() => {
-                      navigate('/vaquerias');
+                      navigate('/eventos');
                       onClose();
                     }}
                     className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold transition-all cursor-pointer ${
-                      isCurrentRoute('/vaquerias') || location.pathname.startsWith('/vaquerias')
+                      isCurrentRoute('/eventos') || location.pathname.startsWith('/eventos') || isCurrentRoute('/vaquerias') || location.pathname.startsWith('/vaquerias')
                         ? 'bg-[#1B4820] text-white shadow-lg shadow-[#1B4820]/20'
                         : 'text-neutral-700 hover:bg-neutral-100'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <ClipboardCheck className={`w-5 h-5 ${isCurrentRoute('/vaquerias') || location.pathname.startsWith('/vaquerias') ? 'text-white' : 'text-[#1B4820]'}`} />
-                      <span>Vaquería</span>
+                      <ClipboardCheck className={`w-5 h-5 ${isCurrentRoute('/eventos') || location.pathname.startsWith('/eventos') || isCurrentRoute('/vaquerias') || location.pathname.startsWith('/vaquerias') ? 'text-white' : 'text-[#1B4820]'}`} />
+                      <span>Eventos</span>
                     </div>
-                    <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/vaquerias') || location.pathname.startsWith('/vaquerias') ? 'text-white' : 'text-neutral-400'}`} />
+                    <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/eventos') || location.pathname.startsWith('/eventos') || isCurrentRoute('/vaquerias') || location.pathname.startsWith('/vaquerias') ? 'text-white' : 'text-neutral-400'}`} />
                   </button>
                 )}
 

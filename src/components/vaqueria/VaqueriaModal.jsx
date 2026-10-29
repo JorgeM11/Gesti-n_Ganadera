@@ -33,7 +33,7 @@ export default function VaqueriaModal({
         setObservations(initialData.observations || '');
       } else {
         const today = new Date();
-        setName('Vaquería');
+        setName('Evento');
         setFarmId(initialFarmId || (farms.length > 0 ? farms[0].id : ''));
         setDate(today.toISOString().split('T')[0]);
         setObservations('');
@@ -55,7 +55,7 @@ export default function VaqueriaModal({
     }
 
     if (!name.trim()) {
-      setError('El nombre de la vaquería es obligatorio');
+      setError('El nombre del evento es obligatorio');
       return;
     }
 
@@ -92,7 +92,7 @@ export default function VaqueriaModal({
       }
       onClose();
     } catch (err) {
-      setError(err.message || 'Error al guardar la vaquería');
+      setError(err.message || 'Error al guardar el evento');
     } finally {
       setIsSaving(false);
     }
@@ -126,7 +126,7 @@ export default function VaqueriaModal({
               </div>
               <div>
                 <h3 className="text-lg font-black text-neutral-900 leading-tight">
-                  {initialData ? 'Editar Vaquería' : 'Nueva Vaquería'}
+                  {initialData ? 'Editar Evento' : 'Nuevo Evento'}
                 </h3>
                 
               </div>
@@ -152,14 +152,14 @@ export default function VaqueriaModal({
             {/* Nombre */}
             <div>
               <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-1.5">
-                Nombre de la Vaquería *
+                Nombre del Evento *
               </label>
               <div className="relative">
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Ej. Vaquería"
+                  placeholder="Ej. Evento de Manejo"
                   className="w-full px-4 py-3 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm font-bold text-neutral-800 placeholder-neutral-400 focus:bg-white focus:border-[#1B4820] focus:ring-2 focus:ring-[#1B4820]/15 outline-none transition-all"
                 />
               </div>
@@ -179,7 +179,7 @@ export default function VaqueriaModal({
               />
               {Boolean(initialData) && (
                 <p className="text-[11px] font-bold text-neutral-400 mt-1">
-                  La finca asociada no se puede modificar una vez creada la vaquería.
+                  La finca asociada no se puede modificar una vez creado el evento.
                 </p>
               )}
             </div>

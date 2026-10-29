@@ -280,7 +280,7 @@ flowchart TD
      - Incluir la opción "Muerte" dentro de los eventos del módulo de evolución (`growth_events`), conectándolo directamente con el apartado de información de baja/muerte en el perfil del animal.
 
 2. **Evolución del Módulo de Vaquería a Eventos**:
-   - [ ] **5. Redefinición y cambio de nombre de "Vaquería" por "Eventos"**:
+   - [x] **5. Redefinición y cambio de nombre de "Vaquería" por "Eventos"**:
      - Evolucionar el concepto de "Vaquería" a "Eventos de Manejo" (para registrar no solo asistencia general, sino también eventos operativos específicos como baños, pesajes, vacunaciones masivas o curaciones).
    - [ ] **6. Edición rápida de animal desde lista de vaquería / evento**:
      - Botón de edición directa en las filas de las pestañas (Presentes / Faltantes) para modificar datos del animal sin necesidad de salir de la vaquería en curso.
@@ -326,3 +326,4 @@ flowchart TD
 | **Fase 4 - Req 2: Módulo de Inactivos** | 2026-10-27 | **Completado** | Antigravity AI & Usuario | Módulo independiente de Inactivos 100% operativo, con interfaz idéntica a Inventario, filtros por motivo, tarjetas equilibradas, segregación de activos y retorno contextual. |
 | **Fase 4 - Req 3: Detección de Repetidos** | 2026-10-28 | **Completado** | Antigravity AI & Usuario | Filtro de animales repetidos por arete y nombre, orden contiguo lado a lado, icono naranja Copy y ubicado bajo Observaciones. |
 | **Fase 4 - Req 4: Vista de Inventario por Finca** | 2026-10-29 | **Completado** | Antigravity AI & Usuario | Vista idéntica a Inventario filtrada por finca, acceso desde modal de fincas, retorno contextual desde perfil, preselección de finca al crear animal y drawer de filtros sin sección de finca. Inventario original 100% intacto. |
+| **Fase 4 - Req 5: Renombramiento de Vaquerías a Eventos** | 2026-10-29 | **Completado** | Antigravity AI & Usuario | Redefinición visual completa del módulo de Vaquerías a Eventos en barra lateral, listados, modales, detalle y rutas (/eventos). Preservada compatibilidad de base de datos y snapshots. |

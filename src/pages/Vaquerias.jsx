@@ -129,9 +129,9 @@ export default function VaqueriasPage() {
     if (!deletingVaqueriaId) return;
     try {
       await deleteVaqueria(deletingVaqueriaId);
-      showToast('Vaquería eliminada', 'La sesión fue eliminada correctamente.', 'success');
+      showToast('Evento eliminado', 'El evento fue eliminado correctamente.', 'success');
     } catch (err) {
-      showToast('Error', err.message || 'No se pudo eliminar la vaquería.', 'error');
+      showToast('Error', err.message || 'No se pudo eliminar el evento.', 'error');
     } finally {
       setDeletingVaqueriaId(null);
     }
@@ -169,7 +169,7 @@ export default function VaqueriasPage() {
               
               <div>
                 <h1 className="text-lg md:text-xl font-black text-primary md:text-white tracking-tight leading-tight">
-                  Vaquería
+                  Eventos
                 </h1>
                 
               </div>
@@ -208,7 +208,7 @@ export default function VaqueriasPage() {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Buscar por nombre de vaquería o finca..."
+                placeholder="Buscar por nombre de evento o finca..."
                 className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-2xl text-xs font-bold text-neutral-800 placeholder-neutral-400 focus:bg-white focus:border-[#1B4820] focus:ring-2 focus:ring-[#1B4820]/15 outline-none transition-all"
               />
             </div>
@@ -251,7 +251,7 @@ export default function VaqueriasPage() {
 
           {/* Contador de Vaquerías */}
           <div className="text-left text-xs font-bold text-neutral-500 pt-1">
-            {filteredVaquerias.length} {filteredVaquerias.length === 1 ? 'vaquería' : 'vaquerías'}
+            {filteredVaquerias.length} {filteredVaquerias.length === 1 ? 'evento' : 'eventos'}
           </div>
         </div>
 
@@ -262,10 +262,10 @@ export default function VaqueriasPage() {
               <ClipboardCheck className="w-7 h-7" />
             </div>
             <h3 className="text-base font-black text-neutral-900 mb-1">
-              No hay vaquerías registradas
+              No hay eventos registrados
             </h3>
             <p className="text-xs font-medium text-neutral-500 mb-6 text-center max-w-sm">
-              Las vaquerías te permiten pasar asistencia periódica al rebaño en una finca, verificar animales presentes, detectar nuevos y registrar faltantes.
+              Los eventos te permiten pasar asistencia periódica al rebaño en una finca, verificar animales presentes, detectar nuevos y registrar faltantes.
             </p>
             <button
               type="button"
@@ -273,7 +273,7 @@ export default function VaqueriasPage() {
               className="py-3 px-6 bg-[#1B4820] text-white rounded-2xl text-xs font-black shadow-lg shadow-[#1B4820]/25 hover:bg-[#143618] transition-all cursor-pointer active:scale-95 flex items-center gap-2"
             >
               <Plus className="w-4 h-4 stroke-[3]" />
-              Crear Primera Vaquería
+              Crear Primer Evento
             </button>
           </div>
         ) : (
@@ -288,7 +288,7 @@ export default function VaqueriasPage() {
               return (
                 <div
                   key={v.id}
-                  onClick={() => navigate(`/vaquerias/${v.id}`, { state: { vaqueria: v } })}
+                  onClick={() => navigate(`/eventos/${v.id}`, { state: { vaqueria: v } })}
                   className="bg-white rounded-3xl p-5 border border-neutral-200/80 shadow-xs hover:shadow-md hover:border-[#1B4820]/40 transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden"
                 >
                   {/* Barra lateral de estado */}
@@ -360,7 +360,7 @@ export default function VaqueriasPage() {
                           setDeletingVaqueriaId(v.id);
                         }}
                         className="p-2 rounded-xl transition-colors cursor-pointer text-rose-600 bg-rose-50 lg:bg-transparent lg:text-neutral-400 lg:hover:text-rose-600 lg:hover:bg-rose-50"
-                        title="Eliminar vaquería"
+                        title="Eliminar evento"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -382,10 +382,10 @@ export default function VaqueriasPage() {
         type="button"
         onClick={handleOpenCreate}
         className="fixed right-5 md:right-8 bottom-6 z-40 flex items-center gap-2 px-5 py-3.5 rounded-full bg-[#1B4820] text-white shadow-xl shadow-[#1B4820]/35 hover:bg-[#143618] hover:shadow-2xl active:scale-95 transition-all cursor-pointer"
-        title="Nueva Vaquería"
+        title="Nuevo Evento"
       >
         <Plus className="w-5 h-5 stroke-[3]" />
-        <span className="text-xs md:text-sm font-black tracking-wide">Nueva Vaquería</span>
+        <span className="text-xs md:text-sm font-black tracking-wide">Nuevo Evento</span>
       </button>
 
       {/* Modales y Drawer */}
@@ -429,12 +429,12 @@ export default function VaqueriasPage() {
         initialFarmId={selectedFarmId !== 'ALL' ? selectedFarmId : ''}
         onSuccess={(v) => {
           showToast(
-            editingVaqueria ? 'Vaquería actualizada' : 'Vaquería creada',
+            editingVaqueria ? 'Evento actualizado' : 'Evento creado',
             `"${v.name}" se guardó exitosamente.`,
             'success'
           );
           if (!editingVaqueria) {
-            navigate(`/vaquerias/${v.id}`, { state: { vaqueria: v } });
+            navigate(`/eventos/${v.id}`, { state: { vaqueria: v } });
           }
         }}
       />
@@ -442,8 +442,8 @@ export default function VaqueriasPage() {
       {/* Confirmación de Borrado */}
       <ConfirmDialog
         isOpen={Boolean(deletingVaqueriaId)}
-        title="¿Eliminar esta Vaquería?"
-        message="Se eliminará la sesión de vaquería y su registro de asistencia. Los animales del inventario permanecerán intactos."
+        title="¿Eliminar este Evento?"
+        message="Se eliminará el evento y su registro de asistencia. Los animales del inventario permanecerán intactos."
         confirmText="Eliminar"
         cancelText="Cancelar"
         isDestructive={true}

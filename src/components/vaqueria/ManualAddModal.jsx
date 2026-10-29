@@ -116,16 +116,16 @@ export default function ManualAddModal({
     // Validación de duplicidad en la lista actual
     if (selectedAnimal) {
       if (presentAnimalIds.has(selectedAnimal.id)) {
-        setError(`El animal Arete #${selectedAnimal.number} ya está registrado en esta vaquería.`);
+        setError(`El animal Arete #${selectedAnimal.number} ya está registrado en este evento.`);
         return;
       }
     } else {
       if (activeTab === 'chip' && presentChips.has(clean)) {
-        setError(`El microchip ${clean} ya está registrado en esta vaquería.`);
+        setError(`El microchip ${clean} ya está registrado en este evento.`);
         return;
       }
       if (activeTab === 'arete' && presentNumbers.has(clean)) {
-        setError(`El arete #${clean} ya está registrado en esta vaquería.`);
+        setError(`El arete #${clean} ya está registrado en este evento.`);
         return;
       }
     }
@@ -410,7 +410,7 @@ export default function ManualAddModal({
 
                         {isAlreadyInVaq ? (
                           <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md">
-                            Ya en Vaquería
+                            Ya en Evento
                           </span>
                         ) : (
                           <span className="text-xs font-bold text-[#1B4820]">

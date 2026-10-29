@@ -110,7 +110,7 @@ export default function InactivateAnimalModal({
 
             <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl">
               <p className="text-xs font-medium text-amber-900">
-                Este animal estaba registrado como <strong>Activo</strong> pero no se presentó en la vaquería. Al inactivarlo, se registrará el motivo y dejará de contarse en el rebaño productivo.
+                Este animal estaba registrado como <strong>Activo</strong> pero no se presentó en el evento. Al inactivarlo, se registrará el motivo y dejará de contarse en el rebaño productivo.
               </p>
             </div>
 
