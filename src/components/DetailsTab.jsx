@@ -64,6 +64,9 @@ export default function DetailsTab({ animal, onEdit }) {
           <AnimalImage
             photoPath={animal.photo_path}
             photoBlob={animal.photo_blob}
+            animalId={animal.id}
+            sex={animal.sex}
+            birthDate={animal.birth_date}
             alt={animal.number ? `#${animal.number}` : (animal.name || (animal.chip_number ? `Chip ${animal.chip_number}` : 'Animal'))}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />

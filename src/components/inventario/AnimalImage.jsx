@@ -8,22 +8,19 @@ export default function AnimalImage({
   alt,
   className = "",
   sex = "Hembra",
-  birthDate = null
+  birthDate = null,
+  animalId = null
 }) {
   const [imgSrc, setImgSrc] = useState(null);
   const [imgError, setImgError] = useState(false);
 
-  // --- 0. INTELIGENCIA PARA AUTODESCUBRIR DATOS ---
-  const animalNumber = alt ? String(alt).replace('#', '').trim() : null;
+  // Consulta por ID único si se proporciona y no hay foto directa
+  const dbAnimal = useLiveQuery(async () => {
+    if (!animalId || photoBlob || photoPath) return null;
+    return await db.animals.get(animalId);
+  }, [animalId, photoBlob, photoPath]);
 
-  const dbAnimal = useLiveQuery(() => {
-    if (!animalNumber || animalNumber.length > 15 || animalNumber.toLowerCase().includes('foto')) {
-      return null;
-    }
-    return db.animals.where('number').equals(animalNumber).first();
-  }, [animalNumber]);
-
-  // --- 1. FASE 3: PRIORIDAD LOCAL (BLOB ANTES QUE NUBE) ---
+  // Prioridad local (Blob físico en IndexedDB antes que URL en la nube)
   useEffect(() => {
     setImgError(false);
     let objectUrl = null;
@@ -32,17 +29,14 @@ export default function AnimalImage({
     const effectivePath = photoPath || dbAnimal?.photo_path || null;
 
     if (effectiveBlob) {
-      // Prioridad 1: Siempre usar la imagen física que tenemos en el disco duro (Dexie)
       objectUrl = URL.createObjectURL(effectiveBlob);
       setImgSrc(objectUrl);
     } else if (effectivePath) {
-      // Prioridad 2: Solo si no hay archivo físico, intentamos cargar desde la nube de Supabase
       setImgSrc(effectivePath);
     } else {
       setImgSrc(null);
     }
 
-    // Limpieza de memoria (Vital para evitar que la app se vuelva lenta tras ver muchas fotos)
     return () => {
       if (objectUrl) {
         URL.revokeObjectURL(objectUrl);
@@ -50,7 +44,7 @@ export default function AnimalImage({
     };
   }, [photoPath, photoBlob, dbAnimal?.photo_blob, dbAnimal?.photo_path]);
 
-  // --- 2. LÓGICA DE ICONO ---
+  // Lógica de silueta según sexo y edad
   const finalSex = dbAnimal?.sex || sex;
   const finalBirthDate = dbAnimal?.birth_date || birthDate;
   let isBecerro = false;
@@ -69,7 +63,7 @@ export default function AnimalImage({
     placeholderSrc = '/placeholders/toro.png';
   }
 
-  // --- RENDER ---
+  // Renderizado
   if (!imgSrc || imgError) {
     return (
       <div className={`flex items-center justify-center bg-[#E5E7EB] w-full h-full ${className}`}>
