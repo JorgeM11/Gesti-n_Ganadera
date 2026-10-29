@@ -24,8 +24,7 @@ import {
   ChevronRight,
   FileText,
   Pencil,
-  CheckSquare,
-  ArrowLeft
+  CheckSquare
 } from 'lucide-react';
 import { FaMars, FaVenus } from 'react-icons/fa6';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -1149,20 +1148,13 @@ export default function InventarioFincaPage() {
           <div className="flex md:flex-1 items-center justify-between md:justify-start w-full gap-3">
             {/* Botón Volver + Menú Hamburguesa + Título de la Finca */}
             <div className="flex items-center gap-2 min-w-0">
-              <Link
-                to="/inventario"
-                className="p-2 -ml-1 rounded-2xl text-[#1B4820] md:text-white hover:bg-[#1B4820]/10 md:hover:bg-white/15 active:scale-95 transition-all cursor-pointer shrink-0"
-                title="Volver al inventario general"
-              >
-                <ArrowLeft className="w-6 h-6 text-[#1B4820] md:text-white" />
-              </Link>
               <button
                 type="button"
                 onClick={() => setIsDrawerOpen(true)}
-                className="p-2 rounded-2xl text-[#1B4820] md:text-white hover:bg-[#1B4820]/10 md:hover:bg-white/15 active:scale-95 transition-all cursor-pointer shrink-0"
+                className="p-2.5 rounded-2xl text-[#1B4820] md:text-white hover:bg-[#1B4820]/10 md:hover:bg-white/15 active:scale-95 transition-all cursor-pointer shrink-0"
                 title="Abrir menú de navegación"
               >
-                <Menu className="w-5 h-5 text-[#1B4820] md:text-white" />
+                <Menu className="w-6 h-6 text-[#1B4820] md:text-white" />
               </button>
               <div className="min-w-0">
                 <h1 className="text-xl md:text-2xl font-black text-[#1B4820] md:text-white tracking-tight truncate">
