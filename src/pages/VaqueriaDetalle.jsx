@@ -45,6 +45,8 @@ import ManualAddModal from '@/components/vaqueria/ManualAddModal';
 import InactivateAnimalModal from '@/components/vaqueria/InactivateAnimalModal';
 import CompleteAnimalModal from '@/components/vaqueria/CompleteAnimalModal';
 import VaqueriaModal from '@/components/vaqueria/VaqueriaModal';
+import BottomSheet from '@/components/ui/BottomSheet';
+import AnimalForm from '@/components/inventario/AnimalForm';
 
 const isMobileOrTouchDevice = () => {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
@@ -79,6 +81,55 @@ export default function VaqueriaDetallePage() {
   const [completingAnimalRecord, setCompletingAnimalRecord] = useState(null);
   const [deletingRecord, setDeletingRecord] = useState(null);
   const [toast, setToast] = useState(null);
+  const [editingAnimal, setEditingAnimal] = useState(null);
+  const [modalStack, setModalStack] = useState([]);
+
+  const handleOpenModal = useCallback((sex, onSelect) => {
+    setModalStack(prev => [...prev, { id: crypto.randomUUID(), sex, onSelect }]);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setModalStack(prev => prev.slice(0, -1));
+  }, []);
+
+  const handleModalSuccess = useCallback((newAnimalId) => {
+    setModalStack(prev => {
+      if (prev.length === 0) return prev;
+      const currentModal = prev[prev.length - 1];
+      if (currentModal && typeof currentModal.onSelect === 'function') {
+        currentModal.onSelect(newAnimalId);
+      }
+      return prev.slice(0, -1);
+    });
+  }, []);
+
+  const handleAnimalEdited = async (savedAnimal) => {
+    setEditingAnimal(null);
+    if (savedAnimal && savedAnimal.id && currentVaqueria) {
+      try {
+        const existingRec = await db.vaqueria_animals
+          .where('vaqueria_id')
+          .equals(currentVaqueria.id)
+          .and(r => r.animal_id === savedAnimal.id && !r.deleted_at)
+          .first();
+        if (existingRec) {
+          await db.vaqueria_animals.update(existingRec.id, {
+            number: savedAnimal.number || null,
+            name: savedAnimal.name || null,
+            chip_number: savedAnimal.chip_number || null,
+            updated_at: new Date().toISOString()
+          });
+        }
+      } catch (e) {
+        console.warn('Error sincronizando campos en vaqueria_animals:', e);
+      }
+    }
+    showToast(
+      'Animal actualizado',
+      'Los datos del animal fueron actualizados correctamente en el inventario.',
+      'success'
+    );
+  };
 
   // Resetear paginación cuando cambia la pestaña o el término de búsqueda
   useEffect(() => {
@@ -1035,6 +1086,17 @@ export default function VaqueriaDetallePage() {
                           </button>
                         )}
 
+                        {item.animal && (
+                          <button
+                            type="button"
+                            onClick={() => setEditingAnimal(item.animal)}
+                            className="p-1.5 text-neutral-400 hover:text-[#1B4820] hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                            title="Editar datos del animal"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        )}
+
                         {!isFinalized && (
                           <button
                             type="button"
@@ -1106,6 +1168,16 @@ export default function VaqueriaDetallePage() {
 
                       {/* Acciones al Final */}
                       <div className="flex items-center gap-1.5 shrink-0">
+                        {item.animal && (
+                          <button
+                            type="button"
+                            onClick={() => setEditingAnimal(item.animal)}
+                            className="p-1.5 text-neutral-400 hover:text-[#1B4820] hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
+                            title="Editar datos del animal"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                        )}
                         {isInactive ? (
                           <span className="text-[10px] font-black uppercase tracking-wider text-neutral-500 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded-lg">
                             Inactivo
@@ -1314,6 +1386,51 @@ export default function VaqueriaDetallePage() {
         onConfirm={handleConfirmRemove}
         onCancel={() => setDeletingRecord(null)}
       />
+
+      {/* Modal de Edición Rápida del Animal desde el Evento (Fase 4 - Req 6) */}
+      <BottomSheet
+        isOpen={Boolean(editingAnimal)}
+        onClose={() => setEditingAnimal(null)}
+        title={`Editar Animal ${editingAnimal?.number ? `#${editingAnimal.number}` : (editingAnimal?.name ? `"${editingAnimal.name}"` : '')}`}
+        description="Modifica los datos del animal directamente desde el evento."
+        maxWidth="max-w-4xl lg:max-w-5xl"
+        style={{ zIndex: 60 }}
+        noPaddingBottom
+      >
+        {editingAnimal && (
+          <AnimalForm 
+            isModal
+            initialValues={editingAnimal}
+            onCancel={() => setEditingAnimal(null)}
+            onSubmitSuccess={handleAnimalEdited}
+            onOpenModal={handleOpenModal}
+          />
+        )}
+      </BottomSheet>
+
+      {/* Modales Recursivos para Progenitores */}
+      <AnimatePresence>
+        {modalStack.map((modal, index) => (
+          <BottomSheet
+            key={modal.id}
+            isOpen={true}
+            onClose={handleCloseModal}
+            title={`Registrar ${modal.sex === 'Macho' ? 'Padre' : 'Madre'}`}
+            description="Completa los datos mínimos para identificar al progenitor."
+            style={{ zIndex: 70 + index * 10 }}
+            noPaddingBottom
+            maxWidth="max-w-4xl lg:max-w-5xl"
+          >
+            <AnimalForm 
+              isModal
+              initialValues={{ sex: modal.sex }}
+              onCancel={handleCloseModal}
+              onSubmitSuccess={handleModalSuccess}
+              onOpenModal={handleOpenModal}
+            />
+          </BottomSheet>
+        ))}
+      </AnimatePresence>
 
       {/* Toast Feedback */}
       {toast && (

@@ -282,7 +282,7 @@ flowchart TD
 2. **Evolución del Módulo de Vaquería a Eventos**:
    - [x] **5. Redefinición y cambio de nombre de "Vaquería" por "Eventos"**:
      - Evolucionar el concepto de "Vaquería" a "Eventos de Manejo" (para registrar no solo asistencia general, sino también eventos operativos específicos como baños, pesajes, vacunaciones masivas o curaciones).
-   - [ ] **6. Edición rápida de animal desde lista de vaquería / evento**:
+   - [x] **6. Edición rápida de animal desde lista de vaquería / evento**:
      - Botón de edición directa en las filas de las pestañas (Presentes / Faltantes) para modificar datos del animal sin necesidad de salir de la vaquería en curso.
    - [ ] **7. Fecha de finalización de vaquería**:
      - Campo explícito para registrar la fecha y hora exacta de culminación de la vaquería (almacenada tanto en snapshot como en metadatos del registro).
@@ -327,3 +327,4 @@ flowchart TD
 | **Fase 4 - Req 3: Detección de Repetidos** | 2026-10-28 | **Completado** | Antigravity AI & Usuario | Filtro de animales repetidos por arete y nombre, orden contiguo lado a lado, icono naranja Copy y ubicado bajo Observaciones. |
 | **Fase 4 - Req 4: Vista de Inventario por Finca** | 2026-10-29 | **Completado** | Antigravity AI & Usuario | Vista idéntica a Inventario filtrada por finca, acceso desde modal de fincas, retorno contextual desde perfil, preselección de finca al crear animal y drawer de filtros sin sección de finca. Inventario original 100% intacto. |
 | **Fase 4 - Req 5: Renombramiento de Vaquerías a Eventos** | 2026-10-29 | **Completado** | Antigravity AI & Usuario | Redefinición visual completa del módulo de Vaquerías a Eventos en barra lateral, listados, modales, detalle y rutas (/eventos). Preservada compatibilidad de base de datos y snapshots. |
+| **Fase 4 - Req 6: Edición Rápida de Animal en Eventos** | 2026-10-29 | **Completado** | Antigravity AI & Usuario | Botón de lápiz al lado del botón de eliminar en listas de Presentes y Faltantes para editar el animal en BottomSheet sin salir del evento en curso, con sincronización reactiva inmediata. |
