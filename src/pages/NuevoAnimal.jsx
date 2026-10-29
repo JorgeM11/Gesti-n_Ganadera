@@ -10,11 +10,15 @@ function NuevoAnimalContent() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const motherId = searchParams.get('mother_id');
+  const farmIdParam = searchParams.get('farm_id') || searchParams.get('farmId');
+  const backTarget = farmIdParam ? `/inventario/finca/${farmIdParam}` : '/inventario';
   
   const initialValues = useMemo(() => {
-    if (!motherId) return undefined;
-    return { mother_id: motherId };
-  }, [motherId]);
+    const vals = {};
+    if (motherId) vals.mother_id = motherId;
+    if (farmIdParam) vals.farm_id = farmIdParam;
+    return Object.keys(vals).length > 0 ? vals : undefined;
+  }, [motherId, farmIdParam]);
   
   // Cada elemento: { id: string, sex: 'Macho'|'Hembra', onSelect: (id) => void }
   const [modalStack, setModalStack] = useState([]);
@@ -58,7 +62,7 @@ function NuevoAnimalContent() {
       {/* HEADER PRINCIPAL */}
       <header className="px-4 py-5 sticky top-0 z-20 bg-[#FCFCFA]/80 backdrop-blur-md border-b border-neutral-100">
         <div className="max-w-5xl mx-auto flex items-center gap-4">
-          <Link to="/inventario" className="p-2 -ml-2 hover:bg-neutral-100 rounded-full transition-colors cursor-pointer">
+          <Link to={backTarget} className="p-2 -ml-2 hover:bg-neutral-100 rounded-full transition-colors cursor-pointer" title={farmIdParam ? 'Volver a la finca' : 'Volver al inventario'}>
             <ArrowLeft className="w-6 h-6 text-[#1B4820]" />
           </Link>
           <h1 className="text-xl font-bold text-[#1B4820]">
@@ -71,8 +75,8 @@ function NuevoAnimalContent() {
       <div className="max-w-5xl mx-auto px-4 mt-6">
         <AnimalForm 
           initialValues={initialValues}
-          onCancel={() => navigate('/inventario')}
-          onSubmitSuccess={() => navigate('/inventario')}
+          onCancel={() => navigate(backTarget)}
+          onSubmitSuccess={() => navigate(backTarget)}
           onOpenModal={handleOpenModal}
         />
       </div>

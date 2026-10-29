@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MapPin, Building2, Plus, Pencil } from 'lucide-react';
@@ -8,6 +9,7 @@ import { db } from '@/lib/db';
 import { createFarm, updateFarm } from '@/lib/farmUtils';
 
 export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdated, initialView = 'list' }) {
+  const navigate = useNavigate();
   const [activeView, setActiveView] = useState(initialView); // 'list' | 'create' | 'edit'
   const [editingFarm, setEditingFarm] = useState(null);
   const [name, setName] = useState('');
@@ -205,16 +207,21 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
                     return (
                       <div
                         key={f.id}
-                        className="bg-neutral-50 rounded-2xl border border-neutral-200/70 overflow-hidden transition-all shadow-2xs"
+                        onClick={() => {
+                          if (onClose) onClose();
+                          navigate(`/inventario/finca/${f.id}`);
+                        }}
+                        className="bg-neutral-50 hover:bg-emerald-50/50 hover:border-[#1B4820]/40 rounded-2xl border border-neutral-200/70 overflow-hidden transition-all shadow-2xs cursor-pointer group"
+                        title={`Ver inventario de ${f.name}`}
                       >
                         <div className="p-3.5">
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center border border-neutral-200 text-[#1B4820] shrink-0">
+                              <div className="w-9 h-9 rounded-xl bg-white group-hover:bg-[#1B4820] group-hover:text-white flex items-center justify-center border border-neutral-200 group-hover:border-[#1B4820] text-[#1B4820] transition-colors shrink-0">
                                 <Building2 className="w-4 h-4" />
                               </div>
                               <div className="min-w-0">
-                                <h4 className="text-sm font-bold text-neutral-900 truncate">{f.name}</h4>
+                                <h4 className="text-sm font-bold text-neutral-900 group-hover:text-[#1B4820] transition-colors truncate">{f.name}</h4>
                                 {f.location && (
                                   <div className="flex items-center gap-1 text-[11px] text-neutral-500">
                                     <MapPin className="w-3 h-3 text-neutral-400 shrink-0" />
@@ -236,9 +243,12 @@ export default function FarmModal({ isOpen, onClose, onFarmCreated, onFarmUpdate
                               {/* Botón de Editar Finca */}
                               <button
                                 type="button"
-                                onClick={() => handleStartEdit(f)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStartEdit(f);
+                                }}
                                 className="p-2 rounded-xl text-[#1B4820] bg-emerald-50 border border-emerald-200/80 md:bg-white md:text-neutral-600 md:border-neutral-200/80 md:hover:bg-[#1B4820] md:hover:text-white transition-all shadow-2xs cursor-pointer"
-                                title={`Editar ${f.name}`}
+                                title={`Editar datos de ${f.name}`}
                               >
                                 <Pencil className="w-3.5 h-3.5" />
                               </button>

@@ -6,6 +6,7 @@ import ScrollToTop from '@/components/providers/ScrollToTop';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Inventario from './pages/Inventario';
+import InventarioFinca from './pages/InventarioFinca';
 import Inactivos from './pages/Inactivos';
 import NuevoAnimal from './pages/NuevoAnimal';
 import PerfilAnimal from './pages/PerfilAnimal';
@@ -65,6 +66,7 @@ export default function App() {
         {/* Rutas protegidas */}
         <Route path="/dashboard" element={<AdminOnlyRoute><Dashboard /></AdminOnlyRoute>} />
         <Route path="/inventario" element={<ProtectedRoute><Inventario /></ProtectedRoute>} />
+        <Route path="/inventario/finca/:farmId" element={<ProtectedRoute><InventarioFinca /></ProtectedRoute>} />
         <Route path="/inactivos" element={<ProtectedRoute><Inactivos /></ProtectedRoute>} />
         <Route path="/inventario/nuevo" element={<ProtectedRoute><NuevoAnimal /></ProtectedRoute>} />
         <Route path="/inventario/perfil" element={<ProtectedRoute><PerfilAnimal /></ProtectedRoute>} />

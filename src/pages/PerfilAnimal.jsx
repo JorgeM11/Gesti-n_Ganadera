@@ -23,8 +23,17 @@ function ProfileContent() {
   // CAPTURAMOS EL ID Y EL TAB DIRECTAMENTE DE LA URL (?id=...&tab=...)
   const animalId = searchParams.get("id");
   const fromSource = searchParams.get("from");
-  const backUrl = fromSource === 'inactivos' ? '/inactivos' : '/inventario';
-  const backLabel = fromSource === 'inactivos' ? 'VOLVER A INACTIVOS' : 'VOLVER AL INVENTARIO';
+  const farmIdParam = searchParams.get("farmId") || searchParams.get("farm_id");
+  const backUrl = fromSource === 'inactivos' 
+    ? '/inactivos' 
+    : fromSource === 'finca' && farmIdParam
+      ? `/inventario/finca/${farmIdParam}`
+      : '/inventario';
+  const backLabel = fromSource === 'inactivos' 
+    ? 'VOLVER A INACTIVOS' 
+    : fromSource === 'finca'
+      ? 'VOLVER A LA FINCA'
+      : 'VOLVER AL INVENTARIO';
   const initialTab = searchParams.get("tab") || 'details';
   
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -145,7 +154,7 @@ function ProfileContent() {
     <main className="min-h-screen bg-[#F7F7F2] font-sans pb-24 md:pb-8 relative">
       {/* HEADER FIJO */}
       <header className="bg-[#F7F7F2] px-4 py-4 sticky top-0 z-30 flex items-center gap-4 border-b border-neutral-100 md:border-none">
-        <Link to={backUrl} className="p-2 -ml-2 hover:bg-neutral-200 rounded-full transition-colors cursor-pointer shrink-0" title={fromSource === 'inactivos' ? 'Volver a Inactivos' : 'Volver al Inventario'}>
+        <Link to={backUrl} className="p-2 -ml-2 hover:bg-neutral-200 rounded-full transition-colors cursor-pointer shrink-0" title={fromSource === 'inactivos' ? 'Volver a Inactivos' : fromSource === 'finca' ? 'Volver a la Finca' : 'Volver al Inventario'}>
           <ArrowLeft className="w-6 h-6 text-[#1B4820]" />
         </Link>
         <div className="overflow-hidden">

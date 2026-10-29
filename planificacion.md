@@ -264,7 +264,7 @@ flowchart TD
      - Visualización de fecha de baja, motivo detallado, notas y filtros específicos por causa.
    - [x] **3. Filtro y detección de animales repetidos**:
      - Filtro rápido o sección de auditoría para detectar duplicados por número de arete, microchip RFID o nombre en la base de datos de la finca.
-   - [ ] **4. Nuevo módulo: Vista de inventario por finca**:
+   - [x] **4. Nuevo módulo: Vista de inventario por finca**:
      - Módulo o pantalla especializada para consultar y visualizar el inventario de animales segmentado y agrupado directamente por cada finca.
    - [ ] **14. Roles productivos en animales (Cría y Reproductor)**:
      - Atributo de clasificación funcional para identificar si el animal cumple el rol de "Cría" o "Reproductor" dentro del rebaño.
@@ -325,3 +325,4 @@ flowchart TD
 | **Fase 4: Consolidación de Requerimientos** | 2026-10-26 | **Planificado** | Antigravity AI & Usuario | Actualizado el alcance total a 19 requerimientos: vista de inventario por finca, ocultar total de animales al obrero, roles cría/reproductor, muerte con foto/descripción, recortador de fotos, origen, destino en venta, evento de muerte en evolución y las mejoras previas de vaquería/eventos y multi-selección. |
 | **Fase 4 - Req 2: Módulo de Inactivos** | 2026-10-27 | **Completado** | Antigravity AI & Usuario | Módulo independiente de Inactivos 100% operativo, con interfaz idéntica a Inventario, filtros por motivo, tarjetas equilibradas, segregación de activos y retorno contextual. |
 | **Fase 4 - Req 3: Detección de Repetidos** | 2026-10-28 | **Completado** | Antigravity AI & Usuario | Filtro de animales repetidos por arete y nombre, orden contiguo lado a lado, icono naranja Copy y ubicado bajo Observaciones. |
+| **Fase 4 - Req 4: Vista de Inventario por Finca** | 2026-10-29 | **Completado** | Antigravity AI & Usuario | Vista idéntica a Inventario filtrada por finca, acceso desde modal de fincas, retorno contextual desde perfil, preselección de finca al crear animal y drawer de filtros sin sección de finca. Inventario original 100% intacto. |
