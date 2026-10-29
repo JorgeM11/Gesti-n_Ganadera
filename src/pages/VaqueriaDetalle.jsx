@@ -1086,7 +1086,7 @@ export default function VaqueriaDetallePage() {
                           </button>
                         )}
 
-                        {item.animal && (
+                        {!isFinalized && item.animal && (
                           <button
                             type="button"
                             onClick={() => setEditingAnimal(item.animal)}
@@ -1168,7 +1168,7 @@ export default function VaqueriaDetallePage() {
 
                       {/* Acciones al Final */}
                       <div className="flex items-center gap-1.5 shrink-0">
-                        {item.animal && (
+                        {!isFinalized && item.animal && (
                           <button
                             type="button"
                             onClick={() => setEditingAnimal(item.animal)}

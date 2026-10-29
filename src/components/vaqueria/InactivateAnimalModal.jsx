@@ -8,9 +8,7 @@ const INACTIVITY_REASONS = [
   'Muerte',
   'Venta',
   'Descarte',
-  'Pérdida / Extravío',
-  'Traslado a otra finca',
-  'Otro motivo'
+  'Pérdida / Extravío'
 ];
 
 export default function InactivateAnimalModal({
