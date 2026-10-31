@@ -1448,14 +1448,10 @@ export default function VaqueriaDetallePage() {
         }
         confirmText={
           statusConfirmAction === 'finalize'
-            ? 'Finalizar Evento'
-            : 'Reabrir Evento'
+            ? 'Finalizar'
+            : 'Reabrir'
         }
-        cancelText={
-          statusConfirmAction === 'finalize'
-            ? 'Continuar en progreso'
-            : 'Mantener finalizado'
-        }
+        cancelText="Cancelar"
         isDanger={false}
         onConfirm={handleToggleStatus}
         onCancel={() => setStatusConfirmAction(null)}
