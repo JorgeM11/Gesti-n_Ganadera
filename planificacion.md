@@ -286,8 +286,8 @@ flowchart TD
      - Botón de edición directa en las filas de las pestañas (Presentes / Faltantes) para modificar datos del animal sin necesidad de salir de la vaquería en curso.
    - [x] **7. Fecha de finalización y reapertura de vaquería / evento**:
      - Campo explícito para registrar la fecha y hora exacta de culminación y reapertura de la vaquería (almacenada tanto en snapshot como en metadatos del registro y visible en tarjetas y detalle).
-   - [ ] **8. Confirmación obligatoria al finalizar vaquería**:
-     - Modal de confirmación y advertencia ("¿Estás seguro de finalizar la vaquería?") para prevenir cierres involuntarios o congelamientos accidentales de snapshots.
+   - [x] **8. Confirmación obligatoria al finalizar o reabrir vaquería / evento**:
+     - Modal de confirmación estilizado ("¿Finalizar este Evento?" / "¿Reabrir este Evento?") para prevenir cierres involuntarios, congelamientos accidentales o reaperturas imprevistas.
    - [ ] **9. Resaltado visual de animales al reabrir vaquería**:
      - Indicador visual destacado para distinguir claramente los animales que ya estaban registrados o validados antes de reabrir la sesión.
    - [ ] **10. Comparación entre vaquerías / eventos**:
@@ -329,3 +329,4 @@ flowchart TD
 | **Fase 4 - Req 5: Renombramiento de Vaquerías a Eventos** | 2026-10-29 | **Completado** | Antigravity AI & Usuario | Redefinición visual completa del módulo de Vaquerías a Eventos en barra lateral, listados, modales, detalle y rutas (/eventos). Preservada compatibilidad de base de datos y snapshots. |
 | **Fase 4 - Req 6: Edición Rápida de Animal en Eventos** | 2026-10-29 | **Completado** | Antigravity AI & Usuario | Botón de lápiz al lado del botón de eliminar en listas de Presentes y Faltantes para editar el animal en BottomSheet sin salir del evento en curso, con sincronización reactiva inmediata. |
 | **Fase 4 - Req 7: Fechas de Finalización y Reapertura** | 2026-10-31 | **Completado** | Antigravity AI & Usuario | Fechas ISO en snapshot y Dexie, visualización en cards de Eventos y detalle, formato local (DD/MM/YYYY hh:mm am/pm) y sincronización resiliente. |
+| **Fase 4 - Req 8: Confirmación al Finalizar y Reabrir Evento** | 2026-10-31 | **Completado** | Antigravity AI & Usuario | Modal estilizado de confirmación con ConfirmDialog para prevenir congelamientos o reaperturas accidentales de listas y snapshots. |

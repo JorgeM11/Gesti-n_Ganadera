@@ -85,6 +85,7 @@ export default function VaqueriaDetallePage() {
   const [toast, setToast] = useState(null);
   const [editingAnimal, setEditingAnimal] = useState(null);
   const [modalStack, setModalStack] = useState([]);
+  const [statusConfirmAction, setStatusConfirmAction] = useState(null); // 'finalize' | 'reopen' | null
 
   const handleOpenModal = useCallback((sex, onSelect) => {
     setModalStack(prev => [...prev, { id: crypto.randomUUID(), sex, onSelect }]);
@@ -501,8 +502,19 @@ export default function VaqueriaDetallePage() {
     }
   };
 
+  // Solicitar confirmación para cambiar estatus (Fase 4 - Req 8)
+  const handleRequestToggleStatus = () => {
+    if (!effectiveVaqueria) return;
+    if (effectiveVaqueria.status === 'Finalizada') {
+      setStatusConfirmAction('reopen');
+    } else {
+      setStatusConfirmAction('finalize');
+    }
+  };
+
   // Cambiar estatus de la vaquería (Finalizada / En progreso)
   const handleToggleStatus = async () => {
+    setStatusConfirmAction(null);
     if (!effectiveVaqueria) return;
     const isCurrentlyFinalized = effectiveVaqueria.status === 'Finalizada';
     const newStatus = isCurrentlyFinalized ? 'En progreso' : 'Finalizada';
@@ -795,7 +807,7 @@ export default function VaqueriaDetallePage() {
           <div className="w-full sm:w-auto">
             <button
               type="button"
-              onClick={handleToggleStatus}
+              onClick={handleRequestToggleStatus}
               className={`w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-black shadow-xs transition-all cursor-pointer text-center ${
                 currentVaqueria.status === 'Finalizada'
                   ? 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
@@ -1419,6 +1431,34 @@ export default function VaqueriaDetallePage() {
         isDestructive={true}
         onConfirm={handleConfirmRemove}
         onCancel={() => setDeletingRecord(null)}
+      />
+
+      {/* Modal de Confirmación para Finalizar o Reabrir Evento (Fase 4 - Req 8) */}
+      <ConfirmDialog
+        isOpen={Boolean(statusConfirmAction)}
+        title={
+          statusConfirmAction === 'finalize'
+            ? '¿Finalizar este Evento?'
+            : '¿Reabrir este Evento?'
+        }
+        description={
+          statusConfirmAction === 'finalize'
+            ? 'Al finalizar el evento, todas las listas de asistencia, faltantes y métricas quedarán congeladas como histórico inmutable. Podrás reabrirlo en cualquier momento si necesitas hacer modificaciones.'
+            : 'El evento volverá al estado "En progreso". Se desbloquearán las listas y el escaneo para permitir nuevos registros o cambios.'
+        }
+        confirmText={
+          statusConfirmAction === 'finalize'
+            ? 'Finalizar Evento'
+            : 'Reabrir Evento'
+        }
+        cancelText={
+          statusConfirmAction === 'finalize'
+            ? 'Continuar en progreso'
+            : 'Mantener finalizado'
+        }
+        isDanger={false}
+        onConfirm={handleToggleStatus}
+        onCancel={() => setStatusConfirmAction(null)}
       />
 
       {/* Modal de Edición Rápida del Animal desde el Evento (Fase 4 - Req 6) */}

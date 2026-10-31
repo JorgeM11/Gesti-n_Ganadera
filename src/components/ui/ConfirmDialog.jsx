@@ -19,12 +19,17 @@ export default function ConfirmDialog({
   isOpen,
   title,
   description,
+  message,
   confirmText = 'Confirmar',
   cancelText = 'Cancelar',
   onConfirm,
   onCancel,
-  isDanger = false
+  isDanger = false,
+  isDestructive = false
 }) {
+  const finalDescription = description || message;
+  const isDangerous = isDanger || isDestructive;
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -49,7 +54,7 @@ export default function ConfirmDialog({
             >
               {/* Header Icon / Close button */}
               <div className="flex items-start justify-between mb-4">
-                <div className={`p-3 rounded-2xl ${isDanger ? 'bg-error-container text-on-error-container' : 'bg-secondary-fixed text-on-secondary-container'}`}>
+                <div className={`p-3 rounded-2xl ${isDangerous ? 'bg-error-container text-on-error-container' : 'bg-secondary-fixed text-on-secondary-container'}`}>
                   <AlertTriangle className="w-6 h-6" />
                 </div>
                 <button
@@ -65,7 +70,7 @@ export default function ConfirmDialog({
                 {title}
               </h3>
               <p className="text-sm font-medium text-neutral-500 leading-relaxed mb-6 font-sans">
-                {description}
+                {finalDescription}
               </p>
 
               {/* Action Buttons */}
@@ -79,7 +84,7 @@ export default function ConfirmDialog({
                 <button
                   onClick={onConfirm}
                   className={`w-full order-1 sm:order-2 px-6 py-4 rounded-full text-white text-xs font-black uppercase tracking-widest transition-all cursor-pointer text-center shadow-lg ${
-                    isDanger
+                    isDangerous
                       ? 'bg-error hover:bg-red-800 shadow-red-500/10'
                       : 'bg-primary hover:bg-[#2d4b2d] shadow-emerald-900/10'
                   }`}
