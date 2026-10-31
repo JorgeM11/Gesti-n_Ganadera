@@ -290,8 +290,8 @@ flowchart TD
      - Modal de confirmación estilizado ("¿Finalizar este Evento?" / "¿Reabrir este Evento?") para prevenir cierres involuntarios, congelamientos accidentales o reaperturas imprevistas.
    - [x] ~~**9. Resaltado visual de animales al reabrir vaquería**~~ *(Omitido por instrucción del cliente)*:
      - Funcionalidad descartada por decisión directa del usuario; el flujo de reapertura mantiene las insignias estándar existentes.
-   - [ ] **10. Comparación entre vaquerías / eventos**:
-     - Herramienta y pantalla de análisis comparativo histórico (Vaquería A vs Vaquería B) para visualizar fluctuaciones de rebaño, variaciones de asistencia, bajas y nuevos ingresos entre fechas.
+   - [x] **10. Comparación entre vaquerías / eventos**:
+     - Herramienta y pantalla de análisis comparativo histórico (Evento A vs Evento B) de la misma finca para visualizar datos principales, cantidad de animales presentes, faltantes, total evaluado y flujo de asistencia (comunes, nuevos y ausentes).
 
 3. **Usuarios, Roles y Control de Acceso**:
    - [ ] **11. Módulo de gestión de Usuarios y Fincas**:
@@ -331,3 +331,4 @@ flowchart TD
 | **Fase 4 - Req 7: Fechas de Finalización y Reapertura** | 2026-10-31 | **Completado** | Antigravity AI & Usuario | Fechas ISO en snapshot y Dexie, visualización en cards de Eventos y detalle, formato local (DD/MM/YYYY hh:mm am/pm) y sincronización resiliente. |
 | **Fase 4 - Req 8: Confirmación al Finalizar y Reabrir Evento** | 2026-10-31 | **Completado** | Antigravity AI & Usuario | Modal estilizado de confirmación con ConfirmDialog para prevenir congelamientos o reaperturas accidentales de listas y snapshots. |
 | **Fase 4 - Req 9: Resaltado Visual al Reabrir** | 2026-10-31 | **Omitido** | Antigravity AI & Usuario | Requerimiento descartado y omitido por instrucción directa del usuario. |
+| **Fase 4 - Req 10: Comparación entre Eventos** | 2026-10-31 | **Completado** | Antigravity AI & Usuario | Selección dual con hover (laptop) y long-press (móvil), restricción estricta por misma finca, barra flotante interactiva y modal de análisis con comparativa de presentes, faltantes, total y flujo de asistencia. |

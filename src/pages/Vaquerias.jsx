@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ClipboardCheck, 
   Plus, 
@@ -15,7 +16,9 @@ import {
   Search, 
   Filter, 
   AlertTriangle,
-  ArrowRight
+  ArrowRight,
+  Check,
+  ArrowLeftRight
 } from 'lucide-react';
 import { db, clearLocalData } from '@/lib/db';
 import { logoutUser } from '@/lib/authService';
@@ -30,6 +33,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Toast from '@/components/ui/Toast';
 import CustomSelect from '@/components/ui/CustomSelect';
 import VaqueriaModal from '@/components/vaqueria/VaqueriaModal';
+import VaqueriaComparisonModal from '@/components/vaqueria/VaqueriaComparisonModal';
 import { useForceResync } from '@/hooks/useForceResync';
 
 export default function VaqueriasPage() {
@@ -46,6 +50,15 @@ export default function VaqueriasPage() {
   const [selectedFarmId, setSelectedFarmId] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [toast, setToast] = useState(null);
+
+  // Estados para Selección y Comparación de Eventos (Fase 4 - Req 10)
+  const [selectedVaqueriaIds, setSelectedVaqueriaIds] = useState([]);
+  const [isComparisonModalOpen, setIsComparisonModalOpen] = useState(false);
+
+  // Refs para pulsación táctil larga en móvil (Long Press)
+  const touchTimerRef = useRef(null);
+  const isLongPressRef = useRef(false);
+  const touchStartPosRef = useRef({ x: 0, y: 0 });
 
   // Estados de cierre de sesión
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
@@ -68,12 +81,107 @@ export default function VaqueriasPage() {
   const allVaqueriaAnimals = useLiveQuery(
     () => db.vaqueria_animals.filter(r => !r.deleted_at).toArray()
   ) || [];
+  const allAnimals = useLiveQuery(
+    () => db.animals.filter(a => !a.deleted_at).toArray()
+  ) || [];
 
   const farmsById = useMemo(() => {
     const map = new Map();
     farms.forEach(f => map.set(f.id, f));
     return map;
   }, [farms]);
+
+  // Datos de los eventos seleccionados para comparar (Fase 4 - Req 10)
+  const selectedVaquerias = useMemo(() => {
+    return selectedVaqueriaIds
+      .map(id => rawVaquerias.find(v => v.id === id))
+      .filter(Boolean);
+  }, [selectedVaqueriaIds, rawVaquerias]);
+
+  const activeComparisonFarmId = selectedVaquerias[0]?.farm_id || null;
+  const activeComparisonFarm = activeComparisonFarmId ? farmsById.get(activeComparisonFarmId) : null;
+  const isSelectionMode = selectedVaqueriaIds.length > 0;
+
+  // Selección para Comparar (Fase 4 - Req 10)
+  const toggleVaqueriaSelection = (v) => {
+    setSelectedVaqueriaIds(prev => {
+      if (prev.includes(v.id)) {
+        return prev.filter(id => id !== v.id);
+      }
+
+      if (prev.length === 0) {
+        return [v.id];
+      }
+
+      const firstV = rawVaquerias.find(item => item.id === prev[0]);
+      if (firstV && firstV.farm_id !== v.farm_id) {
+        const farmName = farmsById.get(firstV.farm_id)?.name || 'la misma finca';
+        showToast('Finca distinta', `Solo puedes comparar eventos de la misma finca (${farmName}).`, 'error');
+        return prev;
+      }
+
+      if (prev.length === 1) {
+        return [...prev, v.id];
+      }
+
+      // Si ya hay 2 seleccionados, reemplazar el segundo
+      return [prev[0], v.id];
+    });
+  };
+
+  // Manejadores de pulsación táctil larga (móvil) y clic
+  const handleTouchStart = (v, e) => {
+    isLongPressRef.current = false;
+    const touch = e.touches[0];
+    if (touch) {
+      touchStartPosRef.current = { x: touch.clientX, y: touch.clientY };
+    }
+    if (touchTimerRef.current) clearTimeout(touchTimerRef.current);
+    touchTimerRef.current = setTimeout(() => {
+      isLongPressRef.current = true;
+      if (navigator.vibrate) {
+        try { navigator.vibrate(60); } catch (_) {}
+      }
+      toggleVaqueriaSelection(v);
+    }, 450);
+  };
+
+  const handleTouchMove = (e) => {
+    const touch = e.touches[0];
+    if (touch && touchStartPosRef.current) {
+      const dx = Math.abs(touch.clientX - touchStartPosRef.current.x);
+      const dy = Math.abs(touch.clientY - touchStartPosRef.current.y);
+      if (dx > 10 || dy > 10) {
+        clearTimeout(touchTimerRef.current);
+        touchTimerRef.current = null;
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (touchTimerRef.current) {
+      clearTimeout(touchTimerRef.current);
+      touchTimerRef.current = null;
+    }
+  };
+
+  const handleCardClick = (v, e) => {
+    if (isLongPressRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      isLongPressRef.current = false;
+      return;
+    }
+
+    if (selectedVaqueriaIds.length > 0) {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleVaqueriaSelection(v);
+      return;
+    }
+
+    navigate(`/eventos/${v.id}`, { state: { vaqueria: v } });
+  };
 
   // Opciones de finca para CustomSelect (versión móvil)
   const farmSelectOptions = useMemo(() => {
@@ -285,33 +393,71 @@ export default function VaqueriasPage() {
                 ? v.snapshot_data.kpis.totalPresent
                 : (countsByVaqueria.get(v.id) || 0);
               const isFinalized = v.status === 'Finalizada';
+              const isSelected = selectedVaqueriaIds.includes(v.id);
+              const isDifferentFarm = isSelectionMode && activeComparisonFarmId && v.farm_id !== activeComparisonFarmId;
 
               return (
                 <div
                   key={v.id}
-                  onClick={() => navigate(`/eventos/${v.id}`, { state: { vaqueria: v } })}
-                  className="bg-white rounded-3xl p-5 border border-neutral-200/80 shadow-xs hover:shadow-md hover:border-[#1B4820]/40 transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden"
+                  onClick={(e) => handleCardClick(v, e)}
+                  onTouchStart={(e) => handleTouchStart(v, e)}
+                  onTouchMove={handleTouchMove}
+                  onTouchEnd={handleTouchEnd}
+                  className={`bg-white rounded-3xl p-5 border shadow-xs transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden select-none ${
+                    isSelected
+                      ? 'ring-2 ring-[#1B4820] border-[#1B4820] bg-emerald-50/15 shadow-md'
+                      : isDifferentFarm
+                        ? 'opacity-40 border-neutral-200 cursor-not-allowed'
+                        : 'border-neutral-200/80 hover:shadow-md hover:border-[#1B4820]/40'
+                  }`}
                 >
                   {/* Barra lateral de estado */}
                   <div className={`absolute top-0 left-0 bottom-0 w-1.5 ${
-                    isFinalized ? 'bg-neutral-300' : 'bg-[#1B4820]'
+                    isSelected
+                      ? 'bg-[#1B4820]'
+                      : isFinalized 
+                        ? 'bg-neutral-300' 
+                        : 'bg-[#1B4820]'
                   }`} />
 
                   <div>
-                    {/* Top Row: Finca y Estado */}
+                    {/* Top Row: Finca, Checkbox de Selección y Estado */}
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-neutral-100 text-neutral-700 text-[11px] font-black truncate">
                         <Building2 className="w-3.5 h-3.5 text-[#1B4820] shrink-0" />
                         {farm?.name || 'Finca no asignada'}
                       </span>
 
-                      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider shrink-0 ${
-                        isFinalized 
-                          ? 'bg-neutral-100 text-neutral-600' 
-                          : 'bg-emerald-100 text-emerald-800'
-                      }`}>
-                        {v.status || 'En progreso'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {/* Checkbox para Comparación (Fase 4 - Req 10) */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleVaqueriaSelection(v);
+                          }}
+                          className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-[#1B4820] border-[#1B4820] text-white opacity-100 scale-105 shadow-xs'
+                              : isSelectionMode
+                                ? isDifferentFarm
+                                  ? 'border-neutral-200 text-neutral-300 opacity-20 cursor-not-allowed'
+                                  : 'border-neutral-300 hover:border-[#1B4820] bg-white opacity-100'
+                                : 'border-neutral-300 hover:border-[#1B4820] bg-white opacity-0 group-hover:opacity-100'
+                          }`}
+                          title={isSelected ? 'Deseleccionar' : isDifferentFarm ? 'Finca distinta' : 'Seleccionar para comparar'}
+                        >
+                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                        </button>
+
+                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider shrink-0 ${
+                          isFinalized 
+                            ? 'bg-neutral-100 text-neutral-600' 
+                            : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {v.status || 'En progreso'}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Nombre de la Vaquería */}
@@ -482,6 +628,72 @@ export default function VaqueriasPage() {
         isDestructive={true}
         onConfirm={executeLogout}
         onCancel={() => setIsLogoutConfirmOpen(false)}
+      />
+
+      {/* Barra Flotante de Selección y Comparación (Fase 4 - Req 10) */}
+      <AnimatePresence>
+        {selectedVaqueriaIds.length > 0 && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            className="fixed bottom-6 left-4 right-4 sm:left-auto sm:right-6 z-40 flex items-center justify-center pointer-events-none"
+          >
+            <div className="pointer-events-auto bg-[#1B4820] text-white rounded-2xl sm:rounded-3xl shadow-2xl px-4 py-3 sm:px-5 sm:py-3.5 flex items-center gap-3 sm:gap-4 border border-emerald-800/80 max-w-lg w-full">
+              <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+                <ArrowLeftRight className="w-5 h-5 text-emerald-300" />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-black tracking-wide flex items-center gap-1.5 truncate">
+                  <span>Comparar Eventos</span>
+                  <span className="px-1.5 py-0.5 rounded-md bg-white/20 text-[10px] font-bold">
+                    {selectedVaqueriaIds.length}/2
+                  </span>
+                </p>
+                <p className="text-[11px] text-emerald-100 font-medium truncate">
+                  {selectedVaqueriaIds.length === 1
+                    ? `Selecciona otro evento de ${activeComparisonFarm?.name || 'la misma finca'}`
+                    : `2 eventos listos para comparar (${activeComparisonFarm?.name || 'la finca'})`
+                  }
+                </p>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setSelectedVaqueriaIds([])}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+
+                {selectedVaqueriaIds.length === 2 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsComparisonModalOpen(true)}
+                    className="px-4 py-2 bg-white text-[#1B4820] hover:bg-emerald-50 rounded-xl text-xs font-black shadow-md transition-all cursor-pointer active:scale-95 flex items-center gap-1.5"
+                  >
+                    <ArrowLeftRight className="w-3.5 h-3.5 stroke-[2.5]" />
+                    Comparar
+                  </button>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Comparación entre 2 Eventos (Fase 4 - Req 10) */}
+      <VaqueriaComparisonModal
+        isOpen={isComparisonModalOpen}
+        onClose={() => setIsComparisonModalOpen(false)}
+        vaqueria1={selectedVaquerias[0]}
+        vaqueria2={selectedVaquerias[1]}
+        farm={activeComparisonFarm}
+        allVaqueriaAnimals={allVaqueriaAnimals}
+        allAnimals={allAnimals}
       />
 
       {/* Toast Feedback */}
