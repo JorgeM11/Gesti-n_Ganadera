@@ -1438,13 +1438,13 @@ export default function VaqueriaDetallePage() {
         isOpen={Boolean(statusConfirmAction)}
         title={
           statusConfirmAction === 'finalize'
-            ? '¿Finalizar este Evento?'
-            : '¿Reabrir este Evento?'
+            ? '¿Finalizar Evento?'
+            : '¿Reabrir Evento?'
         }
         description={
           statusConfirmAction === 'finalize'
-            ? 'Al finalizar el evento, todas las listas de asistencia, faltantes y métricas quedarán congeladas como histórico inmutable. Podrás reabrirlo en cualquier momento si necesitas hacer modificaciones.'
-            : 'El evento volverá al estado "En progreso". Se desbloquearán las listas y el escaneo para permitir nuevos registros o cambios.'
+            ? 'Las listas quedarán guardadas como histórico.'
+            : 'El evento volverá a estar en progreso.'
         }
         confirmText={
           statusConfirmAction === 'finalize'
