@@ -284,8 +284,8 @@ flowchart TD
      - Evolucionar el concepto de "Vaquería" a "Eventos de Manejo" (para registrar no solo asistencia general, sino también eventos operativos específicos como baños, pesajes, vacunaciones masivas o curaciones).
    - [x] **6. Edición rápida de animal desde lista de vaquería / evento**:
      - Botón de edición directa en las filas de las pestañas (Presentes / Faltantes) para modificar datos del animal sin necesidad de salir de la vaquería en curso.
-   - [ ] **7. Fecha de finalización de vaquería**:
-     - Campo explícito para registrar la fecha y hora exacta de culminación de la vaquería (almacenada tanto en snapshot como en metadatos del registro).
+   - [x] **7. Fecha de finalización y reapertura de vaquería / evento**:
+     - Campo explícito para registrar la fecha y hora exacta de culminación y reapertura de la vaquería (almacenada tanto en snapshot como en metadatos del registro y visible en tarjetas y detalle).
    - [ ] **8. Confirmación obligatoria al finalizar vaquería**:
      - Modal de confirmación y advertencia ("¿Estás seguro de finalizar la vaquería?") para prevenir cierres involuntarios o congelamientos accidentales de snapshots.
    - [ ] **9. Resaltado visual de animales al reabrir vaquería**:
@@ -328,3 +328,4 @@ flowchart TD
 | **Fase 4 - Req 4: Vista de Inventario por Finca** | 2026-10-29 | **Completado** | Antigravity AI & Usuario | Vista idéntica a Inventario filtrada por finca, acceso desde modal de fincas, retorno contextual desde perfil, preselección de finca al crear animal y drawer de filtros sin sección de finca. Inventario original 100% intacto. |
 | **Fase 4 - Req 5: Renombramiento de Vaquerías a Eventos** | 2026-10-29 | **Completado** | Antigravity AI & Usuario | Redefinición visual completa del módulo de Vaquerías a Eventos en barra lateral, listados, modales, detalle y rutas (/eventos). Preservada compatibilidad de base de datos y snapshots. |
 | **Fase 4 - Req 6: Edición Rápida de Animal en Eventos** | 2026-10-29 | **Completado** | Antigravity AI & Usuario | Botón de lápiz al lado del botón de eliminar en listas de Presentes y Faltantes para editar el animal en BottomSheet sin salir del evento en curso, con sincronización reactiva inmediata. |
+| **Fase 4 - Req 7: Fechas de Finalización y Reapertura** | 2026-10-31 | **Completado** | Antigravity AI & Usuario | Fechas ISO en snapshot y Dexie, visualización en cards de Eventos y detalle, formato local (DD/MM/YYYY hh:mm am/pm) y sincronización resiliente. |

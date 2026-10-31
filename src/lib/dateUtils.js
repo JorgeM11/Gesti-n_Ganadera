@@ -84,3 +84,24 @@ export function formatWeight(weight) {
   if (!weight && weight !== 0) return '---';
   return `${Number(weight).toLocaleString('es-ES')} kg`;
 }
+
+/**
+ * Formatea una fecha y hora ISO de forma corta y legible (ej: "29/10/2026 06:00 pm").
+ * @param {string | Date} dateString - Fecha/hora ISO.
+ * @returns {string} - Fecha formateada.
+ */
+export function formatDateTimeLocal(dateString) {
+  if (!dateString) return '---';
+  const d = new Date(dateString);
+  if (isNaN(d.getTime())) return '---';
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'pm' : 'am';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const strHours = String(hours).padStart(2, '0');
+  return `${day}/${month}/${year} ${strHours}:${minutes} ${ampm}`;
+}

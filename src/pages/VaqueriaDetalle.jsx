@@ -25,8 +25,10 @@ import {
   UserX,
   ClipboardPlus,
   Info,
-  Lock
+  Lock,
+  Clock
 } from 'lucide-react';
+import { formatDateTimeLocal } from '@/lib/dateUtils';
 import { db } from '@/lib/db';
 import { 
   addAnimalToVaqueria, 
@@ -570,8 +572,12 @@ export default function VaqueriaDetallePage() {
           kpis: activeAnalysis?.kpis || {}
         };
 
+        const nowIso = new Date().toISOString();
+        snapshotData.finalized_at = nowIso;
+
         await updateVaqueria(effectiveVaqueria.id, {
           status: 'Finalizada',
+          finalized_at: nowIso,
           snapshot_data: snapshotData
         });
 
@@ -581,9 +587,16 @@ export default function VaqueriaDetallePage() {
           'success'
         );
       } else {
+        const nowIso = new Date().toISOString();
+        const prevFinalized = effectiveVaqueria.finalized_at || effectiveVaqueria.snapshot_data?.finalized_at || null;
+
         await updateVaqueria(effectiveVaqueria.id, {
           status: 'En progreso',
-          snapshot_data: null
+          reopened_at: nowIso,
+          snapshot_data: {
+            reopened_at: nowIso,
+            previous_finalized_at: prevFinalized
+          }
         });
 
         showToast(
@@ -761,6 +774,22 @@ export default function VaqueriaDetallePage() {
               <Calendar className="w-3.5 h-3.5 text-neutral-400" />
               {currentVaqueria.date || 'Sin fecha'}
             </span>
+
+            {/* Fecha de Finalización si está finalizada */}
+            {currentVaqueria.status === 'Finalizada' && (currentVaqueria.finalized_at || currentVaqueria.snapshot_data?.finalized_at) && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neutral-100 text-neutral-700 text-xs font-bold border border-neutral-200/70">
+                <CheckCircle2 className="w-3.5 h-3.5 text-neutral-500 shrink-0" />
+                <span>Finalizada: {formatDateTimeLocal(currentVaqueria.finalized_at || currentVaqueria.snapshot_data?.finalized_at)}</span>
+              </span>
+            )}
+
+            {/* Fecha de Reapertura si está reabierta */}
+            {currentVaqueria.status !== 'Finalizada' && (currentVaqueria.reopened_at || currentVaqueria.snapshot_data?.reopened_at) && (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-900 text-xs font-bold border border-emerald-200/70">
+                <Clock className="w-3.5 h-3.5 text-[#1B4820] shrink-0" />
+                <span>Reabierta: {formatDateTimeLocal(currentVaqueria.reopened_at || currentVaqueria.snapshot_data?.reopened_at)}</span>
+              </span>
+            )}
           </div>
 
           <div className="w-full sm:w-auto">
@@ -843,6 +872,11 @@ export default function VaqueriaDetallePage() {
                 </h4>
                 <p className="text-[11px] font-medium text-neutral-500">
                   Todas las listas de asistencia, faltantes y métricas están congeladas históricamente. Para realizar modificaciones, pulse "Reabrir Evento".
+                  {(currentVaqueria.finalized_at || currentVaqueria.snapshot_data?.finalized_at) && (
+                    <span className="block font-bold text-neutral-700 mt-1">
+                      Fecha de finalización: {formatDateTimeLocal(currentVaqueria.finalized_at || currentVaqueria.snapshot_data?.finalized_at)}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>

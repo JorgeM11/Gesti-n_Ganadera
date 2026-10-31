@@ -20,6 +20,7 @@ import {
 import { db, clearLocalData } from '@/lib/db';
 import { logoutUser } from '@/lib/authService';
 import { deleteVaqueria } from '@/lib/vaqueriaUtils';
+import { formatDateTimeLocal } from '@/lib/dateUtils';
 import SyncStatus from '@/components/ui/SyncStatus';
 import NavigationDrawer from '@/components/inventario/NavigationDrawer';
 import FarmModal from '@/components/inventario/FarmModal';
@@ -319,10 +320,26 @@ export default function VaqueriasPage() {
                     </h3>
 
                     {/* Fecha y Notas */}
-                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-500 mb-3">
-                      <Calendar className="w-3.5 h-3.5 text-neutral-400" />
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-500 mb-2">
+                      <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                       <span>{v.date || 'Sin fecha'}</span>
                     </div>
+
+                    {/* Fecha de Finalización si está finalizada */}
+                    {isFinalized && (v.finalized_at || v.snapshot_data?.finalized_at) && (
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-neutral-600 mb-2.5 bg-neutral-100/70 px-2 py-1 rounded-lg border border-neutral-200/60">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-neutral-500 shrink-0" />
+                        <span className="truncate">Finalizada: {formatDateTimeLocal(v.finalized_at || v.snapshot_data?.finalized_at)}</span>
+                      </div>
+                    )}
+
+                    {/* Fecha de Reapertura si está reabierta */}
+                    {!isFinalized && (v.reopened_at || v.snapshot_data?.reopened_at) && (
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-800 mb-2.5 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200/60">
+                        <Clock className="w-3.5 h-3.5 text-[#1B4820] shrink-0" />
+                        <span className="truncate">Reabierta: {formatDateTimeLocal(v.reopened_at || v.snapshot_data?.reopened_at)}</span>
+                      </div>
+                    )}
 
                     {v.observations && (
                       <p className="text-xs font-medium text-neutral-500 line-clamp-2 bg-neutral-50 p-2.5 rounded-xl border border-neutral-100 mb-3">

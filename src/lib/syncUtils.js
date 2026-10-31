@@ -172,40 +172,74 @@ export async function processSyncQueue() {
         error = deleteError;
       }
 
-      if (error && error.code === 'PGRST204' && payloadToUpload.updated_by_user_id) {
-        console.warn(`[Sync Engine] Columna updated_by_user_id ausente en Supabase (${item.table_name}). Reintentando sin el campo.`);
-        delete payloadToUpload.updated_by_user_id;
+      // --- MANEJO RESILIENTE ANTE COLUMNAS AUSENTES EN SUPABASE (PGRST204 / 400) ---
+      if (error && (error.code === 'PGRST204' || (error.status === 400 && String(error.message).includes('schema cache')))) {
+        let stripped = false;
+        const match = String(error.message || '').match(/Could not find the '([^']+)' column/i);
+        const missingCol = match ? match[1] : null;
 
-        if (item.operation === 'PATCH' || (item.operation === 'UPDATE' && !payloadToUpload.user_id)) {
-          const { id, ...fields } = payloadToUpload;
-          if (id) {
+        if (missingCol && payloadToUpload[missingCol] !== undefined) {
+          console.warn(`[Sync Engine] Columna '${missingCol}' ausente en Supabase (${item.table_name}). Reintentando sin el campo.`);
+          delete payloadToUpload[missingCol];
+          stripped = true;
+        }
+
+        // Si la tabla es vaquerias y falló por columnas que aún no existen en Supabase:
+        if (item.table_name === 'vaquerias') {
+          if (payloadToUpload.finalized_at !== undefined) {
+            delete payloadToUpload.finalized_at;
+            stripped = true;
+          }
+          if (payloadToUpload.reopened_at !== undefined) {
+            delete payloadToUpload.reopened_at;
+            stripped = true;
+          }
+        }
+
+        if (payloadToUpload.updated_by_user_id !== undefined) {
+          console.warn(`[Sync Engine] Columna updated_by_user_id ausente en Supabase (${item.table_name}). Reintentando sin el campo.`);
+          delete payloadToUpload.updated_by_user_id;
+          stripped = true;
+        }
+
+        if (stripped) {
+          if (item.operation === 'PATCH' || (item.operation === 'UPDATE' && !payloadToUpload.user_id)) {
+            const { id, ...fields } = payloadToUpload;
+            if (id) {
+              const { error: retryError } = await withTimeout(
+                supabase.from(item.table_name).update(fields).eq('id', id),
+                15000
+              );
+              error = retryError;
+            }
+          } else if (item.operation === 'INSERT') {
             const { error: retryError } = await withTimeout(
-              supabase.from(item.table_name).update(fields).eq('id', id),
+              supabase.from(item.table_name).upsert(payloadToUpload),
               15000
             );
             error = retryError;
-          }
-        } else if (item.operation === 'INSERT') {
-          const { error: retryError } = await withTimeout(
-            supabase.from(item.table_name).upsert(payloadToUpload),
-            15000
-          );
-          error = retryError;
-        } else if (item.operation === 'UPDATE') {
-          const { id, ...fields } = payloadToUpload;
-          if (id) {
-            const { error: retryUpdate } = await withTimeout(
-              supabase.from(item.table_name).update(fields).eq('id', id),
-              15000
-            );
-            if (retryUpdate) {
+          } else if (item.operation === 'UPDATE') {
+            const { id, ...fields } = payloadToUpload;
+            if (id) {
+              const { error: retryUpdate } = await withTimeout(
+                supabase.from(item.table_name).update(fields).eq('id', id),
+                15000
+              );
+              if (retryUpdate) {
+                const { error: retryUpsert } = await withTimeout(
+                  supabase.from(item.table_name).upsert(payloadToUpload),
+                  15000
+                );
+                error = retryUpsert;
+              } else {
+                error = null;
+              }
+            } else {
               const { error: retryUpsert } = await withTimeout(
                 supabase.from(item.table_name).upsert(payloadToUpload),
                 15000
               );
               error = retryUpsert;
-            } else {
-              error = null;
             }
           }
         }
@@ -364,6 +398,18 @@ export async function pullFromServer() {
             }
           })
         );
+      }
+
+      // Hidratación de fechas en vaquerias si snapshot_data las contiene pero la columna remota no existe aún
+      if (table === 'vaquerias') {
+        serverData.forEach(record => {
+          if (!record.finalized_at && record.snapshot_data?.finalized_at) {
+            record.finalized_at = record.snapshot_data.finalized_at;
+          }
+          if (!record.reopened_at && record.snapshot_data?.reopened_at) {
+            record.reopened_at = record.snapshot_data.reopened_at;
+          }
+        });
       }
 
       // 2. Guardado en Dexie: 1 sola transacción en bloque sin pérdida de blobs
