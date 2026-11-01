@@ -24,7 +24,8 @@ import {
   ChevronRight,
   FileText,
   Pencil,
-  CheckSquare
+  CheckSquare,
+  Camera
 } from 'lucide-react';
 import { FaMars, FaVenus } from 'react-icons/fa6';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -1548,6 +1549,9 @@ export default function InactivosPage() {
                           <span className="inline-flex items-center justify-center gap-1 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-white shadow-sm backdrop-blur-xs leading-none shrink-0 bg-neutral-800/85">
                             <XCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-300 shrink-0" />
                             <span className="truncate max-w-[90px] sm:max-w-[120px]">{getGeneralInactivityReason(animal.inactivity_reason)}</span>
+                            {Boolean(animal.death_photo_blob || animal.death_photo_path) && (
+                              <Camera className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-300 shrink-0 ml-0.5" title="Contiene foto de evidencia" />
+                            )}
                           </span>
                         </div>
                       </div>
@@ -1798,6 +1802,9 @@ export default function InactivosPage() {
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-neutral-200 text-neutral-700 border border-neutral-300">
                               <XCircle className="w-2.5 h-2.5 text-red-500" />
                               <span className="truncate max-w-[80px]">{getGeneralInactivityReason(animal.inactivity_reason)}</span>
+                              {Boolean(animal.death_photo_blob || animal.death_photo_path) && (
+                                <Camera className="w-2.5 h-2.5 text-amber-700 shrink-0 ml-0.5" title="Contiene foto de evidencia" />
+                              )}
                             </span>
                           </div>
 

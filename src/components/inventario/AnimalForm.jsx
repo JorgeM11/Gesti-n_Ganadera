@@ -8,7 +8,7 @@ import {
   CheckCircle, Building2, Dna, 
   Scale, Calendar, IdCard, Cpu, Tag, 
   Palette, UserCheck, ShieldAlert, ScanBarcode,
-  AlertTriangle, AlertCircle
+  AlertTriangle, AlertCircle, Check
 } from 'lucide-react';
 import { GiCow } from 'react-icons/gi';
 import { FaMars, FaVenus } from 'react-icons/fa6';
@@ -49,6 +49,30 @@ const POPULAR_BREEDS_LIST = [
   'Sin raza'
 ];
 
+export const INACTIVITY_REASONS = [
+  'Muerte',
+  'Venta',
+  'Descarte',
+  'Pérdida / Extravío'
+];
+
+export function parseInactivityReason(rawReason) {
+  if (!rawReason) return { reason: 'Muerte', notes: '' };
+  const trimmed = rawReason.trim();
+  for (const r of INACTIVITY_REASONS) {
+    if (trimmed === r) {
+      return { reason: r, notes: '' };
+    }
+    if (trimmed.startsWith(`${r}:`)) {
+      return { reason: r, notes: trimmed.substring(r.length + 1).trim() };
+    }
+    if (trimmed.startsWith(`${r} -`)) {
+      return { reason: r, notes: trimmed.substring(r.length + 2).trim() };
+    }
+  }
+  return { reason: 'Muerte', notes: trimmed };
+}
+
 // Esquema Zod ajustado: se exige obligatoriamente número de arete/lomo o número de chip (al menos uno)
 const animalSchema = z.object({
   // 1. Número de arete o lomo
@@ -65,6 +89,8 @@ const animalSchema = z.object({
   current_weight_kg: z.preprocess((val) => (val === '' || val === null) ? undefined : Number(val), z.number().optional()),
   // 7. Color (opcional)
   color: z.string().nullable().optional(),
+  // Rol productivo (Cría o Reproductor)
+  productive_role: z.enum(['Cría', 'Reproductor']).default('Cría'),
   // 8. Dueño
   owner_id: z.string().nullable().optional(),
   // 9. Finca
@@ -149,6 +175,39 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
     isModified: false
   });
 
+  // Estado de imagen de evidencia de muerte (animal muerto)
+  const initialDeathPreview = useMemo(() => {
+    if (initialValues?.death_photo_blob) {
+      try {
+        return URL.createObjectURL(initialValues.death_photo_blob);
+      } catch (e) {
+        return initialValues?.death_photo_path || null;
+      }
+    }
+    return initialValues?.death_photo_path || null;
+  }, [initialValues?.death_photo_blob, initialValues?.death_photo_path]);
+
+  const [deathImage, setDeathImage] = useState({
+    blob: null,
+    preview: initialDeathPreview,
+    isModified: false
+  });
+
+  const parsedInitialInactivity = useMemo(() => {
+    return parseInactivityReason(initialValues?.inactivity_reason);
+  }, [initialValues?.inactivity_reason]);
+
+  const [inactivityReasonType, setInactivityReasonType] = useState(() => parsedInitialInactivity.reason);
+  const [inactivityNotes, setInactivityNotes] = useState(() => parsedInitialInactivity.notes);
+
+  useEffect(() => {
+    if (initialValues) {
+      const parsed = parseInactivityReason(initialValues.inactivity_reason);
+      setInactivityReasonType(parsed.reason);
+      setInactivityNotes(parsed.notes);
+    }
+  }, [initialValues?.inactivity_reason]);
+
   const [toast, setToast] = useState({ show: false, type: 'success', message: '' });
   const [isSaved, setIsSaved] = useState(false);
   const currentSavingIdRef = useRef(null);
@@ -214,6 +273,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
       father_id: '',
       mother_id: '',
       breed: 'Sin raza',
+      productive_role: 'Cría',
       status: 'Activo',
       inactivity_reason: '',
       observations: ''
@@ -232,6 +292,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
       father_id: initialValues.father_id || '',
       mother_id: initialValues.mother_id || '',
       breed: initialValues.breed || 'Sin raza',
+      productive_role: initialValues.productive_role || 'Cría',
       status: initialValues.status || 'Activo',
       inactivity_reason: initialValues.inactivity_reason || '',
       observations: initialValues.observations || ''
@@ -245,6 +306,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
 
   const selectedSex = watch('sex');
   const selectedStatus = watch('status');
+  const selectedProductiveRole = watch('productive_role');
   const fatherId = watch('father_id');
   const motherId = watch('mother_id');
   const selectedFarmId = watch('farm_id');
@@ -307,6 +369,23 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
 
   const removeImage = () => {
     setImage({ blob: null, preview: null, isModified: true });
+  };
+
+  const handleDeathImageCapture = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const compressedBlob = await compressImage(file);
+      const previewUrl = URL.createObjectURL(compressedBlob);
+      setDeathImage({ blob: compressedBlob, preview: previewUrl, isModified: true });
+    } catch (error) {
+      console.error('Error procesando foto de muerte:', error);
+      alert('Error al comprimir la foto de muerte.');
+    }
+  };
+
+  const removeDeathImage = () => {
+    setDeathImage({ blob: null, preview: null, isModified: true });
   };
 
   const chipScannerRef = useRef({
@@ -437,6 +516,18 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         ? null
         : (isEditing ? (initialValues?.photo_path || null) : null);
 
+      const deathPhotoBlobToSave = (data.status === 'Inactivo' && inactivityReasonType === 'Muerte')
+        ? (deathImage.isModified ? (deathImage.blob || null) : (initialValues?.death_photo_blob || null))
+        : null;
+
+      const deathPhotoPathToSave = (data.status === 'Inactivo' && inactivityReasonType === 'Muerte')
+        ? (deathImage.isModified ? null : (initialValues?.death_photo_path || null))
+        : null;
+
+      const finalInactivityReason = data.status === 'Inactivo'
+        ? (inactivityNotes.trim() ? `${inactivityReasonType}: ${inactivityNotes.trim()}` : inactivityReasonType)
+        : null;
+
       let finalWeight = initialValues?.last_weight_kg || null;
       let finalWeightDate = initialValues?.last_weight_date || null;
 
@@ -495,8 +586,11 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         father_id: data.father_id || null,
         mother_id: data.mother_id || null,
         breed: data.breed?.trim() || 'Sin raza',
+        productive_role: data.productive_role || 'Cría',
         status: data.status || 'Activo',
-        inactivity_reason: data.status === 'Inactivo' ? (data.inactivity_reason?.trim() || 'Inactivo') : null,
+        inactivity_reason: finalInactivityReason,
+        death_photo_path: deathPhotoPathToSave,
+        death_photo_blob: deathPhotoBlobToSave,
         observations: data.observations?.trim() || null,
         photo_path: photoPathToSave,
         photo_blob: photoBlobToSave,
@@ -939,7 +1033,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
             </div>
             <div>
               <h3 className="text-base font-black text-neutral-900">Características Biológicas</h3>
-              <p className="text-[11px] text-neutral-400 font-medium">Género, nacimiento, peso y color</p>
+              <p className="text-[11px] text-neutral-400 font-medium">Género, rol productivo, nacimiento, peso y color</p>
             </div>
           </div>
 
@@ -977,7 +1071,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
             {/* 5. Fecha de nacimiento */}
             <div>
               <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
@@ -1017,6 +1111,23 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                 {...register('color')}
                 placeholder="Ej. Blanco"
                 className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20"
+              />
+            </div>
+
+            {/* Rol Productivo (Cría o Reproductor) */}
+            <div>
+              <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                <ShieldAlert className="w-3.5 h-3.5 text-[#1B4820]" />
+                Rol Productivo *
+              </label>
+              <CustomSelect
+                value={selectedProductiveRole || 'Cría'}
+                onChange={(val) => setValue('productive_role', val, { shouldValidate: true, shouldDirty: true })}
+                options={[
+                  { value: 'Cría', label: 'Cría' },
+                  { value: 'Reproductor', label: 'Reproductor' }
+                ]}
+                placeholder="Selecciona rol..."
               />
             </div>
           </div>
@@ -1248,16 +1359,63 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
           </div>
 
           {selectedStatus === 'Inactivo' && (
-            <div className="pt-2 animate-in fade-in">
-              <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-1.5 block">
-                Motivo
-              </label>
-              <input
-                type="text"
-                {...register('inactivity_reason')}
-                placeholder="Ej. Vendido, Fallecimiento"
-                className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20"
-              />
+            <div className="space-y-4 pt-2 animate-in fade-in">
+              <div>
+                <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-2 block">
+                  Motivo de Inactivación *
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {INACTIVITY_REASONS.map(r => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setInactivityReasonType(r)}
+                      className={`p-3 rounded-2xl border text-xs font-bold flex items-center justify-between transition-all cursor-pointer ${
+                        inactivityReasonType === r
+                          ? 'border-amber-600 bg-amber-50 text-amber-900 shadow-xs ring-1 ring-amber-600/30'
+                          : 'border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-neutral-100'
+                      }`}
+                    >
+                      <span>{r}</span>
+                      {inactivityReasonType === r && <Check className="w-4 h-4 text-amber-600 stroke-[3]" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Si el motivo es Muerte: Fotografía de evidencia */}
+              {inactivityReasonType === 'Muerte' && (
+                <div className="pt-1 animate-in fade-in space-y-2">
+                  <label className="text-[11px] font-black text-rose-700 uppercase tracking-wider flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5" />
+                    Fotografía de Evidencia (Animal Muerto)
+                  </label>
+                  <SingleImageUploader
+                    preview={deathImage.preview}
+                    onCapture={handleDeathImageCapture}
+                    onRemove={removeDeathImage}
+                    label="Foto de evidencia de muerte"
+                  />
+                </div>
+              )}
+
+              {/* Input de detalles / comprador o destino */}
+              <div className="pt-1">
+                <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-1.5 block">
+                  {inactivityReasonType === 'Venta' ? 'Comprador o Destino' : 'Detalles adicionales (Opcional)'}
+                </label>
+                <input
+                  type="text"
+                  value={inactivityNotes}
+                  onChange={(e) => setInactivityNotes(e.target.value)}
+                  placeholder={
+                    inactivityReasonType === 'Venta'
+                      ? 'Ej. Juan Pérez, Frigorífico El Centro, Finca La Vega...'
+                      : 'Ej. Causa médica, circunstancias, observaciones...'
+                  }
+                  className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all placeholder:text-neutral-400"
+                />
+              </div>
             </div>
           )}
         </div>

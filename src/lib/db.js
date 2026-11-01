@@ -56,8 +56,11 @@ import Dexie from 'dexie';
  * @property {'Macho' | 'Hembra'} [sex]
  * @property {'Activo' | 'Inactivo'} [status]
  * @property {string} [inactivity_reason]
+ * @property {'Cría' | 'Reproductor'} [productive_role]
  * @property {string} [photo_path]
  * @property {Blob} [photo_blob]
+ * @property {string} [death_photo_path]
+ * @property {Blob} [death_photo_blob]
  * @property {string} [mother_id]
  * @property {string} [father_id]
  * @property {number} [birth_weight_kg]
@@ -283,6 +286,15 @@ export class GanaderaDB extends Dexie {
         // --- VERSIÓN 10: Auditoría de usuario creador y modificador en animales ---
         this.version(10).stores({
             animals: 'id, user_id, created_by_user_id, updated_by_user_id, farm_id, potrero_id, owner_id, number, chip_number, name, status, sex, breed, last_weight_kg, last_weight_date, mother_id, father_id, updated_at, deleted_at'
+        });
+
+        // --- VERSIÓN 11: Roles productivos (Cría, Reproductor) y soporte para fotos de muerte/inactivación ---
+        this.version(11).stores({
+            animals: 'id, user_id, created_by_user_id, updated_by_user_id, farm_id, potrero_id, owner_id, number, chip_number, name, status, sex, breed, productive_role, last_weight_kg, last_weight_date, mother_id, father_id, updated_at, deleted_at'
+        }).upgrade(tx => {
+            return tx.table('animals').toCollection().modify(animal => {
+                if (!animal.productive_role) animal.productive_role = 'Cría';
+            });
         });
 
         /** @type {Dexie.Table<Animal, string>} */

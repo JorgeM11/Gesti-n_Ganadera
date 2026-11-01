@@ -613,11 +613,15 @@ export default function BulkEditModal({
 
                           <div>
                             <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-1.5 block">
-                              Detalles o Notas (Opcional):
+                              {inactivityReason === 'Venta' ? 'Comprador o Destino:' : 'Detalles o Notas (Opcional):'}
                             </label>
                             <input
                               type="text"
-                              placeholder="Ej. Vendido a productor vecino, muerte súbita..."
+                              placeholder={
+                                inactivityReason === 'Venta'
+                                  ? 'Ej. Nombre del comprador, finca o frigorífico de destino...'
+                                  : 'Ej. Causa médica, observaciones, detalles...'
+                              }
                               value={customInactivityNotes}
                               onChange={(e) => setCustomInactivityNotes(e.target.value)}
                               className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-xs sm:text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all placeholder:text-neutral-400"

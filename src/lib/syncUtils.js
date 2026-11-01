@@ -102,8 +102,9 @@ export async function processSyncQueue() {
         }
       }
 
-      // --- SIEMPRE eliminar photo_blob antes de enviar a la nube ---
+      // --- SIEMPRE eliminar photo_blob y death_photo_blob antes de enviar a la nube ---
       delete payloadToUpload.photo_blob;
+      delete payloadToUpload.death_photo_blob;
 
       // --- IMÁGENES: subir blob local si aún no tiene URL remota ---
       if (item.payload.photo_blob && !payloadToUpload.photo_path) {
@@ -117,6 +118,18 @@ export async function processSyncQueue() {
         await db.table(item.table_name).update(payloadToUpload.id, { photo_path: url });
         // También actualizamos en el payload local por si la subida a BD fallara luego
         item.payload.photo_path = url;
+      }
+
+      // --- EVIDENCIA DE MUERTE: subir death_photo_blob si aún no tiene URL remota ---
+      if (item.payload.death_photo_blob && !payloadToUpload.death_photo_path) {
+        const fileName = `offline-sync-${item.table_name}-death-${payloadToUpload.id}`;
+        const url = await withTimeout(
+          uploadImageToSupabase(item.payload.death_photo_blob, fileName),
+          45000 // 45s de gracia para subida de imagen en redes lentas
+        );
+        payloadToUpload.death_photo_path = url;
+        await db.table(item.table_name).update(payloadToUpload.id, { death_photo_path: url });
+        item.payload.death_photo_path = url;
       }
 
       // --- SUBIDA A BASE DE DATOS ---
@@ -396,8 +409,31 @@ export async function pullFromServer() {
                 // Silencioso: la imagen cargará por URL pública mientras haya red
               }
             }
+
+            // Preservación y descarga de evidencia de muerte (death_photo_blob)
+            if (localRecord?.death_photo_blob) {
+              record.death_photo_blob = localRecord.death_photo_blob;
+            } else if (record.death_photo_path) {
+              try {
+                const response = await withTimeout(fetch(record.death_photo_path), 15000);
+                if (response.ok) {
+                  record.death_photo_blob = await response.blob();
+                }
+              } catch (imgErr) {
+                // Silencioso
+              }
+            }
           })
         );
+      }
+
+      // Default de rol productivo para animales si viene nulo desde el servidor
+      if (table === 'animals') {
+        serverData.forEach(record => {
+          if (!record.productive_role) {
+            record.productive_role = 'Cría';
+          }
+        });
       }
 
       // Hidratación de fechas en vaquerias si snapshot_data las contiene pero la columna remota no existe aún

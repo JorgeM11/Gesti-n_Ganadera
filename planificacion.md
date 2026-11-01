@@ -266,16 +266,16 @@ flowchart TD
      - Filtro rápido o sección de auditoría para detectar duplicados por número de arete, microchip RFID o nombre en la base de datos de la finca.
    - [x] **4. Nuevo módulo: Vista de inventario por finca**:
      - Módulo o pantalla especializada para consultar y visualizar el inventario de animales segmentado y agrupado directamente por cada finca.
-   - [ ] **14. Roles productivos en animales (Cría y Reproductor)**:
-     - Atributo de clasificación funcional para identificar si el animal cumple el rol de "Cría" o "Reproductor" dentro del rebaño.
-   - [ ] **15. Registro detallado de muerte con descripción y foto**:
-     - Al registrar el motivo de baja por muerte, permitir adjuntar una descripción detallada de la causa y una fotografía de evidencia/constancia.
+   - [x] **14. Roles productivos en animales (Cría y Reproductor)**:
+     - Atributo de clasificación funcional para identificar si el animal cumple el rol de "Cría" o "Reproductor" dentro del rebaño (por defecto 'Cría' en todo el sistema, selector CustomSelect en formulario, filtrable en inventario y sin visualización en cards de inventario).
+   - [x] **15. Registro detallado de muerte con descripción y foto**:
+     - 4 botones de inactivación en formulario, captura y compresión de evidencia fotográfica del animal muerto, carga a Supabase Storage y visualización en ficha técnica e inactivos.
    - [ ] **16. Recorte de fotos antes de subirlas (Image Cropper)**:
      - Herramienta visual e interactiva previa a la subida para recortar, centrar y encuadrar las fotografías de los animales.
    - [ ] **17. Origen y procedencia del animal**:
      - Campo en el formulario y ficha técnica para registrar de dónde proviene el animal (finca de origen, procedencia, compra, etc.).
-   - [ ] **18. Inactivación por venta con registro de destino**:
-     - Si el animal se marca como inactivo con motivo "Venta", habilitar un campo para registrar el destino del animal (comprador, destino o predio receptor).
+   - [x] **18. Inactivación por venta con registro de destino**:
+     - Al seleccionar motivo "Venta", el campo de detalles conmuta automáticamente a "Comprador o destino" formateando como `Venta: [comprador o destino]`.
    - [ ] **19. Evento de muerte en módulo de Evolución**:
      - Incluir la opción "Muerte" dentro de los eventos del módulo de evolución (`growth_events`), conectándolo directamente con el apartado de información de baja/muerte en el perfil del animal.
 
@@ -332,3 +332,6 @@ flowchart TD
 | **Fase 4 - Req 8: Confirmación al Finalizar y Reabrir Evento** | 2026-10-31 | **Completado** | Antigravity AI & Usuario | Modal estilizado de confirmación con ConfirmDialog para prevenir congelamientos o reaperturas accidentales de listas y snapshots. |
 | **Fase 4 - Req 9: Resaltado Visual al Reabrir** | 2026-10-31 | **Omitido** | Antigravity AI & Usuario | Requerimiento descartado y omitido por instrucción directa del usuario. |
 | **Fase 4 - Req 10: Comparación entre Eventos** | 2026-10-31 | **Completado** | Antigravity AI & Usuario | Selección dual con hover (laptop) y long-press (móvil), restricción estricta por misma finca, barra flotante interactiva y modal de análisis con comparativa de presentes, faltantes, total y flujo de asistencia. |
+| **Fase 4 - Req 14: Roles Productivos (Cría y Reproductor)** | 2026-11-01 | **Completado** | Antigravity AI & Usuario | Campo `productive_role` con valor por defecto 'Cría', selector CustomSelect en AnimalForm, filtrado dinámico en Inventario y sin alterar las cards de inventario. |
+| **Fase 4 - Req 15: Evidencia Fotográfica y Detalle de Muerte** | 2026-11-01 | **Completado** | Antigravity AI & Usuario | Interfaz de 4 botones para inactivación en AnimalForm, captura/subida de evidencia fotográfica del animal muerto (`death_photo_blob`/`death_photo_path`) y visualización en ficha técnica e inactivos. |
+| **Fase 4 - Req 18: Inactivación por Venta con Destino** | 2026-11-01 | **Completado** | Antigravity AI & Usuario | Al seleccionar motivo 'Venta', el campo de observaciones cambia a 'Comprador o destino', unificando AnimalForm, BulkEditModal e InactivateAnimalModal. |

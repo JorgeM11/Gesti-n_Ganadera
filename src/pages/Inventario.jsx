@@ -25,7 +25,8 @@ import {
   ChevronRight,
   FileText,
   Pencil,
-  CheckSquare
+  CheckSquare,
+  ShieldAlert
 } from 'lucide-react';
 import { FaMars, FaVenus } from 'react-icons/fa6';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -526,6 +527,7 @@ export default function InventarioPage() {
   const [filters, setFilters] = useState({
     duplicates: [],
     sex: [],
+    role: [],
     category: [],
     breed: [],
     observations: []
@@ -671,7 +673,7 @@ export default function InventarioPage() {
   };
 
   const clearFilters = () => {
-    setFilters({ duplicates: [], sex: [], category: [], breed: [], observations: [] });
+    setFilters({ duplicates: [], sex: [], role: [], category: [], breed: [], observations: [] });
     setSelectedFarmFilter('ALL');
     setSelectedPotreroFilter('ALL');
     setSelectedOwnerFilter('ALL');
@@ -680,6 +682,7 @@ export default function InventarioPage() {
   const activeFiltersCount = 
     (filters.duplicates?.length || 0) +
     filters.sex.length + 
+    (filters.role?.length || 0) +
     filters.category.length + 
     filters.breed.length + 
     filters.observations.length + 
@@ -711,6 +714,8 @@ export default function InventarioPage() {
         String(a.id || '').toLowerCase().includes(term);
       
       const matchesSex = filters.sex.length === 0 || filters.sex.includes(a.sex);
+      const currentRole = a.productive_role || 'Cría';
+      const matchesRole = !filters.role || filters.role.length === 0 || filters.role.includes(currentRole);
       const matchesFarm = selectedFarmFilter === 'ALL' 
         ? true 
         : selectedFarmFilter === 'NONE'
@@ -752,7 +757,7 @@ export default function InventarioPage() {
         }
       }
 
-      return matchesSearch && matchesSex && matchesCategory && matchesFarm && matchesPotrero && matchesOwner && matchesBreed && matchesObservations && matchesDuplicates;
+      return matchesSearch && matchesSex && matchesRole && matchesCategory && matchesFarm && matchesPotrero && matchesOwner && matchesBreed && matchesObservations && matchesDuplicates;
     });
 
     const isDuplicatesFilterActive = filters.duplicates && filters.duplicates.length > 0;
@@ -831,6 +836,7 @@ export default function InventarioPage() {
     }
     return allAnimals.filter(a => {
       if (type === 'sex') return a.sex === value;
+      if (type === 'role') return (a.productive_role || 'Cría') === value;
       if (type === 'breed') return ((a.breed || '').trim() || 'Sin raza') === value;
       if (type === 'category') {
         const cat = getAnimalAgeCategory(a);
@@ -1180,6 +1186,18 @@ export default function InventarioPage() {
                 </div>
               </div>
 
+              {/* Rol Productivo */}
+              <div>
+                <h4 className="text-sm font-black text-neutral-900 mb-2 uppercase tracking-wider flex items-center gap-1.5">
+                  <ShieldAlert className="w-3.5 h-3.5 text-[#1B4820] stroke-[2.5]" />
+                  <span>Rol Productivo</span>
+                </h4>
+                <div className="space-y-0.5">
+                  <FilterCheckbox label="Cría" count={getCount('role', 'Cría')} checked={filters.role?.includes('Cría')} onChange={() => toggleFilter('role', 'Cría')} />
+                  <FilterCheckbox label="Reproductor" count={getCount('role', 'Reproductor')} checked={filters.role?.includes('Reproductor')} onChange={() => toggleFilter('role', 'Reproductor')} />
+                </div>
+              </div>
+
               {/* 5. Categoría */}
               <div>
                 <h4 className="text-sm font-black text-neutral-900 mb-2 uppercase tracking-wider">Categoría por Edad</h4>
@@ -1354,6 +1372,12 @@ export default function InventarioPage() {
                 <span key={s} className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 shadow-2xs">
                   <span>{s}</span>
                   <button type="button" onClick={() => toggleFilter('sex', s)} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
+                </span>
+              ))}
+              {filters.role?.map(r => (
+                <span key={r} className="inline-flex items-center gap-1 bg-white px-2.5 py-1 rounded-lg text-[11px] font-bold border border-emerald-300 shadow-2xs">
+                  <span>Rol: {r}</span>
+                  <button type="button" onClick={() => toggleFilter('role', r)} className="text-neutral-400 hover:text-black ml-0.5 font-black cursor-pointer">×</button>
                 </span>
               ))}
               {filters.breed.map(b => (

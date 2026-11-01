@@ -139,13 +139,17 @@ export default function InactivateAnimalModal({
             {/* Observaciones detalladas */}
             <div>
               <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-1.5">
-                Detalles adicionales (Opcional)
+                {reason === 'Venta' ? 'Comprador o Destino' : 'Detalles adicionales (Opcional)'}
               </label>
               <textarea
                 rows={2}
                 value={customNotes}
                 onChange={(e) => setCustomNotes(e.target.value)}
-                placeholder="Fecha aproximada, comprador, causa médica o detalle..."
+                placeholder={
+                  reason === 'Venta'
+                    ? 'Nombre del comprador, finca o frigorífico de destino...'
+                    : 'Fecha aproximada, causa médica, observaciones o detalle...'
+                }
                 className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-2xl text-xs font-medium text-neutral-800 placeholder-neutral-400 focus:bg-white focus:border-amber-600 focus:ring-2 focus:ring-amber-600/15 outline-none transition-all resize-none"
               />
             </div>

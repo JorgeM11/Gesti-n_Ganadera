@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   IdCard, Network, FileText, Pencil, CircleAlert, Building2, 
-  Dna, Scale, Calendar, ArrowUpRight, Palette, Cpu, UserCheck, Tag
+  Dna, Scale, Calendar, ArrowUpRight, Palette, Cpu, UserCheck, Tag,
+  Camera, X, ShieldAlert
 } from 'lucide-react';
 import { FaMars, FaVenus } from 'react-icons/fa6';
 import AnimalImage from '@/components/inventario/AnimalImage';
@@ -48,6 +49,19 @@ export default function DetailsTab({ animal, onEdit }) {
     () => animal?.owner_id ? db.owners.get(animal.owner_id) : null,
     [animal?.owner_id]
   );
+
+  const deathPhotoUrl = useMemo(() => {
+    if (animal?.death_photo_blob) {
+      try {
+        return URL.createObjectURL(animal.death_photo_blob);
+      } catch (e) {
+        return animal?.death_photo_path || null;
+      }
+    }
+    return animal?.death_photo_path || null;
+  }, [animal?.death_photo_blob, animal?.death_photo_path]);
+
+  const [isDeathPhotoModalOpen, setIsDeathPhotoModalOpen] = useState(false);
 
   if (!animal) return null;
 
@@ -220,6 +234,12 @@ export default function DetailsTab({ animal, onEdit }) {
               </span>
             </InfoTile>
 
+            <InfoTile label="Rol Productivo" icon={ShieldAlert}>
+              <span className="font-bold text-sm text-neutral-800">
+                {animal.productive_role || 'Cría'}
+              </span>
+            </InfoTile>
+
             <InfoTile label="Estado en Inventario">
               <span className={`inline-flex items-center gap-1 text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full ${
                 animal.status === 'Inactivo' ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-800'
@@ -229,11 +249,34 @@ export default function DetailsTab({ animal, onEdit }) {
             </InfoTile>
 
             {animal.status === 'Inactivo' && animal.inactivity_reason && (
-              <InfoTile label="Motivo" className="sm:col-span-2">
+              <InfoTile label="Motivo de Inactivación" className="sm:col-span-2">
                 <span className="font-bold text-xs text-red-600 block">
                   {animal.inactivity_reason}
                 </span>
               </InfoTile>
+            )}
+
+            {animal.status === 'Inactivo' && deathPhotoUrl && (
+              <div className="sm:col-span-2 p-4 bg-rose-50/70 rounded-2xl border border-rose-200/80 space-y-2">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-rose-800 flex items-center gap-1.5">
+                  <Camera className="w-3.5 h-3.5 text-rose-600" />
+                  Evidencia Fotográfica de Muerte
+                </span>
+                <div 
+                  className="w-full sm:w-64 h-48 rounded-xl overflow-hidden border border-rose-200 bg-neutral-100 relative group cursor-pointer shadow-xs"
+                  onClick={() => setIsDeathPhotoModalOpen(true)}
+                  title="Clic para ampliar foto"
+                >
+                  <img
+                    src={deathPhotoUrl}
+                    alt="Evidencia fotográfica de muerte"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-bold">
+                    Toca para ampliar
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </section>
@@ -325,6 +368,37 @@ export default function DetailsTab({ animal, onEdit }) {
         <Pencil className="w-4 h-4" />
         <span>Editar</span>
       </motion.button>
+
+      {/* Modal para ver Evidencia de Muerte a tamaño completo */}
+      {isDeathPhotoModalOpen && deathPhotoUrl && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 cursor-pointer"
+          onClick={() => setIsDeathPhotoModalOpen(false)}
+        >
+          <div className="relative max-w-3xl max-h-[90vh] bg-neutral-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 bg-neutral-900/90 border-b border-neutral-800 text-white">
+              <span className="text-xs font-black uppercase tracking-wider text-rose-400 flex items-center gap-2">
+                <Camera className="w-4 h-4" />
+                Evidencia de Muerte - Animal {animal.number ? `#${animal.number}` : (animal.name || '')}
+              </span>
+              <button 
+                type="button" 
+                onClick={() => setIsDeathPhotoModalOpen(false)}
+                className="p-1.5 rounded-full hover:bg-neutral-800 text-neutral-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-2 flex items-center justify-center overflow-auto max-h-[80vh]">
+              <img 
+                src={deathPhotoUrl} 
+                alt="Evidencia fotográfica completa" 
+                className="max-h-[75vh] w-auto object-contain rounded-2xl"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
