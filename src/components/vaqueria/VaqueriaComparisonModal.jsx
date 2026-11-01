@@ -1,19 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { 
   Building2, 
   Calendar, 
   CheckCircle2, 
   Clock, 
-  ArrowLeftRight, 
   TrendingUp, 
   TrendingDown, 
   Minus, 
   Users, 
   UserCheck, 
   UserX,
-  Sparkles,
-  ChevronRight,
-  Info
+  Sparkles
 } from 'lucide-react';
 import BottomSheet from '@/components/ui/BottomSheet';
 import { calculateVaqueriaAnalysis } from '@/lib/vaqueriaUtils';
@@ -21,13 +18,12 @@ import { formatDateTimeLocal } from '@/lib/dateUtils';
 
 /**
  * VaqueriaComparisonModal (Fase 4 - Req 10)
- * Modal de análisis comparativo entre 2 eventos de la misma finca.
+ * Modal amigable de análisis comparativo entre 2 eventos de la misma finca.
  * Compara:
- * - Datos principales (nombre, fecha, estado, observaciones)
- * - Animales Presentes (Evento A vs Evento B y variación)
- * - Animales Faltantes (Evento A vs Evento B y variación)
- * - Cantidad Total de Animales (Rebaño evaluado)
- * - Desglose de flujo: Animales comunes, nuevos en B y ausentes en B.
+ * - Datos principales (nombre, fecha, estado, fecha de finalización)
+ * - Cantidad de animales presentes (con variación)
+ * - Cantidad de animales faltantes (con variación)
+ * - Cantidad total evaluada (con variación)
  */
 export default function VaqueriaComparisonModal({
   isOpen,
@@ -38,8 +34,6 @@ export default function VaqueriaComparisonModal({
   allVaqueriaAnimals = [],
   allAnimals = []
 }) {
-  const [activeDetailTab, setActiveDetailTab] = useState('summary'); // 'summary' | 'only_b' | 'absent_b' | 'common'
-
   // Ordenar cronológicamente (Evento A: más antiguo/base, Evento B: más reciente)
   const sortedEvents = useMemo(() => {
     if (!vaqueria1 || !vaqueria2) return [];
@@ -95,81 +89,29 @@ export default function VaqueriaComparisonModal({
   const totalB = presentB + missingB;
   const diffTotal = totalB - totalA;
 
-  // Cruce de animales entre ambos eventos
-  const { commonAnimals, onlyInBAnimals, absentInBAnimals } = useMemo(() => {
-    if (!analysisA || !analysisB) {
-      return { commonAnimals: [], onlyInBAnimals: [], absentInBAnimals: [] };
-    }
-
-    const presentListA = analysisA.classifiedPresent || [];
-    const presentListB = analysisB.classifiedPresent || [];
-
-    const getKey = (item) => {
-      if (item.record?.animal_id) return `id_${item.record.animal_id}`;
-      if (item.animal?.id) return `id_${item.animal.id}`;
-      if (item.displayChip && item.displayChip !== '---') return `chip_${item.displayChip}`;
-      if (item.displayNumber && item.displayNumber !== '---') return `num_${item.displayNumber}`;
-      return `name_${item.displayName}`;
-    };
-
-    const mapB = new Map();
-    presentListB.forEach(item => {
-      mapB.set(getKey(item), item);
-    });
-
-    const mapA = new Map();
-    presentListA.forEach(item => {
-      mapA.set(getKey(item), item);
-    });
-
-    const common = [];
-    const absentInB = [];
-
-    presentListA.forEach(itemA => {
-      const key = getKey(itemA);
-      if (mapB.has(key)) {
-        common.push(itemA);
-      } else {
-        absentInB.push(itemA);
-      }
-    });
-
-    const onlyInB = [];
-    presentListB.forEach(itemB => {
-      const key = getKey(itemB);
-      if (!mapA.has(key)) {
-        onlyInB.push(itemB);
-      }
-    });
-
-    return {
-      commonAnimals: common,
-      onlyInBAnimals: onlyInB,
-      absentInBAnimals: absentInB
-    };
-  }, [analysisA, analysisB]);
-
   if (!eventA || !eventB) return null;
 
   const renderDiffBadge = (diff, invertColors = false) => {
     if (diff === 0) {
       return (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-600 text-xs font-black">
-          <Minus className="w-3 h-3 stroke-[3]" />
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-100 text-neutral-600 text-xs font-black shrink-0">
+          <Minus className="w-3.5 h-3.5 stroke-[3]" />
           <span>Sin cambio</span>
         </span>
       );
     }
 
     const isPositive = diff > 0;
-    // Para presentes, positivo es bueno (verde). Para faltantes, positivo es alerta (rojo/ámbar).
+    // Para presentes, positivo es verde. Para faltantes, positivo es ámbar/rojo.
     const isGood = invertColors ? !isPositive : isPositive;
 
-    const bgClass = isGood ? 'bg-emerald-100 text-[#1B4820]' : 'bg-amber-100 text-amber-800';
+    const bgClass = isGood 
+      ? 'bg-emerald-100 text-[#1B4820] border border-emerald-200/70' 
+      : 'bg-amber-100 text-amber-900 border border-amber-200/70';
     const Icon = isPositive ? TrendingUp : TrendingDown;
 
     return (
-      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-xs font-black ${bgClass}`}>
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black shadow-xs shrink-0 ${bgClass}`}>
         <Icon className="w-3.5 h-3.5 stroke-[3]" />
         <span>{isPositive ? `+${diff}` : diff}</span>
       </span>
@@ -181,12 +123,12 @@ export default function VaqueriaComparisonModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Comparación de Eventos"
-      description={`Análisis comparativo de dos eventos en ${farm?.name || 'la finca'}`}
-      maxWidth="max-w-4xl"
+      description={`Comparando dos eventos de ${farm?.name || 'la finca'}`}
+      maxWidth="max-w-3xl"
       style={{ zIndex: 65 }}
     >
-      <div className="space-y-6 pt-1 pb-4">
-        {/* Cabecera de Finca */}
+      <div className="space-y-5 pt-1 pb-4">
+        {/* Cabecera amigable de la Finca */}
         <div className="flex items-center justify-between gap-3 bg-neutral-50 px-4 py-3 rounded-2xl border border-neutral-200/70">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-xl bg-emerald-100 text-[#1B4820] flex items-center justify-center shrink-0">
@@ -202,293 +144,194 @@ export default function VaqueriaComparisonModal({
           </span>
         </div>
 
-        {/* Tarjetas Superiores: Evento A vs Evento B */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Tarjeta Evento A */}
-          <div className="bg-white rounded-2xl p-4 border-2 border-neutral-200 shadow-xs relative">
-            <span className="absolute -top-2.5 left-4 px-2.5 py-0.5 rounded-full bg-neutral-800 text-white text-[10px] font-black uppercase tracking-wider">
-              Evento 1 (Base)
+        {/* Tarjetas Superiores: Evento 1 vs Evento 2 */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Tarjeta Evento 1 */}
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border-2 border-neutral-200/80 shadow-xs relative flex flex-col justify-between">
+            <span className="absolute -top-3 left-4 px-3 py-0.5 rounded-full bg-neutral-800 text-white text-[10px] font-black uppercase tracking-wider shadow-xs">
+              1° Evento (Base)
             </span>
             <div className="pt-1">
-              <h4 className="text-base font-black text-neutral-900 line-clamp-1 mb-1">{eventA.name}</h4>
-              <div className="flex items-center gap-2 text-xs font-bold text-neutral-500 mb-2">
+              <h4 className="text-base font-black text-neutral-900 line-clamp-1 mb-1.5">{eventA.name}</h4>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-500 mb-3">
                 <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                 <span>{eventA.date || 'Sin fecha'}</span>
               </div>
-              <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                <span className={`px-2 py-0.5 rounded-md font-black uppercase text-[10px] ${
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg font-black uppercase text-[10px] ${
                   eventA.status === 'Finalizada' ? 'bg-neutral-100 text-neutral-700' : 'bg-emerald-100 text-emerald-800'
                 }`}>
+                  {eventA.status === 'Finalizada' ? <CheckCircle2 className="w-3 h-3 text-neutral-500" /> : <Clock className="w-3 h-3 text-[#1B4820]" />}
                   {eventA.status || 'En progreso'}
                 </span>
                 {eventA.finalized_at && (
-                  <span className="text-neutral-500 font-medium">
+                  <span className="text-[11px] text-neutral-500 font-bold">
                     Fin: {formatDateTimeLocal(eventA.finalized_at)}
                   </span>
                 )}
               </div>
               {eventA.observations && (
-                <p className="mt-2 text-xs text-neutral-500 italic bg-neutral-50 p-2 rounded-xl border border-neutral-100 line-clamp-2">
-                  "{eventA.observations}"
+                <p className="mt-2.5 text-xs text-neutral-500 bg-neutral-50 p-2.5 rounded-xl border border-neutral-100 line-clamp-2">
+                  {eventA.observations}
                 </p>
               )}
             </div>
           </div>
 
-          {/* Tarjeta Evento B */}
-          <div className="bg-white rounded-2xl p-4 border-2 border-[#1B4820]/40 shadow-xs relative bg-emerald-50/10">
-            <span className="absolute -top-2.5 left-4 px-2.5 py-0.5 rounded-full bg-[#1B4820] text-white text-[10px] font-black uppercase tracking-wider">
-              Evento 2 (Posterior)
+          {/* Tarjeta Evento 2 */}
+          <div className="bg-emerald-50/20 rounded-3xl p-4 sm:p-5 border-2 border-[#1B4820]/40 shadow-xs relative flex flex-col justify-between">
+            <span className="absolute -top-3 left-4 px-3 py-0.5 rounded-full bg-[#1B4820] text-white text-[10px] font-black uppercase tracking-wider shadow-xs">
+              2° Evento (Posterior)
             </span>
             <div className="pt-1">
-              <h4 className="text-base font-black text-neutral-900 line-clamp-1 mb-1">{eventB.name}</h4>
-              <div className="flex items-center gap-2 text-xs font-bold text-neutral-500 mb-2">
+              <h4 className="text-base font-black text-neutral-900 line-clamp-1 mb-1.5">{eventB.name}</h4>
+              <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-500 mb-3">
                 <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                 <span>{eventB.date || 'Sin fecha'}</span>
               </div>
-              <div className="flex flex-wrap items-center gap-2 text-[11px]">
-                <span className={`px-2 py-0.5 rounded-md font-black uppercase text-[10px] ${
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg font-black uppercase text-[10px] ${
                   eventB.status === 'Finalizada' ? 'bg-neutral-100 text-neutral-700' : 'bg-emerald-100 text-emerald-800'
                 }`}>
+                  {eventB.status === 'Finalizada' ? <CheckCircle2 className="w-3 h-3 text-neutral-500" /> : <Clock className="w-3 h-3 text-[#1B4820]" />}
                   {eventB.status || 'En progreso'}
                 </span>
                 {eventB.finalized_at && (
-                  <span className="text-neutral-500 font-medium">
+                  <span className="text-[11px] text-neutral-500 font-bold">
                     Fin: {formatDateTimeLocal(eventB.finalized_at)}
                   </span>
                 )}
               </div>
               {eventB.observations && (
-                <p className="mt-2 text-xs text-neutral-500 italic bg-neutral-50 p-2 rounded-xl border border-neutral-100 line-clamp-2">
-                  "{eventB.observations}"
+                <p className="mt-2.5 text-xs text-neutral-500 bg-neutral-50 p-2.5 rounded-xl border border-neutral-100 line-clamp-2">
+                  {eventB.observations}
                 </p>
               )}
             </div>
           </div>
         </div>
 
-        {/* MÉTRICAS COMPARATIVAS PRINCIPALES (Presentes, Faltantes, Total) */}
-        <div>
-          <h4 className="text-xs font-black uppercase tracking-wider text-neutral-400 mb-3 flex items-center gap-1.5">
+        {/* COMPARACIÓN DE MÉTRICAS PRINCIPALES */}
+        <div className="space-y-3.5">
+          <h4 className="text-xs font-black uppercase tracking-wider text-neutral-400 flex items-center gap-1.5 pt-1">
             <Sparkles className="w-3.5 h-3.5 text-[#1B4820]" />
-            Comparación de Datos Principales
+            Métricas Comparativas
           </h4>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-            {/* KPI 1: Presentes */}
-            <div className="bg-white rounded-2xl p-4 border border-neutral-200/80 shadow-xs flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-black text-neutral-600">Animales Presentes</span>
-                <div className="w-7 h-7 rounded-lg bg-emerald-50 text-[#1B4820] flex items-center justify-center font-bold">
-                  <UserCheck className="w-4 h-4" />
+          {/* Tarjeta 1: Animales Presentes */}
+          <div className="bg-white rounded-3xl p-5 border border-neutral-200/80 shadow-xs">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#1B4820] flex items-center justify-center font-bold shrink-0">
+                  <UserCheck className="w-5 h-5" />
                 </div>
-              </div>
-
-              <div className="flex items-baseline justify-between mb-2">
                 <div>
-                  <span className="text-[10px] font-bold text-neutral-400 block">Evento 1 → Evento 2</span>
-                  <div className="text-lg font-black text-neutral-900">
-                    <span>{presentA}</span>
-                    <span className="text-neutral-300 mx-1.5 font-normal">→</span>
-                    <span className="text-[#1B4820]">{presentB}</span>
-                  </div>
+                  <h4 className="text-sm font-black text-neutral-900">Animales Presentes</h4>
+                  <p className="text-[11px] font-medium text-neutral-400">Cabezas que asistieron a cada evento</p>
                 </div>
-                {renderDiffBadge(diffPresent, false)}
               </div>
-              <span className="text-[10px] text-neutral-400 font-medium">
-                {diffPresent > 0 
-                  ? `Se registraron ${diffPresent} presentes más en el segundo evento.` 
-                  : diffPresent < 0 
-                    ? `Disminuyó en ${Math.abs(diffPresent)} animales presentes.` 
-                    : 'Misma cantidad de animales presentes.'
-                }
-              </span>
+              {renderDiffBadge(diffPresent, false)}
             </div>
 
-            {/* KPI 2: Faltantes */}
-            <div className="bg-white rounded-2xl p-4 border border-neutral-200/80 shadow-xs flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-black text-neutral-600">Animales Faltantes</span>
-                <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
-                  <UserX className="w-4 h-4" />
-                </div>
+            <div className="grid grid-cols-2 gap-3 bg-neutral-50/70 p-3.5 rounded-2xl border border-neutral-100">
+              <div className="text-center border-r border-neutral-200/70 pr-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400 block mb-0.5 truncate">
+                  {eventA.name}
+                </span>
+                <span className="text-2xl font-black text-neutral-800">{presentA}</span>
+                <span className="text-[10px] font-bold text-neutral-400 block">cabezas</span>
               </div>
+              <div className="text-center pl-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#1B4820] block mb-0.5 truncate">
+                  {eventB.name}
+                </span>
+                <span className="text-2xl font-black text-[#1B4820]">{presentB}</span>
+                <span className="text-[10px] font-bold text-[#1B4820]/70 block">cabezas</span>
+              </div>
+            </div>
+          </div>
 
-              <div className="flex items-baseline justify-between mb-2">
-                <div>
-                  <span className="text-[10px] font-bold text-neutral-400 block">Evento 1 → Evento 2</span>
-                  <div className="text-lg font-black text-neutral-900">
-                    <span>{missingA}</span>
-                    <span className="text-neutral-300 mx-1.5 font-normal">→</span>
-                    <span className="text-amber-800">{missingB}</span>
-                  </div>
+          {/* Tarjeta 2: Animales Faltantes */}
+          <div className="bg-white rounded-3xl p-5 border border-neutral-200/80 shadow-xs">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold shrink-0">
+                  <UserX className="w-5 h-5" />
                 </div>
-                {renderDiffBadge(diffMissing, true)}
+                <div>
+                  <h4 className="text-sm font-black text-neutral-900">Animales Faltantes</h4>
+                  <p className="text-[11px] font-medium text-neutral-400">Animales Ausentes</p>
+                </div>
               </div>
-              <span className="text-[10px] text-neutral-400 font-medium">
-                {diffMissing > 0 
-                  ? `Aumentaron en ${diffMissing} los animales faltantes.` 
-                  : diffMissing < 0 
-                    ? `Disminuyeron los faltantes en ${Math.abs(diffMissing)} animales.` 
-                    : 'Misma cantidad de faltantes.'
-                }
-              </span>
+              {renderDiffBadge(diffMissing, true)}
             </div>
 
-            {/* KPI 3: Cantidad Total */}
-            <div className="bg-white rounded-2xl p-4 border border-neutral-200/80 shadow-xs flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-black text-neutral-600">Cantidad Total Evaluada</span>
-                <div className="w-7 h-7 rounded-lg bg-neutral-100 text-neutral-700 flex items-center justify-center font-bold">
-                  <Users className="w-4 h-4" />
-                </div>
+            <div className="grid grid-cols-2 gap-3 bg-neutral-50/70 p-3.5 rounded-2xl border border-neutral-100">
+              <div className="text-center border-r border-neutral-200/70 pr-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400 block mb-0.5 truncate">
+                  {eventA.name}
+                </span>
+                <span className="text-2xl font-black text-neutral-800">{missingA}</span>
+                <span className="text-[10px] font-bold text-neutral-400 block">faltantes</span>
               </div>
+              <div className="text-center pl-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 block mb-0.5 truncate">
+                  {eventB.name}
+                </span>
+                <span className="text-2xl font-black text-amber-800">{missingB}</span>
+                <span className="text-[10px] font-bold text-amber-700/70 block">faltantes</span>
+              </div>
+            </div>
+          </div>
 
-              <div className="flex items-baseline justify-between mb-2">
-                <div>
-                  <span className="text-[10px] font-bold text-neutral-400 block">Evento 1 → Evento 2</span>
-                  <div className="text-lg font-black text-neutral-900">
-                    <span>{totalA}</span>
-                    <span className="text-neutral-300 mx-1.5 font-normal">→</span>
-                    <span className="text-neutral-800">{totalB}</span>
-                  </div>
+          {/* Tarjeta 3: Cantidad Total */}
+          <div className="bg-white rounded-3xl p-5 border border-neutral-200/80 shadow-xs">
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-neutral-100 text-neutral-700 flex items-center justify-center font-bold shrink-0">
+                  <Users className="w-5 h-5" />
                 </div>
-                {renderDiffBadge(diffTotal, false)}
+                <div>
+                  <h4 className="text-sm font-black text-neutral-900">Cantidad Total Evaluada</h4>
+                  <p className="text-[11px] font-medium text-neutral-400">Presentes y faltantes</p>
+                </div>
               </div>
-              <span className="text-[10px] text-neutral-400 font-medium">
-                Suma de presentes y faltantes evaluados en cada evento.
-              </span>
+              {renderDiffBadge(diffTotal, false)}
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 bg-neutral-50/70 p-3.5 rounded-2xl border border-neutral-100">
+              <div className="text-center border-r border-neutral-200/70 pr-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400 block mb-0.5 truncate">
+                  {eventA.name}
+                </span>
+                <span className="text-2xl font-black text-neutral-800">{totalA}</span>
+                <span className="text-[10px] font-bold text-neutral-400 block">total</span>
+              </div>
+              <div className="text-center pl-2">
+                <span className="text-[10px] font-black uppercase tracking-wider text-neutral-700 block mb-0.5 truncate">
+                  {eventB.name}
+                </span>
+                <span className="text-2xl font-black text-neutral-800">{totalB}</span>
+                <span className="text-[10px] font-bold text-neutral-400 block">total</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* FLUJO Y FIDELIDAD DE ASISTENCIA */}
-        <div className="bg-neutral-50 rounded-2xl p-4 border border-neutral-200/70">
-          <h4 className="text-xs font-black uppercase tracking-wider text-neutral-500 mb-3 flex items-center gap-1.5">
-            <ArrowLeftRight className="w-3.5 h-3.5 text-[#1B4820]" />
-            Flujo de Animales entre Eventos
-          </h4>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            <button
-              type="button"
-              onClick={() => setActiveDetailTab(activeDetailTab === 'common' ? 'summary' : 'common')}
-              className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                activeDetailTab === 'common' 
-                  ? 'bg-white border-[#1B4820] shadow-sm' 
-                  : 'bg-white/70 border-neutral-200 hover:bg-white'
-              }`}
-            >
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">Presentes en Ambos</span>
-              <div className="flex items-baseline justify-between mt-1">
-                <span className="text-base font-black text-[#1B4820]">{commonAnimals.length}</span>
-                <span className="text-[10px] font-bold text-neutral-500">Repitieron</span>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveDetailTab(activeDetailTab === 'only_b' ? 'summary' : 'only_b')}
-              className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                activeDetailTab === 'only_b' 
-                  ? 'bg-white border-emerald-600 shadow-sm' 
-                  : 'bg-white/70 border-neutral-200 hover:bg-white'
-              }`}
-            >
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">Nuevos en Evento 2</span>
-              <div className="flex items-baseline justify-between mt-1">
-                <span className="text-base font-black text-emerald-700">+{onlyInBAnimals.length}</span>
-                <span className="text-[10px] font-bold text-neutral-500">No estaban en E1</span>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setActiveDetailTab(activeDetailTab === 'absent_b' ? 'summary' : 'absent_b')}
-              className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                activeDetailTab === 'absent_b' 
-                  ? 'bg-white border-amber-600 shadow-sm' 
-                  : 'bg-white/70 border-neutral-200 hover:bg-white'
-              }`}
-            >
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">Ausentes en Evento 2</span>
-              <div className="flex items-baseline justify-between mt-1">
-                <span className="text-base font-black text-amber-700">-{absentInBAnimals.length}</span>
-                <span className="text-[10px] font-bold text-neutral-500">Estuvieron en E1</span>
-              </div>
-            </button>
+        {/* Resumen amigable de conclusión */}
+        <div className="bg-emerald-50/60 rounded-2xl p-4 border border-emerald-200/60 flex items-center gap-3 text-xs text-neutral-700">
+          <div className="w-8 h-8 rounded-xl bg-white text-[#1B4820] flex items-center justify-center shrink-0 shadow-xs">
+            <CheckCircle2 className="w-4 h-4" />
           </div>
+          <p className="font-medium leading-relaxed">
+            {diffPresent > 0 
+              ? `El segundo evento registró ${diffPresent} presentes más que el primero.`
+              : diffPresent < 0
+                ? `El segundo evento registró ${Math.abs(diffPresent)} presentes menos que el primero.`
+                : 'Ambos eventos registraron exactamente la misma cantidad de animales presentes.'
+            }
+          </p>
         </div>
-
-        {/* DETALLE EXPANDIBLE DE LISTAS (Si el usuario selecciona una categoría de flujo) */}
-        {activeDetailTab !== 'summary' && (
-          <div className="bg-white rounded-2xl border border-neutral-200/80 p-4 shadow-xs">
-            <div className="flex items-center justify-between pb-3 border-b border-neutral-100 mb-3">
-              <h5 className="text-xs font-black text-neutral-800 uppercase tracking-wider">
-                {activeDetailTab === 'common' && `Animales Presentes en Ambos (${commonAnimals.length})`}
-                {activeDetailTab === 'only_b' && `Animales Nuevos en "${eventB.name}" (${onlyInBAnimals.length})`}
-                {activeDetailTab === 'absent_b' && `Animales Ausentes en "${eventB.name}" (${absentInBAnimals.length})`}
-              </h5>
-              <button
-                type="button"
-                onClick={() => setActiveDetailTab('summary')}
-                className="text-[11px] font-bold text-neutral-500 hover:text-neutral-800 cursor-pointer"
-              >
-                Ocultar lista
-              </button>
-            </div>
-
-            {(() => {
-              const currentList = activeDetailTab === 'common' 
-                ? commonAnimals 
-                : activeDetailTab === 'only_b' 
-                  ? onlyInBAnimals 
-                  : absentInBAnimals;
-
-              if (currentList.length === 0) {
-                return (
-                  <div className="py-6 text-center text-xs text-neutral-400 font-medium">
-                    No hay animales en esta categoría.
-                  </div>
-                );
-              }
-
-              return (
-                <div className="divide-y divide-neutral-100 max-h-60 overflow-y-auto">
-                  {currentList.map((item, idx) => {
-                    const ident = item.displayNumber && item.displayNumber !== '---'
-                      ? `#${item.displayNumber}`
-                      : (item.displayChip && item.displayChip !== '---' ? `Chip ${item.displayChip}` : (item.displayName || 'Animal'));
-
-                    return (
-                      <div key={idx} className="py-2.5 flex items-center justify-between gap-3 text-xs">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="w-5 text-[10px] font-bold text-neutral-300 text-right">{idx + 1}</span>
-                          <span className="font-black text-neutral-800 truncate">{ident}</span>
-                          {item.displayName && item.displayName !== ident && (
-                            <span className="text-neutral-500 text-[11px] truncate">({item.displayName})</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0 text-[10px]">
-                          {item.displaySex && (
-                            <span className="px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600 font-bold">
-                              {item.displaySex}
-                            </span>
-                          )}
-                          {item.displayBreed && (
-                            <span className="px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-600 font-medium truncate max-w-[90px]">
-                              {item.displayBreed}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })()}
-          </div>
-        )}
       </div>
     </BottomSheet>
   );
