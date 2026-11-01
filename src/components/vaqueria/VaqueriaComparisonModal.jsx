@@ -227,7 +227,7 @@ export default function VaqueriaComparisonModal({
                 </div>
                 <div>
                   <h4 className="text-sm font-black text-neutral-900">Animales Presentes</h4>
-                  <p className="text-[11px] font-medium text-neutral-400">Animales Presentes</p>
+                  <p className="text-[11px] font-medium text-neutral-400">Presentes</p>
                 </div>
               </div>
               {renderDiffBadge(diffPresent, false)}
@@ -260,7 +260,7 @@ export default function VaqueriaComparisonModal({
                 </div>
                 <div>
                   <h4 className="text-sm font-black text-neutral-900">Animales Faltantes</h4>
-                  <p className="text-[11px] font-medium text-neutral-400">Animales Ausentes</p>
+                  <p className="text-[11px] font-medium text-neutral-400">Ausentes</p>
                 </div>
               </div>
               {renderDiffBadge(diffMissing, true)}
