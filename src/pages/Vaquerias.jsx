@@ -647,15 +647,13 @@ export default function VaqueriasPage() {
 
               <div className="min-w-0 flex-1">
                 <p className="text-xs font-black tracking-wide flex items-center gap-1.5 truncate">
-                  <span>Comparar Eventos</span>
-                  <span className="px-1.5 py-0.5 rounded-md bg-white/20 text-[10px] font-bold">
-                    {selectedVaqueriaIds.length}/2
-                  </span>
+                  <span>Comparar</span>
+                  
                 </p>
                 <p className="text-[11px] text-emerald-100 font-medium truncate">
                   {selectedVaqueriaIds.length === 1
                     ? `Selecciona otro evento de ${activeComparisonFarm?.name || 'la misma finca'}`
-                    : `2 eventos listos para comparar (${activeComparisonFarm?.name || 'la finca'})`
+                    : `2 eventos`
                   }
                 </p>
               </div>

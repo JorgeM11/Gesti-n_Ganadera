@@ -318,20 +318,8 @@ export default function VaqueriaComparisonModal({
           </div>
         </div>
 
-        {/* Resumen amigable de conclusión */}
-        <div className="bg-emerald-50/60 rounded-2xl p-4 border border-emerald-200/60 flex items-center gap-3 text-xs text-neutral-700">
-          <div className="w-8 h-8 rounded-xl bg-white text-[#1B4820] flex items-center justify-center shrink-0 shadow-xs">
-            <CheckCircle2 className="w-4 h-4" />
-          </div>
-          <p className="font-medium leading-relaxed">
-            {diffPresent > 0 
-              ? `El segundo evento registró ${diffPresent} presentes más que el primero.`
-              : diffPresent < 0
-                ? `El segundo evento registró ${Math.abs(diffPresent)} presentes menos que el primero.`
-                : 'Ambos eventos registraron exactamente la misma cantidad de animales presentes.'
-            }
-          </p>
-        </div>
+        
+        
       </div>
     </BottomSheet>
   );
