@@ -8,7 +8,7 @@ import {
   CheckCircle, Building2, Dna, 
   Scale, Calendar, IdCard, Cpu, Tag, 
   Palette, UserCheck, ShieldAlert, ScanBarcode,
-  AlertTriangle, AlertCircle, Check
+  AlertTriangle, AlertCircle, Check, Crop, MapPin
 } from 'lucide-react';
 import { GiCow } from 'react-icons/gi';
 import { FaMars, FaVenus } from 'react-icons/fa6';
@@ -24,6 +24,7 @@ import FarmModal from './FarmModal';
 import PotreroModal from './PotreroModal';
 import OwnerModal from './OwnerModal';
 import BarcodeScannerModal from './BarcodeScannerModal';
+import ImageCropperModal from '@/components/ui/ImageCropperModal';
 import CustomSelect from '@/components/ui/CustomSelect';
 import { DateInput } from '@/components/ui/DateInput';
 
@@ -102,6 +103,8 @@ const animalSchema = z.object({
   mother_id: z.string().nullable().optional(),
   // 12. Raza sin porcentaje (con opción 'Sin raza')
   breed: z.string().default('Sin raza'),
+  // Origen o procedencia (opcional)
+  origin: z.string().nullable().optional(),
   // 13. Activo o Inactivo
   status: z.enum(['Activo', 'Inactivo']).default('Activo'),
   inactivity_reason: z.string().nullable().optional(),
@@ -117,7 +120,7 @@ const animalSchema = z.object({
 });
 
 // Sub-componente para subir la foto
-const SingleImageUploader = ({ preview, onCapture, onRemove, label }) => {
+const SingleImageUploader = ({ preview, onCapture, onRemove, onCrop, label }) => {
   const inputRef = useRef(null);
   return (
     <div
@@ -127,14 +130,26 @@ const SingleImageUploader = ({ preview, onCapture, onRemove, label }) => {
       {preview ? (
         <>
           <img src={preview} alt={label} className="w-full h-full object-cover animate-in fade-in zoom-in duration-300" />
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onRemove(); }}
-            className="absolute top-3 right-3 bg-red-500 text-white p-2.5 rounded-full shadow-lg hover:bg-red-600 active:scale-90 transition-all z-10 cursor-pointer"
-            title="Eliminar foto"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
+          <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+            {onCrop && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onCrop(); }}
+                className="bg-white/95 text-neutral-800 p-2.5 rounded-full shadow-lg hover:bg-white active:scale-90 transition-all cursor-pointer backdrop-blur-xs border border-neutral-200"
+                title="Recortar y reencuadrar foto"
+              >
+                <Crop className="w-4 h-4 text-[#1B4820]" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onRemove(); }}
+              className="bg-red-500 text-white p-2.5 rounded-full shadow-lg hover:bg-red-600 active:scale-90 transition-all cursor-pointer"
+              title="Eliminar foto"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
         </>
       ) : (
         <>
@@ -143,7 +158,16 @@ const SingleImageUploader = ({ preview, onCapture, onRemove, label }) => {
           <span className="text-[10px] text-neutral-400 font-medium mt-0.5">Toca para tomar foto o seleccionar de galería</span>
         </>
       )}
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onCapture} />
+      <input 
+        ref={inputRef} 
+        type="file" 
+        accept="image/*" 
+        className="hidden" 
+        onChange={(e) => {
+          onCapture(e);
+          e.target.value = '';
+        }} 
+      />
     </div>
   );
 };
@@ -191,6 +215,14 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
     blob: null,
     preview: initialDeathPreview,
     isModified: false
+  });
+
+  // Modal para recorte de fotos antes de guardar
+  const [cropperModal, setCropperModal] = useState({
+    isOpen: false,
+    imageSrc: null,
+    target: 'main',
+    originalFile: null
   });
 
   const parsedInitialInactivity = useMemo(() => {
@@ -273,6 +305,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
       father_id: '',
       mother_id: '',
       breed: 'Sin raza',
+      origin: '',
       productive_role: 'Cría',
       status: 'Activo',
       inactivity_reason: '',
@@ -292,6 +325,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
       father_id: initialValues.father_id || '',
       mother_id: initialValues.mother_id || '',
       breed: initialValues.breed || 'Sin raza',
+      origin: initialValues.origin || '',
       productive_role: initialValues.productive_role || 'Cría',
       status: initialValues.status || 'Activo',
       inactivity_reason: initialValues.inactivity_reason || '',
@@ -353,39 +387,97 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
     }
   }, [isWorker, farms, selectedFarmId, setValue]);
 
-  // Manejo de captura de foto
-  const handleImageCapture = async (e) => {
+  // Manejo de captura de foto con recorte
+  const handleImageCapture = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    try {
-      const compressedBlob = await compressImage(file);
-      const previewUrl = URL.createObjectURL(compressedBlob);
-      setImage({ blob: compressedBlob, preview: previewUrl, isModified: true });
-    } catch (error) {
-      console.error('Error procesando imagen:', error);
-      alert('Error al comprimir la foto.');
-    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropperModal({
+        isOpen: true,
+        imageSrc: reader.result,
+        target: 'main',
+        originalFile: file
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleEditCropMain = () => {
+    if (!image.preview) return;
+    setCropperModal({
+      isOpen: true,
+      imageSrc: image.preview,
+      target: 'main',
+      originalFile: null
+    });
   };
 
   const removeImage = () => {
     setImage({ blob: null, preview: null, isModified: true });
   };
 
-  const handleDeathImageCapture = async (e) => {
+  const handleDeathImageCapture = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    try {
-      const compressedBlob = await compressImage(file);
-      const previewUrl = URL.createObjectURL(compressedBlob);
-      setDeathImage({ blob: compressedBlob, preview: previewUrl, isModified: true });
-    } catch (error) {
-      console.error('Error procesando foto de muerte:', error);
-      alert('Error al comprimir la foto de muerte.');
-    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropperModal({
+        isOpen: true,
+        imageSrc: reader.result,
+        target: 'death',
+        originalFile: file
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleEditCropDeath = () => {
+    if (!deathImage.preview) return;
+    setCropperModal({
+      isOpen: true,
+      imageSrc: deathImage.preview,
+      target: 'death',
+      originalFile: null
+    });
   };
 
   const removeDeathImage = () => {
     setDeathImage({ blob: null, preview: null, isModified: true });
+  };
+
+  const handleCropSave = async (croppedBlob) => {
+    try {
+      const compressedBlob = await compressImage(croppedBlob);
+      const previewUrl = URL.createObjectURL(compressedBlob);
+      if (cropperModal.target === 'main') {
+        setImage({ blob: compressedBlob, preview: previewUrl, isModified: true });
+      } else {
+        setDeathImage({ blob: compressedBlob, preview: previewUrl, isModified: true });
+      }
+      setCropperModal(prev => ({ ...prev, isOpen: false, imageSrc: null, originalFile: null }));
+    } catch (error) {
+      console.error('Error procesando recorte:', error);
+      alert('Error al comprimir la foto recortada.');
+    }
+  };
+
+  const handleUseOriginal = async () => {
+    try {
+      if (cropperModal.originalFile) {
+        const compressedBlob = await compressImage(cropperModal.originalFile);
+        const previewUrl = URL.createObjectURL(compressedBlob);
+        if (cropperModal.target === 'main') {
+          setImage({ blob: compressedBlob, preview: previewUrl, isModified: true });
+        } else {
+          setDeathImage({ blob: compressedBlob, preview: previewUrl, isModified: true });
+        }
+      }
+      setCropperModal(prev => ({ ...prev, isOpen: false, imageSrc: null, originalFile: null }));
+    } catch (error) {
+      console.error('Error procesando imagen original:', error);
+      alert('Error al comprimir la foto.');
+    }
   };
 
   const chipScannerRef = useRef({
@@ -586,6 +678,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         father_id: data.father_id || null,
         mother_id: data.mother_id || null,
         breed: data.breed?.trim() || 'Sin raza',
+        origin: data.origin?.trim() || null,
         productive_role: data.productive_role || 'Cría',
         status: data.status || 'Activo',
         inactivity_reason: finalInactivityReason,
@@ -1282,6 +1375,33 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
         </div>
 
         {/* ========================================================================= */}
+        {/* ORIGEN O PROCEDENCIA                                                     */}
+        {/* ========================================================================= */}
+        <div className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200/80 shadow-sm space-y-4">
+          <div className="flex items-center gap-2.5 pb-2 border-b border-neutral-100">
+            <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center">
+              <MapPin className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-base font-black text-neutral-900">Origen o Procedencia</h3>
+              <p className="text-[11px] text-neutral-400 font-medium">Procedencia o procedencia del animal (Opcional)</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[11px] font-black text-neutral-700 uppercase tracking-wider mb-2 block">
+              Origen / Procedencia
+            </label>
+            <input
+              type="text"
+              {...register('origin')}
+              placeholder="Ej. Nacido en finca, Subasta El Centro, Hacienda La Vega..."
+              className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl px-4 py-3 text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all placeholder:text-neutral-400"
+            />
+          </div>
+        </div>
+
+        {/* ========================================================================= */}
         {/* 12. MADRE Y PADRE                                                         */}
         {/* ========================================================================= */}
         <div className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200/80 shadow-sm space-y-4">
@@ -1394,6 +1514,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
                     preview={deathImage.preview}
                     onCapture={handleDeathImageCapture}
                     onRemove={removeDeathImage}
+                    onCrop={handleEditCropDeath}
                     label="Foto de evidencia de muerte"
                   />
                 </div>
@@ -1438,6 +1559,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
             preview={image.preview}
             onCapture={handleImageCapture}
             onRemove={removeImage}
+            onCrop={handleEditCropMain}
             label="Foto del Animal"
           />
 
@@ -1534,6 +1656,16 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
           handleChipInputScan(scannedCode);
         }}
       />
+
+      {/* Modal de Recorte de Imágenes */}
+      {cropperModal.isOpen && cropperModal.imageSrc && (
+        <ImageCropperModal
+          imageSrc={cropperModal.imageSrc}
+          onCropComplete={handleCropSave}
+          onCancel={() => setCropperModal(prev => ({ ...prev, isOpen: false, imageSrc: null, originalFile: null }))}
+          onUseOriginal={cropperModal.originalFile ? handleUseOriginal : null}
+        />
+      )}
     </div>
   );
 }

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { 
   IdCard, Network, FileText, Pencil, CircleAlert, Building2, 
   Dna, Scale, Calendar, ArrowUpRight, Palette, Cpu, UserCheck, Tag,
-  Camera, X, ShieldAlert
+  Camera, X, ShieldAlert, MapPin
 } from 'lucide-react';
 import { FaMars, FaVenus } from 'react-icons/fa6';
 import AnimalImage from '@/components/inventario/AnimalImage';
@@ -231,6 +231,12 @@ export default function DetailsTab({ animal, onEdit }) {
             <InfoTile label="Raza" icon={Dna}>
               <span className="font-bold text-sm text-neutral-800">
                 {animal.breed || 'Sin raza'}
+              </span>
+            </InfoTile>
+
+            <InfoTile label="Origen / Procedencia" icon={MapPin}>
+              <span className="font-bold text-sm text-neutral-800">
+                {animal.origin || 'No especificado'}
               </span>
             </InfoTile>
 

@@ -67,6 +67,7 @@ import Dexie from 'dexie';
  * @property {string} [origin_service_id]
  * @property {string} [color]
  * @property {string} [observations]
+ * @property {string} [origin]
  * @property {number} [last_weight_kg]
  * @property {string} [last_weight_date]
  * @property {string} [breed]
@@ -295,6 +296,11 @@ export class GanaderaDB extends Dexie {
             return tx.table('animals').toCollection().modify(animal => {
                 if (!animal.productive_role) animal.productive_role = 'Cría';
             });
+        });
+
+        // --- VERSIÓN 12: Origen y procedencia del animal (Req 17) ---
+        this.version(12).stores({
+            animals: 'id, user_id, created_by_user_id, updated_by_user_id, farm_id, potrero_id, owner_id, number, chip_number, name, status, sex, breed, productive_role, origin, last_weight_kg, last_weight_date, mother_id, father_id, updated_at, deleted_at'
         });
 
         /** @type {Dexie.Table<Animal, string>} */

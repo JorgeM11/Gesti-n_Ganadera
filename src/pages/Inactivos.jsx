@@ -984,7 +984,7 @@ export default function InactivosPage() {
                         : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                     }`}
                   >
-                    Todas las Fincas ({allAnimals?.length || 0})
+                    Todas las Fincas {!isWorker && `(${allAnimals?.length || 0})`}
                   </button>
                   {farms.map(f => {
                     const count = allAnimals?.filter(a => a.farm_id === f.id).length || 0;
@@ -1120,7 +1120,7 @@ export default function InactivosPage() {
                         : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                     }`}
                   >
-                    Todos los Dueños ({allAnimals?.length || 0})
+                    Todos los Dueños {!isWorker && `(${allAnimals?.length || 0})`}
                   </button>
                   {owners.map(o => {
                     const count = allAnimals?.filter(a => a.owner_id === o.id).length || 0;
@@ -1282,7 +1282,7 @@ export default function InactivosPage() {
                 onClick={() => setIsFilterOpen(false)}
                 className="w-full bg-[#1B4820] text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-emerald-950 transition-colors shadow-lg shadow-[#1B4820]/20 cursor-pointer"
               >
-                Ver {filteredAnimals.length} Resultados
+                {isWorker ? 'Ver Resultados' : `Ver ${filteredAnimals.length} Resultados`}
               </button>
             </div>
           </motion.div>
@@ -1424,14 +1424,16 @@ export default function InactivosPage() {
             {/* TOOLBAR SUPERIOR: CONTEO DE RESULTADOS Y SELECTOR DE VISTA */}
             <div className="flex items-center justify-between gap-3 mb-4">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs sm:text-sm font-bold text-neutral-600">
-                  <span className="text-neutral-900 font-black">{filteredAnimals.length}</span> {filteredAnimals.length === 1 ? 'animal inactivo' : 'animales inactivos'}
-                  {allAnimals && filteredAnimals.length !== allAnimals.length && (
-                    <span className="text-neutral-400 font-medium ml-1">
-                      (de {allAnimals.length})
-                    </span>
-                  )}
-                </span>
+                {!isWorker && (
+                  <span className="text-xs sm:text-sm font-bold text-neutral-600">
+                    <span className="text-neutral-900 font-black">{filteredAnimals.length}</span> {filteredAnimals.length === 1 ? 'animal inactivo' : 'animales inactivos'}
+                    {allAnimals && filteredAnimals.length !== allAnimals.length && (
+                      <span className="text-neutral-400 font-medium ml-1">
+                        (de {allAnimals.length})
+                      </span>
+                    )}
+                  </span>
+                )}
 
                 {/* Si hay animales seleccionados: botón Seleccionar todos / Deseleccionar */}
                 {selectedAnimalIds.size > 0 && (

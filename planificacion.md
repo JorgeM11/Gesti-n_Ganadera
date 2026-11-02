@@ -270,9 +270,9 @@ flowchart TD
      - Atributo de clasificación funcional para identificar si el animal cumple el rol de "Cría" o "Reproductor" dentro del rebaño (por defecto 'Cría' en todo el sistema, selector CustomSelect en formulario, filtrable en inventario y sin visualización en cards de inventario).
    - [x] **15. Registro detallado de muerte con descripción y foto**:
      - 4 botones de inactivación en formulario, captura y compresión de evidencia fotográfica del animal muerto, carga a Supabase Storage y visualización en ficha técnica e inactivos.
-   - [ ] **16. Recorte de fotos antes de subirlas (Image Cropper)**:
+   - [x] **16. Recorte de fotos antes de subirlas (Image Cropper)**:
      - Herramienta visual e interactiva previa a la subida para recortar, centrar y encuadrar las fotografías de los animales.
-   - [ ] **17. Origen y procedencia del animal**:
+   - [x] **17. Origen y procedencia del animal**:
      - Campo en el formulario y ficha técnica para registrar de dónde proviene el animal (finca de origen, procedencia, compra, etc.).
    - [x] **18. Inactivación por venta con registro de destino**:
      - Al seleccionar motivo "Venta", el campo de detalles conmuta automáticamente a "Comprador o destino" formateando como `Venta: [comprador o destino]`.
@@ -298,7 +298,7 @@ flowchart TD
      - Interfaz administrativa para que el administrador pueda dar de alta usuarios, consultar el equipo y asignar o revocar fincas autorizadas a cada operador/obrero.
    - [ ] **12. Nuevo rol: Usuario Operador**:
      - Incorporación formal del rol `operador`, estructurando su alcance de permisos intermedios entre administrador y obrero de campo.
-   - [ ] **13. Restricción del conteo total de animales para rol Obrero**:
+   - [x] **13. Restricción del conteo total de animales para rol Obrero**:
      - Ocultar el indicador numérico de cantidad total de animales (la métrica/tarjeta con la suma total del rebaño no debe ser visible para usuarios con rol `obrero`).
 
 ---
@@ -335,3 +335,6 @@ flowchart TD
 | **Fase 4 - Req 14: Roles Productivos (Cría y Reproductor)** | 2026-11-01 | **Completado** | Antigravity AI & Usuario | Campo `productive_role` con valor por defecto 'Cría', selector CustomSelect en AnimalForm, filtrado dinámico en Inventario y sin alterar las cards de inventario. |
 | **Fase 4 - Req 15: Evidencia Fotográfica y Detalle de Muerte** | 2026-11-01 | **Completado** | Antigravity AI & Usuario | Interfaz de 4 botones para inactivación en AnimalForm, captura/subida de evidencia fotográfica del animal muerto (`death_photo_blob`/`death_photo_path`) y visualización en ficha técnica e inactivos. |
 | **Fase 4 - Req 18: Inactivación por Venta con Destino** | 2026-11-01 | **Completado** | Antigravity AI & Usuario | Al seleccionar motivo 'Venta', el campo de observaciones cambia a 'Comprador o destino', unificando AnimalForm, BulkEditModal e InactivateAnimalModal. |
+| **Fase 4 - Req 13: Ocultar Total Animales a Obrero** | 2026-11-02 | **Completado** | Antigravity AI & Usuario | Conteo total de animales ocultado por completo para usuarios con rol obrero en Inventario, Inactivos e Inventario por Finca. |
+| **Fase 4 - Req 16: Recorte de Fotos (Image Cropper)** | 2026-11-02 | **Completado** | Antigravity AI & Usuario | Modal de recorte interactivo con react-easy-crop, rotación de 90°, presets de aspecto (4:3 Ganado, 1:1 Cuadrado, Libre) y compresión offline local. |
+| **Fase 4 - Req 17: Origen y Procedencia del Animal** | 2026-11-02 | **Completado** | Antigravity AI & Usuario | Nuevo campo origin en formulario AnimalForm (ubicado bajo Raza), persistencia en Dexie v12, sincronización con Supabase y visualización en ficha técnica. |
