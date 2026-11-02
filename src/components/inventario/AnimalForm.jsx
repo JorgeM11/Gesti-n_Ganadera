@@ -125,17 +125,26 @@ const SingleImageUploader = ({ preview, onCapture, onRemove, onCrop, label }) =>
   return (
     <div
       onClick={() => inputRef.current?.click()}
-      className={`relative border-2 border-dashed border-neutral-300 rounded-3xl flex flex-col items-center justify-center text-neutral-400 bg-white hover:bg-neutral-50 cursor-pointer transition-all group overflow-hidden shadow-inner ${preview ? 'h-52' : 'h-36'}`}
+      className={`relative border-2 border-dashed border-neutral-300 rounded-3xl flex flex-col items-center justify-center text-neutral-400 bg-white hover:bg-neutral-50 cursor-pointer transition-all group overflow-hidden shadow-inner ${preview ? 'h-56' : 'h-36'}`}
     >
       {preview ? (
         <>
           <img src={preview} alt={label} className="w-full h-full object-cover animate-in fade-in zoom-in duration-300" />
+          
+          {/* Badge informativo para cambiar foto */}
+          <div className="absolute bottom-3 inset-x-0 flex justify-center z-10 pointer-events-none">
+            <span className="bg-black/60 backdrop-blur-md text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-md border border-white/20 flex items-center gap-1.5">
+              <Camera className="w-3.5 h-3.5" />
+              Toca para cambiar foto
+            </span>
+          </div>
+
           <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
             {onCrop && (
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onCrop(); }}
-                className="bg-white/95 text-neutral-800 p-2.5 rounded-full shadow-lg hover:bg-white active:scale-90 transition-all cursor-pointer backdrop-blur-xs border border-neutral-200"
+                className="bg-white/95 text-neutral-800 p-2.5 rounded-full shadow-lg hover:bg-white active:scale-90 transition-all cursor-pointer backdrop-blur-xs border border-neutral-200 flex items-center justify-center"
                 title="Recortar y reencuadrar foto"
               >
                 <Crop className="w-4 h-4 text-[#1B4820]" />
@@ -143,8 +152,16 @@ const SingleImageUploader = ({ preview, onCapture, onRemove, onCrop, label }) =>
             )}
             <button
               type="button"
+              onClick={(e) => { e.stopPropagation(); inputRef.current?.click(); }}
+              className="bg-white/95 text-neutral-800 p-2.5 rounded-full shadow-lg hover:bg-white active:scale-90 transition-all cursor-pointer backdrop-blur-xs border border-neutral-200 flex items-center justify-center"
+              title="Cambiar fotografía"
+            >
+              <Camera className="w-4 h-4 text-blue-700" />
+            </button>
+            <button
+              type="button"
               onClick={(e) => { e.stopPropagation(); onRemove(); }}
-              className="bg-red-500 text-white p-2.5 rounded-full shadow-lg hover:bg-red-600 active:scale-90 transition-all cursor-pointer"
+              className="bg-red-500 text-white p-2.5 rounded-full shadow-lg hover:bg-red-600 active:scale-90 transition-all cursor-pointer flex items-center justify-center"
               title="Eliminar foto"
             >
               <Trash2 className="w-4 h-4" />
@@ -1384,7 +1401,7 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
             </div>
             <div>
               <h3 className="text-base font-black text-neutral-900">Origen o Procedencia</h3>
-              <p className="text-[11px] text-neutral-400 font-medium">Procedencia o procedencia del animal (Opcional)</p>
+              
             </div>
           </div>
 
@@ -1660,10 +1677,12 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
       {/* Modal de Recorte de Imágenes */}
       {cropperModal.isOpen && cropperModal.imageSrc && (
         <ImageCropperModal
+          isOpen={cropperModal.isOpen}
           imageSrc={cropperModal.imageSrc}
-          onCropComplete={handleCropSave}
-          onCancel={() => setCropperModal(prev => ({ ...prev, isOpen: false, imageSrc: null, originalFile: null }))}
+          onCropSave={handleCropSave}
+          onClose={() => setCropperModal({ isOpen: false, imageSrc: null, target: 'main', originalFile: null })}
           onUseOriginal={cropperModal.originalFile ? handleUseOriginal : null}
+          title={cropperModal.target === 'death' ? 'Recortar Evidencia de Muerte' : 'Recortar Foto del Animal'}
         />
       )}
     </div>

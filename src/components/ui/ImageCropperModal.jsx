@@ -1,6 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Cropper from 'react-easy-crop';
+import 'react-easy-crop/react-easy-crop.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Crop, 
@@ -9,7 +10,6 @@ import {
   ZoomIn, 
   ZoomOut, 
   Check, 
-  Sparkles,
   Maximize2
 } from 'lucide-react';
 import { getCroppedImg } from '@/lib/imageUtils';
@@ -17,15 +17,17 @@ import { getCroppedImg } from '@/lib/imageUtils';
 const ASPECT_RATIOS = [
   { label: '4:3 (Ganado)', value: 4 / 3 },
   { label: '1:1 (Cuadrado)', value: 1 / 1 },
-  { label: '16:9', value: 16 / 9 },
-  { label: 'Libre', value: null }
+  { label: '16:9 (Panorámica)', value: 16 / 9 },
+  { label: '3:4 (Vertical)', value: 3 / 4 },
 ];
 
 export default function ImageCropperModal({
-  isOpen,
+  isOpen = true,
   imageSrc,
   onClose,
+  onCancel,
   onCropSave,
+  onCropComplete,
   onUseOriginal,
   title = "Recortar y Encuadrar Fotografía"
 }) {
@@ -34,9 +36,16 @@ export default function ImageCropperModal({
   const [rotation, setRotation] = useState(0);
   const [aspect, setAspect] = useState(4 / 3);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const croppedAreaPixelsRef = useRef(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleCropComplete = useCallback((croppedArea, pixels) => {
+  const handleClose = useCallback(() => {
+    if (onClose) onClose();
+    else if (onCancel) onCancel();
+  }, [onClose, onCancel]);
+
+  const handleCropCompleteInternal = useCallback((croppedArea, pixels) => {
+    croppedAreaPixelsRef.current = pixels;
     setCroppedAreaPixels(pixels);
   }, []);
 
@@ -45,14 +54,21 @@ export default function ImageCropperModal({
   };
 
   const handleConfirmCrop = async () => {
-    if (!croppedAreaPixels || !imageSrc) return;
+    const pixelsToCrop = croppedAreaPixels || croppedAreaPixelsRef.current;
+    if (!pixelsToCrop || !imageSrc) {
+      if (onUseOriginal) onUseOriginal();
+      handleClose();
+      return;
+    }
     try {
       setIsProcessing(true);
-      const croppedBlob = await getCroppedImg(imageSrc, croppedAreaPixels, rotation);
+      const croppedBlob = await getCroppedImg(imageSrc, pixelsToCrop, rotation);
       if (onCropSave) {
         await onCropSave(croppedBlob);
+      } else if (onCropComplete) {
+        await onCropComplete(croppedBlob);
       }
-      onClose();
+      handleClose();
     } catch (err) {
       console.error('Error recortando imagen:', err);
       alert('Error al recortar la imagen. Intenta de nuevo.');
@@ -65,21 +81,21 @@ export default function ImageCropperModal({
     if (onUseOriginal) {
       onUseOriginal();
     }
-    onClose();
+    handleClose();
   };
 
-  if (!isOpen || !imageSrc) return null;
+  if (!imageSrc || isOpen === false) return null;
 
   const modalContent = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-5 select-none">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-5 select-none">
         {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 bg-black/80 backdrop-blur-sm cursor-pointer"
+          onClick={handleClose}
+          className="fixed inset-0 bg-black/85 backdrop-blur-md cursor-pointer"
         />
 
         {/* Modal Window */}
@@ -102,14 +118,14 @@ export default function ImageCropperModal({
                   {title}
                 </h3>
                 <p className="text-[11px] font-medium text-neutral-400">
-                  Arrastra para mover o usa dos dedos / rueda para zoom
+                  Arrastra para encuadrar o usa dos dedos / rueda para zoom
                 </p>
               </div>
             </div>
 
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               disabled={isProcessing}
               className="p-2 text-neutral-400 hover:text-white hover:bg-neutral-800 rounded-xl transition-colors cursor-pointer"
             >
@@ -118,22 +134,18 @@ export default function ImageCropperModal({
           </div>
 
           {/* Área de Recorte (Canvas interactivo react-easy-crop) */}
-          <div className="relative w-full h-72 sm:h-96 bg-black overflow-hidden flex items-center justify-center">
+          <div className="relative w-full h-80 sm:h-[420px] bg-neutral-950 overflow-hidden">
             <Cropper
               image={imageSrc}
               crop={crop}
               zoom={zoom}
               rotation={rotation}
-              aspect={aspect || undefined}
+              aspect={aspect}
               onCropChange={setCrop}
               onZoomChange={setZoom}
               onRotationChange={setRotation}
-              onCropComplete={handleCropComplete}
+              onCropComplete={handleCropCompleteInternal}
               showGrid={true}
-              classes={{
-                containerClassName: 'w-full h-full relative',
-                mediaClassName: 'max-h-full max-w-full',
-              }}
             />
           </div>
 
@@ -189,7 +201,7 @@ export default function ImageCropperModal({
                 title="Girar 90 grados"
               >
                 <RotateCw className="w-4 h-4" />
-                <span className="hidden sm:inline">Girar</span>
+                <span className="hidden sm:inline">Girar 90°</span>
               </button>
             </div>
 
@@ -197,7 +209,7 @@ export default function ImageCropperModal({
             <div className="pt-1 flex items-center gap-2 sm:gap-3">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 disabled={isProcessing}
                 className="py-3 px-3.5 sm:px-4 rounded-2xl border border-neutral-700 text-xs sm:text-sm font-bold text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors cursor-pointer"
               >
@@ -209,7 +221,7 @@ export default function ImageCropperModal({
                 onClick={handleKeepOriginal}
                 disabled={isProcessing}
                 className="py-3 px-3.5 sm:px-4 rounded-2xl bg-neutral-800 border border-neutral-700 text-xs sm:text-sm font-bold text-neutral-200 hover:bg-neutral-700 transition-colors cursor-pointer"
-                title="Subir la fotografía completa original sin recortar"
+                title="Guardar la fotografía completa original sin recortar"
               >
                 Sin recortar
               </button>

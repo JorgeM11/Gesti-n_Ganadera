@@ -113,9 +113,17 @@ export const createImage = (url) =>
   new Promise((resolve, reject) => {
     const image = new Image();
     image.addEventListener('load', () => resolve(image));
-    image.addEventListener('error', (error) => reject(error));
-    image.setAttribute('crossOrigin', 'anonymous');
-    image.src = url;
+    image.addEventListener('error', (error) => {
+      console.error('[createImage] Error al cargar imagen:', error);
+      reject(error);
+    });
+    if (typeof url === 'string' && !url.startsWith('data:') && !url.startsWith('blob:')) {
+      image.crossOrigin = 'anonymous';
+      const cacheBustUrl = url.includes('?') ? `${url}&_cb=${Date.now()}` : `${url}?_cb=${Date.now()}`;
+      image.src = cacheBustUrl;
+    } else {
+      image.src = url;
+    }
   });
 
 export function getRadianAngle(degreeValue) {
