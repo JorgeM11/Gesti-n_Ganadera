@@ -117,9 +117,7 @@ export default function ImageCropperModal({
                 <h3 className="text-base font-black text-white leading-tight">
                   {title}
                 </h3>
-                <p className="text-[11px] font-medium text-neutral-400">
-                  Arrastra para encuadrar o usa dos dedos / rueda para zoom
-                </p>
+                
               </div>
             </div>
 
@@ -237,7 +235,7 @@ export default function ImageCropperModal({
                 ) : (
                   <>
                     <Check className="w-4 h-4 stroke-[3]" />
-                    <span>Recortar y Guardar</span>
+                    <span>Guardar</span>
                   </>
                 )}
               </button>
