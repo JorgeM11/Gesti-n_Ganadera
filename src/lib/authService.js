@@ -17,6 +17,12 @@ export async function hashPassword(plainText) {
  * Inicializa un usuario Administrador por defecto si la base de datos está vacía.
  */
 export async function seedInitialAdminIfNeeded() {
+  const usersCount = await db.usuarios.count();
+  if (usersCount > 0) {
+    // Si ya existen usuarios en el sistema local, no sembrar cuenta demo
+    return;
+  }
+
   const defaultAdminEmail = 'admin@campo.com';
   const defaultAdminPass = 'admin123';
   const passHash = await hashPassword(defaultAdminPass);

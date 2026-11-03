@@ -56,8 +56,16 @@ export default function Usuarios() {
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3500);
   };
 
-  // Consultas reactivas Dexie
-  const rawUsers = useLiveQuery(() => db.usuarios.filter(u => !u.deleted_at).toArray()) || [];
+  // Consultas reactivas Dexie: acotadas al equipo del administrador activo
+  const rawUsers = useLiveQuery(
+    () => {
+      if (!currentUser?.id) return [];
+      return db.usuarios
+        .filter(u => !u.deleted_at && (u.id === currentUser.id || u.admin_id === currentUser.id))
+        .toArray();
+    },
+    [currentUser?.id]
+  ) || [];
   const rawFarms = useLiveQuery(() => db.farms.filter(f => !f.deleted_at).toArray()) || [];
   const rawPotreros = useLiveQuery(() => db.potreros.filter(p => !p.deleted_at).toArray()) || [];
   const rawOwners = useLiveQuery(() => db.owners.filter(o => !o.deleted_at).toArray()) || [];
@@ -138,6 +146,11 @@ export default function Usuarios() {
   };
 
   const handleToggleStatus = async (user) => {
+    if (user.role === 'admin') {
+      showToast('No se puede inactivar una cuenta de administrador.', 'error');
+      setConfirmToggleUser(null);
+      return;
+    }
     try {
       const newStatus = await toggleUserStatus(user.id);
       showToast(
@@ -429,7 +442,7 @@ export default function Usuarios() {
                       <span>Editar</span>
                     </button>
 
-                    {!isSelf && (
+                    {!isSelf && user.role !== 'admin' && (
                       <button
                         type="button"
                         onClick={() => setConfirmToggleUser(user)}
