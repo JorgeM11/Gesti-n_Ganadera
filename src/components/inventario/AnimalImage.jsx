@@ -66,11 +66,17 @@ export default function AnimalImage({
   // Renderizado
   if (!imgSrc || imgError) {
     return (
-      <div className={`flex items-center justify-center bg-[#E5E7EB] w-full h-full ${className}`}>
+      <div 
+        className={`flex items-center justify-center bg-[#E5E7EB] w-full h-full select-none pointer-events-none ${className}`}
+        style={{ WebkitTouchCallout: 'none' }}
+      >
         <img
           src={placeholderSrc}
           alt="Silueta"
-          className="w-full h-full p-[18%] object-contain opacity-50 mix-blend-multiply drop-shadow-sm transition-all"
+          draggable={false}
+          onContextMenu={(e) => e.preventDefault()}
+          className="w-full h-full p-[18%] object-contain opacity-50 mix-blend-multiply drop-shadow-sm transition-all pointer-events-none select-none"
+          style={{ WebkitTouchCallout: 'none' }}
         />
       </div>
     );
@@ -80,7 +86,10 @@ export default function AnimalImage({
     <img
       src={imgSrc}
       alt={alt || "Animal"}
-      className={`object-cover w-full h-full ${className}`}
+      draggable={false}
+      onContextMenu={(e) => e.preventDefault()}
+      className={`object-cover w-full h-full select-none pointer-events-none ${className}`}
+      style={{ WebkitTouchCallout: 'none' }}
       onError={() => setImgError(true)}
     />
   );

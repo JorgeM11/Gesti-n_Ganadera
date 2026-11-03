@@ -385,8 +385,6 @@ export default function BulkEditModal({
                         options={farmOptions}
                         placeholder="Selecciona la nueva finca..."
                         bgClass="bg-white"
-                        searchable
-                        searchPlaceholder="Buscar finca..."
                       />
 
                       
@@ -439,8 +437,6 @@ export default function BulkEditModal({
                         options={potreroOptions}
                         placeholder={availablePotreros.length === 0 ? "Sin potreros disponibles" : "Selecciona potrero..."}
                         bgClass="bg-white"
-                        searchable
-                        searchPlaceholder="Buscar potrero..."
                       />
                     </div>
                   )}
@@ -484,8 +480,6 @@ export default function BulkEditModal({
                         options={yearOptions}
                         placeholder="Selecciona año..."
                         bgClass="bg-white"
-                        searchable
-                        searchPlaceholder="Buscar año..."
                       />
                      
                     </div>
@@ -529,8 +523,6 @@ export default function BulkEditModal({
                         options={ownerOptions}
                         placeholder="Selecciona dueño..."
                         bgClass="bg-white"
-                        searchable
-                        searchPlaceholder="Buscar dueño..."
                       />
                     </div>
                   )}

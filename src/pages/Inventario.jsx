@@ -420,16 +420,22 @@ export default function InventarioPage() {
 
   const handleCardClick = (animalId, e) => {
     if (isLongPressRef.current) {
-      e.preventDefault();
-      e.stopPropagation();
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
       isLongPressRef.current = false;
       return;
     }
     if (selectedAnimalIds.size > 0) {
-      e.preventDefault();
-      e.stopPropagation();
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
       toggleAnimalSelection(animalId);
+      return;
     }
+    navigate(`/inventario/perfil?id=${animalId}`);
   };
 
   const handleCheckboxClick = (animalId, e) => {
@@ -1485,7 +1491,9 @@ export default function InventarioPage() {
                   const CardContent = (
                     <motion.article 
                       whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                      className={`relative bg-white rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full cursor-pointer group border-2 ${
+                      onContextMenu={(e) => e.preventDefault()}
+                      style={{ WebkitTouchCallout: 'none' }}
+                      className={`relative bg-white rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full cursor-pointer group border-2 select-none ${
                         isSelected 
                           ? 'border-[#1B4820] ring-2 ring-[#1B4820]/40 shadow-md bg-emerald-50/15' 
                           : 'border-neutral-200/80 hover:border-neutral-300'
@@ -1655,14 +1663,17 @@ export default function InventarioPage() {
                       onTouchStart={(e) => handleTouchStart(animal.id, e)}
                       onTouchMove={handleTouchMove}
                       onTouchEnd={handleTouchEnd}
+                      onContextMenu={(e) => e.preventDefault()}
+                      style={{ WebkitTouchCallout: 'none' }}
                     >
-                      <Link 
-                        to={`/inventario/perfil?id=${animal.id}`}
+                      <div 
                         onClick={(e) => handleCardClick(animal.id, e)}
+                        onContextMenu={(e) => e.preventDefault()}
                         className="block h-full cursor-pointer select-none"
+                        style={{ WebkitTouchCallout: 'none' }}
                       >
                         {CardContent}
-                      </Link>
+                      </div>
                     </motion.div>
                   );
                 })}
@@ -1710,15 +1721,18 @@ export default function InventarioPage() {
                       onTouchStart={(e) => handleTouchStart(animal.id, e)}
                       onTouchMove={handleTouchMove}
                       onTouchEnd={handleTouchEnd}
+                      onContextMenu={(e) => e.preventDefault()}
+                      style={{ WebkitTouchCallout: 'none' }}
                     >
-                      <Link
-                        to={`/inventario/perfil?id=${animal.id}`}
+                      <div
                         onClick={(e) => handleCardClick(animal.id, e)}
+                        onContextMenu={(e) => e.preventDefault()}
                         className={`group block bg-white rounded-2xl border transition-all duration-200 shadow-2xs hover:shadow-md cursor-pointer p-3.5 sm:p-4 select-none ${
                           isSelected 
                             ? 'border-[#1B4820] ring-2 ring-[#1B4820]/40 bg-emerald-50/20' 
                             : 'border-neutral-200/90 hover:border-[#1B4820]/40 hover:bg-neutral-50/60'
                         }`}
+                        style={{ WebkitTouchCallout: 'none' }}
                       >
                         {/* 1. Vista Desktop (Grid horizontal de columnas alineadas) */}
                         <div className="hidden lg:grid lg:grid-cols-[36px_160px_140px_85px_90px_105px_1fr_130px_24px] gap-3 items-center w-full">
@@ -1955,7 +1969,7 @@ export default function InventarioPage() {
                             </div>
                           </div>
                         </div>
-                      </Link>
+                      </div>
                     </motion.div>
                   );
                 })}
