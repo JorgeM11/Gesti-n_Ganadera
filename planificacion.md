@@ -294,9 +294,9 @@ flowchart TD
      - Herramienta y pantalla de análisis comparativo histórico (Evento A vs Evento B) de la misma finca para visualizar datos principales, cantidad de animales presentes, faltantes, total evaluado y flujo de asistencia (comunes, nuevos y ausentes).
 
 3. **Usuarios, Roles y Control de Acceso**:
-   - [ ] **11. Módulo de gestión de Usuarios y Fincas**:
+   - [x] **11. Módulo de gestión de Usuarios y Fincas**:
      - Interfaz administrativa para que el administrador pueda dar de alta usuarios, consultar el equipo y asignar o revocar fincas autorizadas a cada operador/obrero.
-   - [ ] **12. Nuevo rol: Usuario Operador**:
+   - [x] **12. Nuevo rol: Usuario Operador**:
      - Incorporación formal del rol `operador`, estructurando su alcance de permisos intermedios entre administrador y obrero de campo.
    - [x] **13. Restricción del conteo total de animales para rol Obrero**:
      - Ocultar el indicador numérico de cantidad total de animales (la métrica/tarjeta con la suma total del rebaño no debe ser visible para usuarios con rol `obrero`).
@@ -338,3 +338,5 @@ flowchart TD
 | **Fase 4 - Req 13: Ocultar Total Animales a Obrero** | 2026-11-02 | **Completado** | Antigravity AI & Usuario | Conteo total de animales ocultado por completo para usuarios con rol obrero en Inventario, Inactivos e Inventario por Finca. |
 | **Fase 4 - Req 16: Recorte de Fotos (Image Cropper)** | 2026-11-02 | **Completado** | Antigravity AI & Usuario | Modal de recorte interactivo con react-easy-crop, rotación de 90°, presets de aspecto (4:3 Ganado, 1:1 Cuadrado, Libre) y compresión offline local. |
 | **Fase 4 - Req 17: Origen y Procedencia del Animal** | 2026-11-02 | **Completado** | Antigravity AI & Usuario | Nuevo campo origin en formulario AnimalForm (ubicado bajo Raza), persistencia en Dexie v12, sincronización con Supabase y visualización en ficha técnica. |
+| **Fase 4 - Req 11: Módulo de Gestión de Usuarios y Fincas** | 2026-11-03 | **Completado** | Antigravity AI & Usuario | Vista exclusiva para Administrador (/usuarios) para crear, editar, inactivar y asignar fincas a obreros con persistencia local y sincronización. |
+| **Fase 4 - Req 12: Rol de Usuario Operador** | 2026-11-03 | **Completado** | Antigravity AI & Usuario | Rol operador con acceso total a inventario, eventos, fincas y dashboard; restringido de gestión de usuarios y con historial de cambios filtrado a sus modificaciones y las de obreros. |

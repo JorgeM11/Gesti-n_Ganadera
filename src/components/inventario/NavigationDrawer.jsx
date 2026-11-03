@@ -16,10 +16,11 @@ import {
   ChevronRight,
   ExternalLink,
   Fence,
-  UserX
+  UserX,
+  Users
 } from 'lucide-react';
 import { GiCow } from 'react-icons/gi';
-import { isCurrentUserWorker } from '@/lib/authService';
+import { isCurrentUserWorker, isCurrentUserAdmin, getCurrentUser } from '@/lib/authService';
 
 export default function NavigationDrawer({
   isOpen,
@@ -38,6 +39,8 @@ export default function NavigationDrawer({
   const navigate = useNavigate();
   const location = useLocation();
   const isWorker = isCurrentUserWorker();
+  const isAdmin = isCurrentUserAdmin();
+  const currentUser = getCurrentUser();
 
   const isCurrentRoute = (path) => location.pathname === path;
 
@@ -71,8 +74,21 @@ export default function NavigationDrawer({
                     <GiCow className="w-6 h-6" />
                   </div>
                   <div>
-                    <h2 className="text-base font-black text-neutral-900 tracking-tight">Ganadera</h2>
-                    <p className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">Gestión & Control</p>
+                    <h2 className="text-base font-black text-neutral-900 tracking-tight leading-tight">Ganadera</h2>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Gestión & Control</span>
+                      {currentUser?.role && (
+                        <span className={`text-[9px] font-black uppercase px-1.5 py-0.2 rounded-md ${
+                          currentUser.role === 'admin'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : currentUser.role === 'operador'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {currentUser.role}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <button
@@ -233,6 +249,28 @@ export default function NavigationDrawer({
                   </div>
                   <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/inactivos') ? 'text-white' : 'text-neutral-400'}`} />
                 </button>
+
+                {/* 8. Gestión de Usuarios y Fincas (Exclusivo Administrador) */}
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigate('/usuarios');
+                      onClose();
+                    }}
+                    className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl text-sm font-bold transition-all cursor-pointer ${
+                      isCurrentRoute('/usuarios')
+                        ? 'bg-[#1B4820] text-white shadow-lg shadow-[#1B4820]/20'
+                        : 'text-neutral-700 hover:bg-neutral-100'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Users className={`w-5 h-5 ${isCurrentRoute('/usuarios') ? 'text-white' : 'text-[#1B4820]'}`} />
+                      <span>Usuarios & Fincas</span>
+                    </div>
+                    <ChevronRight className={`w-4 h-4 opacity-50 ${isCurrentRoute('/usuarios') ? 'text-white' : 'text-neutral-400'}`} />
+                  </button>
+                )}
 
                 {/* Separador sutil */}
                 <div className="my-2 border-t border-neutral-100" />

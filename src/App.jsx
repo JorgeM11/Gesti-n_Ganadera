@@ -14,8 +14,9 @@ import PerfilEvento from './pages/PerfilEvento';
 import PerfilTratamiento from './pages/PerfilTratamiento';
 import Vaquerias from './pages/Vaquerias';
 import VaqueriaDetalle from './pages/VaqueriaDetalle';
+import Usuarios from './pages/Usuarios';
 
-import { isCurrentUserWorker } from '@/lib/authService';
+import { isCurrentUserWorker, isCurrentUserAdmin } from '@/lib/authService';
 
 function ProtectedRoute({ children }) {
   const userId = localStorage.getItem('ganadera_user_id');
@@ -32,6 +33,17 @@ function AdminOnlyRoute({ children }) {
   }
   if (isCurrentUserWorker()) {
     return <Navigate to="/inventario" replace />;
+  }
+  return children;
+}
+
+function AdminMasterRoute({ children }) {
+  const userId = localStorage.getItem('ganadera_user_id');
+  if (!userId) {
+    return <Navigate to="/login" replace />;
+  }
+  if (!isCurrentUserAdmin()) {
+    return <Navigate to={isCurrentUserWorker() ? "/inventario" : "/dashboard"} replace />;
   }
   return children;
 }
@@ -76,6 +88,7 @@ export default function App() {
         <Route path="/eventos/:id" element={<AdminOnlyRoute><VaqueriaDetalle /></AdminOnlyRoute>} />
         <Route path="/vaquerias" element={<AdminOnlyRoute><Vaquerias /></AdminOnlyRoute>} />
         <Route path="/vaquerias/:id" element={<AdminOnlyRoute><VaqueriaDetalle /></AdminOnlyRoute>} />
+        <Route path="/usuarios" element={<AdminMasterRoute><Usuarios /></AdminMasterRoute>} />
 
         {/* Ruta 404: Redirigir por defecto según rol */}
         <Route path="*" element={<DefaultRedirect />} />

@@ -160,9 +160,11 @@ export function saveSessionLocally(user) {
 export function getCurrentUser() {
   const id = localStorage.getItem('ganadera_user_id');
   if (!id) return null;
-  const role = localStorage.getItem('ganadera_user_role') || 'operador';
+  const role = localStorage.getItem('ganadera_user_role') || 'admin';
   const adminId = localStorage.getItem('ganadera_admin_id') || null;
-  const isWorker = role === 'obrero' || role === 'operador';
+  const isWorker = role === 'obrero';
+  const isOperator = role === 'operador';
+  const isAdmin = role === 'admin';
   return {
     id,
     name: localStorage.getItem('ganadera_user_name') || '',
@@ -170,16 +172,34 @@ export function getCurrentUser() {
     role,
     adminId,
     isWorker,
-    effectiveAdminId: isWorker && adminId ? adminId : id
+    isOperator,
+    isAdmin,
+    effectiveAdminId: (isWorker || isOperator) && adminId ? adminId : id
   };
 }
 
 /**
- * Retorna true si el usuario activo tiene rol de obrero / operador
+ * Retorna true si el usuario activo tiene rol de obrero
  */
 export function isCurrentUserWorker() {
   const user = getCurrentUser();
   return Boolean(user?.isWorker);
+}
+
+/**
+ * Retorna true si el usuario activo tiene rol de operador
+ */
+export function isCurrentUserOperator() {
+  const user = getCurrentUser();
+  return Boolean(user?.isOperator);
+}
+
+/**
+ * Retorna true si el usuario activo es administrador titular
+ */
+export function isCurrentUserAdmin() {
+  const user = getCurrentUser();
+  return Boolean(user?.isAdmin || (!user?.isWorker && !user?.isOperator));
 }
 
 /**

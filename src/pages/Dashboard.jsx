@@ -491,6 +491,24 @@ export default function DashboardPage() {
     };
   }, [filteredAnimals, allAnimals, farms, potreros, currentFarmPotreros, farmMap, ownerMap, selectedFarmId]);
 
+  // Filtrado de auditoría de actividad reciente según rol
+  // Si el usuario es 'operador', solo puede ver sus cambios y los del obrero (oculta los del admin)
+  const filteredRecientes = useMemo(() => {
+    if (!metrics.recientes) return [];
+    if (currentUser?.role !== 'operador') {
+      return metrics.recientes;
+    }
+    return filteredAnimals
+      .filter((animal) => {
+        const modifierUserId = animal.updated_by_user_id || animal.created_by_user_id || animal.user_id;
+        const userInfo = getUserInfo(modifierUserId);
+        if (modifierUserId === currentUser?.id) return true;
+        if (userInfo.role === 'obrero') return true;
+        return false;
+      })
+      .slice(0, 10);
+  }, [metrics.recientes, filteredAnimals, currentUser, usersMap]);
+
   // Contar cuántos filtros activos secundarios existen
   const activeSecondaryFiltersCount =
     (selectedPotreroId !== 'ALL' ? 1 : 0) +
@@ -1153,9 +1171,9 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {metrics.recientes.length === 0 ? (
+          {filteredRecientes.length === 0 ? (
             <p className="text-xs text-neutral-400 italic py-6 text-center">
-              No hay animales registrados.
+              No hay modificaciones recientes disponibles.
             </p>
           ) : (
             <div className="overflow-x-auto -mx-2 sm:mx-0">
@@ -1170,7 +1188,7 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100 text-xs font-medium text-neutral-700">
-                  {metrics.recientes.map((animal) => {
+                  {filteredRecientes.map((animal) => {
                     const modifierUserId = animal.updated_by_user_id || animal.created_by_user_id || animal.user_id;
                     const userInfo = getUserInfo(modifierUserId);
                     return (

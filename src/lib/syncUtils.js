@@ -454,7 +454,7 @@ export async function pullFromServer() {
 
     // 3. RECONCILIACIÓN DE BORRADOS (Supabase -> Dexie)
     // Permite que eliminaciones directas en Supabase o panel administrativo se sincronicen en local
-    if (table !== 'usuarios') {
+    if (table !== 'usuarios' && table !== 'usuario_farms') {
       try {
         const reconciliationOwnerId = (table === 'usuario_farms') ? userId : effectiveOwnerId;
         const serverIds = await fetchAllServerIds(table, reconciliationOwnerId);
