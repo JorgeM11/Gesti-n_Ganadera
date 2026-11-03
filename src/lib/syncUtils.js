@@ -126,7 +126,7 @@ export async function processSyncQueue() {
 
       // --- IMÁGENES: subir blob local si aún no tiene URL remota ---
       if (item.payload.photo_blob && !payloadToUpload.photo_path) {
-        const fileName = `offline-sync-${item.table_name}-${payloadToUpload.id}`;
+        const fileName = `offline-sync-${item.table_name}-${payloadToUpload.id}-${Date.now()}`;
         const url = await withTimeout(
           uploadImageToSupabase(item.payload.photo_blob, fileName),
           45000 // 45s de gracia para subida de imagen en redes lentas
@@ -140,7 +140,7 @@ export async function processSyncQueue() {
 
       // --- EVIDENCIA DE MUERTE: subir death_photo_blob si aún no tiene URL remota ---
       if (item.payload.death_photo_blob && !payloadToUpload.death_photo_path) {
-        const fileName = `offline-sync-${item.table_name}-death-${payloadToUpload.id}`;
+        const fileName = `offline-sync-${item.table_name}-death-${payloadToUpload.id}-${Date.now()}`;
         const url = await withTimeout(
           uploadImageToSupabase(item.payload.death_photo_blob, fileName),
           45000 // 45s de gracia para subida de imagen en redes lentas
@@ -438,34 +438,70 @@ export async function pullFromServer() {
       if (table === 'animals' || table === 'growth_events') {
         await Promise.allSettled(
           serverData.map(async (record) => {
-            // A) Si ya tenemos el registro en Dexie localmente con su photo_blob físico, NUNCA sobreescribirlo con undefined
             const localRecord = await db.table(table).get(record.id);
-            if (localRecord?.photo_blob) {
+            const hasPendingLocalEdit = pendingIdsByTable.get(table)?.has(record.id);
+
+            // A) Manejo inteligente de imagen de perfil / evento (photo_blob y photo_path)
+            if (hasPendingLocalEdit && localRecord?.photo_blob) {
+              // Protección: hay un cambio local pendiente de subida en este dispositivo, conservar blob local
               record.photo_blob = localRecord.photo_blob;
             } else if (record.photo_path) {
-              // B) Si es un registro nuevo o no tiene blob local, intentar descargarlo
-              try {
-                const response = await withTimeout(fetch(record.photo_path), 15000);
-                if (response.ok) {
-                  record.photo_blob = await response.blob();
+              // Si la URL en el servidor es la misma que ya tenemos y disponemos del blob local, reutilizarlo
+              const isSamePhoto = localRecord?.photo_blob &&
+                                  localRecord?.photo_path &&
+                                  (localRecord.photo_path === record.photo_path);
+
+              if (isSamePhoto) {
+                record.photo_blob = localRecord.photo_blob;
+              } else {
+                // Foto nueva o actualizada en el servidor (la URL cambió): descargar el nuevo blob
+                try {
+                  const response = await withTimeout(
+                    fetch(record.photo_path, { cache: 'no-cache' }),
+                    15000
+                  );
+                  if (response.ok) {
+                    record.photo_blob = await response.blob();
+                  } else {
+                    record.photo_blob = null;
+                  }
+                } catch (imgErr) {
+                  // Silencioso: si falla la descarga del blob en red lenta, dejar null para que cargue por URL pública
+                  record.photo_blob = null;
                 }
-              } catch (imgErr) {
-                // Silencioso: la imagen cargará por URL pública mientras haya red
               }
+            } else {
+              // El servidor no tiene foto (fue removida o no tiene): limpiar blob local obsoleto
+              record.photo_blob = null;
             }
 
-            // Preservación y descarga de evidencia de muerte (death_photo_blob)
-            if (localRecord?.death_photo_blob) {
+            // B) Manejo inteligente de evidencia de muerte (death_photo_blob)
+            if (hasPendingLocalEdit && localRecord?.death_photo_blob) {
               record.death_photo_blob = localRecord.death_photo_blob;
             } else if (record.death_photo_path) {
-              try {
-                const response = await withTimeout(fetch(record.death_photo_path), 15000);
-                if (response.ok) {
-                  record.death_photo_blob = await response.blob();
+              const isSameDeathPhoto = localRecord?.death_photo_blob &&
+                                       localRecord?.death_photo_path &&
+                                       (localRecord.death_photo_path === record.death_photo_path);
+
+              if (isSameDeathPhoto) {
+                record.death_photo_blob = localRecord.death_photo_blob;
+              } else {
+                try {
+                  const response = await withTimeout(
+                    fetch(record.death_photo_path, { cache: 'no-cache' }),
+                    15000
+                  );
+                  if (response.ok) {
+                    record.death_photo_blob = await response.blob();
+                  } else {
+                    record.death_photo_blob = null;
+                  }
+                } catch (imgErr) {
+                  record.death_photo_blob = null;
                 }
-              } catch (imgErr) {
-                // Silencioso
               }
+            } else {
+              record.death_photo_blob = null;
             }
 
             // Preservación de autoría de cambios locales si el servidor no la retorna
