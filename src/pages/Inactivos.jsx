@@ -283,7 +283,21 @@ export default function InactivosPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+
+  // Recuperar estado previo de sesión (filtros, búsqueda y página)
+  const storageKey = 'ganadera_inactivos_filter_state';
+
+  const initialSaved = useMemo(() => {
+    try {
+      const saved = sessionStorage.getItem(storageKey);
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Error leyendo estado guardado de inactivos:', e);
+    }
+    return null;
+  }, []);
+
+  const [searchTerm, setSearchTerm] = useState(() => initialSaved?.searchTerm || '');
   
   // Detección reactiva de Desktop (breakpoint lg: 1024px)
   const [isDesktop, setIsDesktop] = useState(() => typeof window !== 'undefined' ? window.innerWidth >= 1024 : false);
@@ -326,7 +340,7 @@ export default function InactivosPage() {
   const { isResyncing, resyncSuccess, handleForceSync } = useForceResync();
 
   // --- ESTADO DE PAGINACIÓN ---
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(() => initialSaved?.currentPage || 1);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -339,9 +353,9 @@ export default function InactivosPage() {
   const [pendingLogoutCount, setPendingLogoutCount] = useState(0);
 
   // --- ESTADOS PARA FINCAS, POTREROS Y DUEÑOS ---
-  const [selectedFarmFilter, setSelectedFarmFilter] = useState('ALL');
-  const [selectedPotreroFilter, setSelectedPotreroFilter] = useState('ALL');
-  const [selectedOwnerFilter, setSelectedOwnerFilter] = useState('ALL');
+  const [selectedFarmFilter, setSelectedFarmFilter] = useState(() => initialSaved?.selectedFarmFilter || 'ALL');
+  const [selectedPotreroFilter, setSelectedPotreroFilter] = useState(() => initialSaved?.selectedPotreroFilter || 'ALL');
+  const [selectedOwnerFilter, setSelectedOwnerFilter] = useState(() => initialSaved?.selectedOwnerFilter || 'ALL');
   const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
   const [isPotreroModalOpen, setIsPotreroModalOpen] = useState(false);
   const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
@@ -537,7 +551,7 @@ export default function InactivosPage() {
     }
   };
 
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState(() => initialSaved?.filters || {
     duplicates: [],
     reason: [],
     sex: [],
@@ -545,6 +559,31 @@ export default function InactivosPage() {
     breed: [],
     observations: []
   });
+
+  const isFirstMountRef = useRef(true);
+  const prevFilterDepsRef = useRef(JSON.stringify({
+    searchTerm: initialSaved?.searchTerm || '',
+    filters: initialSaved?.filters || { duplicates: [], reason: [], sex: [], category: [], breed: [], observations: [] },
+    selectedFarmFilter: initialSaved?.selectedFarmFilter || 'ALL',
+    selectedPotreroFilter: initialSaved?.selectedPotreroFilter || 'ALL',
+    selectedOwnerFilter: initialSaved?.selectedOwnerFilter || 'ALL'
+  }));
+
+  // Guardar en sessionStorage ante cualquier cambio
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(storageKey, JSON.stringify({
+        searchTerm,
+        currentPage,
+        filters,
+        selectedFarmFilter,
+        selectedPotreroFilter,
+        selectedOwnerFilter
+      }));
+    } catch (e) {
+      console.warn('Error guardando estado de inactivos en sessionStorage:', e);
+    }
+  }, [searchTerm, currentPage, filters, selectedFarmFilter, selectedPotreroFilter, selectedOwnerFilter]);
 
   // Consulta estricta de animales inactivos
   const allAnimals = useLiveQuery(
@@ -826,15 +865,40 @@ export default function InactivosPage() {
     });
   };
 
+  // --- REINICIAR PAGINACION AL FILTRAR O BUSCAR (SOLO ANTE CAMBIOS ACTIVOS, NUNCA EN EL MONTAJE) ---
   useEffect(() => {
-    setCurrentPage(1);
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      return;
+    }
+    const currentDeps = JSON.stringify({
+      searchTerm,
+      filters,
+      selectedFarmFilter,
+      selectedPotreroFilter,
+      selectedOwnerFilter
+    });
+    if (prevFilterDepsRef.current !== currentDeps) {
+      prevFilterDepsRef.current = currentDeps;
+      setCurrentPage(1);
+    }
   }, [searchTerm, filters, selectedFarmFilter, selectedPotreroFilter, selectedOwnerFilter]);
 
+  // --- PAGINACION ---
   const totalPages = Math.ceil(filteredAnimals.length / ITEMS_PER_PAGE);
+
+  // Asegurar que si los registros disminuyen, la página actual no quede fuera de rango
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
   const paginatedAnimals = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const safePage = Math.max(1, Math.min(currentPage, totalPages || 1));
+    const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
     return filteredAnimals.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-  }, [filteredAnimals, currentPage]);
+  }, [filteredAnimals, currentPage, totalPages]);
 
   const getCount = (type, value) => {
     if (!allAnimals) return 0;

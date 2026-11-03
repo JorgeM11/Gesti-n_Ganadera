@@ -249,4 +249,7 @@ export function logoutUser() {
   localStorage.removeItem('ganadera_user_role');
   localStorage.removeItem('ganadera_admin_id');
   localStorage.removeItem('lastSyncTimestamp');
+  try {
+    sessionStorage.clear();
+  } catch (_) {}
 }
