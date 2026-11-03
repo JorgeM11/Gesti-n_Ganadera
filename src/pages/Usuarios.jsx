@@ -19,7 +19,7 @@ import {
   UserX,
   Mail
 } from 'lucide-react';
-import { db } from '@/lib/db';
+import { db, clearLocalData } from '@/lib/db';
 import { getCurrentUser, logoutUser } from '@/lib/authService';
 import { toggleUserStatus } from '@/lib/userService';
 import { useForceResync } from '@/hooks/useForceResync';
@@ -158,10 +158,12 @@ export default function Usuarios() {
         await handleForceSync();
       }
       logoutUser();
+      await clearLocalData();
       navigate('/login');
     } catch (err) {
       console.error('Error durante el cierre de sesión:', err);
       logoutUser();
+      await clearLocalData();
       navigate('/login');
     }
   };

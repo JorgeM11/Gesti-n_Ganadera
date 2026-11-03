@@ -130,6 +130,14 @@ export async function createUser({ name, email, password, role, farmIds = [], st
       };
       await db.usuario_farms.put(newUf);
       await addToSyncQueue('usuario_farms', 'INSERT', newUf);
+
+      if (navigator.onLine) {
+        try {
+          await supabase.from('usuario_farms').upsert(newUf, { onConflict: 'user_id,farm_id' });
+        } catch (err) {
+          console.warn('[userService] Error insertando usuario_farms en Supabase:', err);
+        }
+      }
     }
   }
 
@@ -230,14 +238,45 @@ export async function updateUser(userId, { name, email, password, role, farmIds 
         };
         await db.usuario_farms.put(newUf);
         await addToSyncQueue('usuario_farms', 'INSERT', newUf);
+
+        if (navigator.onLine) {
+          try {
+            await supabase.from('usuario_farms').upsert(newUf, { onConflict: 'user_id,farm_id' });
+          } catch (err) {
+            console.warn('[userService] Error insertando usuario_farms en Supabase:', err);
+          }
+        }
       }
     }
 
     // 2. Remover desmarcadas
     for (const current of currentAssignments) {
       if (!targetFarmIds.has(current.farm_id)) {
-        await db.usuario_farms.delete(current.id);
-        await addToSyncQueue('usuario_farms', 'DELETE', { id: current.id, user_id: userId, farm_id: current.farm_id });
+        // Eliminar de Dexie asegurando limpiar cualquier duplicado de este farm_id para el usuario
+        await db.usuario_farms
+          .where('user_id')
+          .equals(userId)
+          .filter(u => u.farm_id === current.farm_id)
+          .delete();
+
+        await addToSyncQueue('usuario_farms', 'DELETE', { 
+          id: current.id, 
+          user_id: userId, 
+          farm_id: current.farm_id 
+        });
+
+        // Si hay conexión, eliminar inmediatamente de Supabase por (user_id, farm_id)
+        if (navigator.onLine) {
+          try {
+            await supabase
+              .from('usuario_farms')
+              .delete()
+              .eq('user_id', userId)
+              .eq('farm_id', current.farm_id);
+          } catch (delErr) {
+            console.warn('[userService] Error eliminando usuario_farms en Supabase:', delErr);
+          }
+        }
       }
     }
   } else if (role === 'operador') {
@@ -250,6 +289,14 @@ export async function updateUser(userId, { name, email, password, role, farmIds 
     for (const assignment of previousAssignments) {
       await db.usuario_farms.delete(assignment.id);
       await addToSyncQueue('usuario_farms', 'DELETE', { id: assignment.id, user_id: userId, farm_id: assignment.farm_id });
+    }
+
+    if (navigator.onLine) {
+      try {
+        await supabase.from('usuario_farms').delete().eq('user_id', userId);
+      } catch (err) {
+        console.warn('[userService] Error limpiando asignaciones de operador en Supabase:', err);
+      }
     }
   }
 

@@ -189,7 +189,7 @@ export default function UserModal({
                   {isEditing ? 'Editar Usuario' : 'Nuevo Usuario'}
                 </h3>
                 <p className="text-xs text-neutral-400 font-medium">
-                  {isEditing ? 'Actualiza los datos y permisos de acceso' : 'Registra un operador u obrero en el equipo'}
+                  {isEditing ? null : 'Registra un operador u obrero.'}
                 </p>
               </div>
             </div>
@@ -261,9 +261,7 @@ export default function UserModal({
                   Contraseña {isEditing ? '(Opcional)' : '*'}
                 </label>
                 {isEditing && (
-                  <span className="text-[10px] text-neutral-400 font-medium italic">
-                    Deja en blanco para conservar la actual
-                  </span>
+                  null
                 )}
               </div>
               <div className="relative">
@@ -312,9 +310,7 @@ export default function UserModal({
                     </div>
                     {role === 'obrero' && <Check className="w-4 h-4 text-amber-700 stroke-[3]" />}
                   </div>
-                  <p className="text-[11px] text-neutral-500 font-medium leading-relaxed">
-                    Acceso limitado exclusivamente a sus fincas asignadas. No visualiza el total de animales ni módulos administrativos.
-                  </p>
+                  
                 </button>
 
                 {/* Opción OPERADOR */}
@@ -336,9 +332,7 @@ export default function UserModal({
                     </div>
                     {role === 'operador' && <Check className="w-4 h-4 text-blue-700 stroke-[3]" />}
                   </div>
-                  <p className="text-[11px] text-neutral-500 font-medium leading-relaxed">
-                    Acceso completo a inventario, dashboard, eventos y catálogos. No requiere asignación de fincas.
-                  </p>
+                  
                 </button>
               </div>
             </div>
@@ -356,9 +350,7 @@ export default function UserModal({
                     <label className="text-[11px] font-black text-amber-900 uppercase tracking-wider block">
                       Fincas Asignadas *
                     </label>
-                    <p className="text-[11px] text-neutral-400 font-medium">
-                      El obrero solo podrá consultar y registrar animales en estas fincas
-                    </p>
+                    
                   </div>
                   {allFarms.length > 0 && (
                     <div className="flex items-center gap-2">
@@ -457,7 +449,7 @@ export default function UserModal({
                   }`}
                 >
                   <span className={`w-2 h-2 rounded-full ${status === 'Inactivo' ? 'bg-rose-500' : 'bg-neutral-400'}`} />
-                  <span>Inactivo (Bloqueado)</span>
+                  <span>Inactivo</span>
                 </button>
               </div>
             </div>
@@ -483,7 +475,7 @@ export default function UserModal({
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    <span>{isEditing ? 'Guardar Cambios' : 'Registrar Usuario'}</span>
+                    <span>{isEditing ? 'Guardar' : 'Registrar'}</span>
                   </>
                 )}
               </button>

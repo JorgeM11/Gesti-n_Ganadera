@@ -199,8 +199,16 @@ export async function processSyncQueue() {
           error = upsertError;
         }
       } else if (item.operation === 'DELETE') {
+        let deleteQuery = supabase.from(item.table_name).delete();
+        if (item.table_name === 'usuario_farms' && item.payload.user_id && item.payload.farm_id) {
+          deleteQuery = deleteQuery
+            .eq('user_id', item.payload.user_id)
+            .eq('farm_id', item.payload.farm_id);
+        } else {
+          deleteQuery = deleteQuery.eq('id', item.payload.id);
+        }
         const { error: deleteError } = await withTimeout(
-          supabase.from(item.table_name).delete().eq('id', item.payload.id),
+          deleteQuery,
           15000 // 15s de gracia
         );
         error = deleteError;
@@ -331,6 +339,11 @@ async function fetchAllServerIds(table, userId) {
     let query = supabase.from(table).select('id, deleted_at').range(from, from + pageSize - 1);
     if (table === 'usuarios') {
       query = query.or(`id.eq.${userId},admin_id.eq.${userId}`);
+    } else if (table === 'usuario_farms') {
+      const activeRole = localStorage.getItem('ganadera_user_role');
+      if (activeRole === 'obrero') {
+        query = query.eq('user_id', userId);
+      }
     } else {
       query = query.eq('user_id', userId);
     }
@@ -407,6 +420,8 @@ export async function pullFromServer() {
         if (isWorker) {
           query = query.eq('user_id', userId);
         }
+        // Para admin / operador, NO filtrar por user_id = effectiveOwnerId
+        // ya que user_id en usuario_farms pertenece a los obreros
       } else {
         query = query.eq('user_id', effectiveOwnerId);
       }
@@ -485,7 +500,7 @@ export async function pullFromServer() {
 
     // 3. RECONCILIACIÓN DE BORRADOS (Supabase -> Dexie)
     // Permite que eliminaciones directas en Supabase o panel administrativo se sincronicen en local
-    if (table !== 'usuarios' && table !== 'usuario_farms') {
+    if (table !== 'usuarios') {
       try {
         const reconciliationOwnerId = (table === 'usuario_farms') ? userId : effectiveOwnerId;
         const serverIds = await fetchAllServerIds(table, reconciliationOwnerId);

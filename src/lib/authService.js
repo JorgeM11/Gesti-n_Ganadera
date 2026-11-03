@@ -119,6 +119,29 @@ export async function authenticateUser(email, password) {
       // Guardar en Dexie local para acceso continuo una vez autenticado
       await db.usuarios.put(user);
       saveSessionLocally(user);
+
+      // Si es obrero, sincronizar inmediatamente sus asignaciones de fincas vigentes desde Supabase
+      if (user.role === 'obrero') {
+        try {
+          const { data: serverUfs } = await supabase
+            .from('usuario_farms')
+            .select('*')
+            .eq('user_id', user.id);
+
+          if (serverUfs) {
+            const existingUfs = await db.usuario_farms.where('user_id').equals(user.id).toArray();
+            if (existingUfs.length > 0) {
+              await db.usuario_farms.bulkDelete(existingUfs.map(u => u.id));
+            }
+            if (serverUfs.length > 0) {
+              await db.usuario_farms.bulkPut(serverUfs);
+            }
+          }
+        } catch (ufErr) {
+          console.warn('[Auth] Error al precargar asignaciones del obrero al login:', ufErr);
+        }
+      }
+
       // Disparar sincronización de fondo
       setTimeout(() => runFullSync(), 500);
       return { success: true, user };
