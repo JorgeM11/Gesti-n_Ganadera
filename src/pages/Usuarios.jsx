@@ -15,32 +15,41 @@ import {
   Check, 
   X, 
   Menu, 
-  ArrowLeft,
+  Plus,
   AlertTriangle,
-  UserCheck,
   UserX,
-  Lock,
-  ChevronRight,
-  Info
+  Mail
 } from 'lucide-react';
 import { db } from '@/lib/db';
-import { getCurrentUser } from '@/lib/authService';
+import { getCurrentUser, logoutUser } from '@/lib/authService';
 import { toggleUserStatus } from '@/lib/userService';
+import { useForceResync } from '@/hooks/useForceResync';
 import UserModal from '@/components/usuarios/UserModal';
 import NavigationDrawer from '@/components/inventario/NavigationDrawer';
+import SyncStatus from '@/components/ui/SyncStatus';
+import FarmModal from '@/components/inventario/FarmModal';
+import PotreroModal from '@/components/inventario/PotreroModal';
+import OwnerModal from '@/components/inventario/OwnerModal';
 
 export default function Usuarios() {
   const navigate = useNavigate();
   const currentUser = useMemo(() => getCurrentUser(), []);
 
-  // Estados de navegación y modal
+  // Hook de sincronización forzada
+  const { isResyncing, resyncSuccess, handleForceSync } = useForceResync();
+
+  // Estados de navegación y modales
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isFarmModalOpen, setIsFarmModalOpen] = useState(false);
+  const [isPotreroModalOpen, setIsPotreroModalOpen] = useState(false);
+  const [isOwnerModalOpen, setIsOwnerModalOpen] = useState(false);
+
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [selectedUserToEdit, setSelectedUserToEdit] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL'); // 'ALL' | 'operador' | 'obrero' | 'INACTIVOS'
 
-  // Modal de confirmación para inactivar
+  // Modal de confirmación para inactivar / activar
   const [confirmToggleUser, setConfirmToggleUser] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
@@ -52,6 +61,8 @@ export default function Usuarios() {
   // Consultas reactivas Dexie
   const rawUsers = useLiveQuery(() => db.usuarios.filter(u => !u.deleted_at).toArray()) || [];
   const rawFarms = useLiveQuery(() => db.farms.filter(f => !f.deleted_at).toArray()) || [];
+  const rawPotreros = useLiveQuery(() => db.potreros.filter(p => !p.deleted_at).toArray()) || [];
+  const rawOwners = useLiveQuery(() => db.owners.filter(o => !o.deleted_at).toArray()) || [];
   const rawUsuarioFarms = useLiveQuery(() => db.usuario_farms.filter(uf => !uf.deleted_at).toArray()) || [];
 
   // Mapa de fincas por ID para resolución rápida de nombres
@@ -119,7 +130,6 @@ export default function Usuarios() {
 
       return true;
     }).sort((a, b) => {
-      // Poner al usuario admin titular de primero, luego operadores, luego obreros
       if (a.role === 'admin' && b.role !== 'admin') return -1;
       if (b.role === 'admin' && a.role !== 'admin') return 1;
       if (a.status === 'Activo' && b.status === 'Inactivo') return -1;
@@ -153,49 +163,55 @@ export default function Usuarios() {
     }
   };
 
+  const handleLogoutFlow = async () => {
+    try {
+      if (navigator.onLine) {
+        await handleForceSync();
+      }
+      logoutUser();
+      navigate('/login');
+    } catch (err) {
+      console.error('Error durante el cierre de sesión:', err);
+      logoutUser();
+      navigate('/login');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#F8FAF7] text-neutral-800 pb-16">
-      {/* Barra de Navegación Superior */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-neutral-200/80 px-4 sm:px-6 py-3.5 shadow-2xs">
+    <div className="min-h-screen bg-[#F8FAF7] text-neutral-800 pb-28">
+      {/* ========================================================================= */}
+      {/* HEADER PRINCIPAL (VERDE IDÉNTICO A INVENTARIO, INACTIVOS Y VAQUERÍAS)     */}
+      {/* ========================================================================= */}
+      <header className="bg-white md:bg-[#1B4820] w-full px-4 pt-4 pb-4 md:py-4 md:px-8 sticky top-0 z-30 shadow-md transition-colors duration-300">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setIsDrawerOpen(true)}
-              className="p-2.5 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors cursor-pointer"
-              title="Abrir menú principal"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-
-            <div>
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-[#1B4820]" />
-                <h1 className="text-lg sm:text-xl font-black text-neutral-900 tracking-tight">
-                  Usuarios & Fincas
-                </h1>
-              </div>
-              <p className="text-[11px] font-bold text-neutral-400 hidden sm:block">
-                Administración de operadores, obreros y asignaciones de finca
-              </p>
-            </div>
-          </div>
-
+          {/* Lado izquierdo: Botón Menú Hamburguesa + Título */}
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={handleOpenCreate}
-              className="px-4 py-2.5 bg-[#1B4820] hover:bg-[#123316] active:scale-98 text-white rounded-2xl font-black text-xs sm:text-sm flex items-center gap-2 shadow-md shadow-[#1B4820]/20 transition-all cursor-pointer"
+              onClick={() => setIsDrawerOpen(true)}
+              className="p-2.5 rounded-2xl text-[#1B4820] md:text-white hover:bg-[#1B4820]/10 md:hover:bg-white/15 active:scale-95 transition-all cursor-pointer"
+              title="Abrir menú de navegación"
             >
-              <UserPlus className="w-4 h-4" />
-              <span>Nuevo Usuario</span>
+              <Menu className="w-6 h-6 stroke-[2.5]" />
             </button>
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl md:text-3xl font-black text-[#1B4820] md:text-white tracking-tight whitespace-nowrap">
+                Usuarios
+              </h1>
+            </div>
+          </div>
+
+          {/* Lado derecho: Estado de Sincronización */}
+          <div className="flex items-center gap-2">
+            <SyncStatus />
           </div>
         </div>
       </header>
 
-      {/* Contenido Principal */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-5 space-y-5">
+      {/* ========================================================================= */}
+      {/* CONTENIDO PRINCIPAL                                                       */}
+      {/* ========================================================================= */}
+      <main className="max-w-7xl mx-auto w-full px-4 md:px-8 mt-5 md:mt-8 space-y-6">
         {/* Toast Notificación */}
         <AnimatePresence>
           {toast.show && (
@@ -203,7 +219,7 @@ export default function Usuarios() {
               initial={{ opacity: 0, y: -15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
-              className={`fixed top-18 right-4 sm:right-6 z-50 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 text-xs sm:text-sm font-bold border ${
+              className={`fixed top-20 right-4 sm:right-8 z-50 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 text-xs sm:text-sm font-bold border ${
                 toast.type === 'error'
                   ? 'bg-rose-50 text-rose-800 border-rose-200'
                   : 'bg-emerald-50 text-emerald-800 border-emerald-200'
@@ -220,38 +236,38 @@ export default function Usuarios() {
         </AnimatePresence>
 
         {/* 1. Métrica Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
           {/* Total */}
-          <div className="bg-white p-4 rounded-3xl border border-neutral-200/80 shadow-2xs flex flex-col justify-between">
+          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-neutral-200/80 shadow-2xs flex flex-col justify-between">
             <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400">Total Usuarios</span>
-            <div className="flex items-baseline justify-between mt-1">
+            <div className="flex items-baseline justify-between mt-1.5">
               <span className="text-2xl sm:text-3xl font-black text-neutral-900">{stats.total}</span>
               <Users className="w-5 h-5 text-neutral-400" />
             </div>
           </div>
 
           {/* Operadores */}
-          <div className="bg-white p-4 rounded-3xl border border-blue-200/60 shadow-2xs flex flex-col justify-between bg-gradient-to-br from-white to-blue-50/30">
+          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-blue-200/70 shadow-2xs flex flex-col justify-between bg-gradient-to-br from-white to-blue-50/20">
             <span className="text-[10px] font-black uppercase tracking-wider text-blue-700">Operadores</span>
-            <div className="flex items-baseline justify-between mt-1">
+            <div className="flex items-baseline justify-between mt-1.5">
               <span className="text-2xl sm:text-3xl font-black text-blue-800">{stats.operadores}</span>
               <ShieldCheck className="w-5 h-5 text-blue-600" />
             </div>
           </div>
 
           {/* Obreros */}
-          <div className="bg-white p-4 rounded-3xl border border-amber-200/60 shadow-2xs flex flex-col justify-between bg-gradient-to-br from-white to-amber-50/30">
+          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-amber-200/70 shadow-2xs flex flex-col justify-between bg-gradient-to-br from-white to-amber-50/20">
             <span className="text-[10px] font-black uppercase tracking-wider text-amber-800">Obreros</span>
-            <div className="flex items-baseline justify-between mt-1">
+            <div className="flex items-baseline justify-between mt-1.5">
               <span className="text-2xl sm:text-3xl font-black text-amber-900">{stats.obreros}</span>
               <HardHat className="w-5 h-5 text-amber-600" />
             </div>
           </div>
 
           {/* Inactivos */}
-          <div className="bg-white p-4 rounded-3xl border border-neutral-200/80 shadow-2xs flex flex-col justify-between">
+          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-neutral-200/80 shadow-2xs flex flex-col justify-between">
             <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400">Inactivos</span>
-            <div className="flex items-baseline justify-between mt-1">
+            <div className="flex items-baseline justify-between mt-1.5">
               <span className="text-2xl sm:text-3xl font-black text-neutral-600">{stats.inactivos}</span>
               <UserX className="w-5 h-5 text-neutral-400" />
             </div>
@@ -259,8 +275,8 @@ export default function Usuarios() {
         </div>
 
         {/* 2. Barra de Búsqueda y Filtros de Rol */}
-        <div className="bg-white rounded-3xl p-3 sm:p-4 border border-neutral-200/80 shadow-2xs space-y-3">
-          <div className="flex flex-col sm:flex-row items-center gap-3">
+        <div className="bg-white rounded-3xl p-4 md:p-5 shadow-sm border border-neutral-200/80 space-y-3.5">
+          <div className="flex flex-col md:flex-row items-center gap-3">
             {/* Buscador */}
             <div className="relative flex-1 w-full">
               <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
@@ -268,14 +284,14 @@ export default function Usuarios() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar por nombre o correo..."
-                className="w-full pl-10 pr-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-2xl text-xs sm:text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all placeholder:text-neutral-400"
+                placeholder="Buscar usuario por nombre o correo electrónico..."
+                className="w-full pl-10 pr-4 py-3 bg-neutral-50 border border-neutral-200 rounded-2xl text-xs sm:text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all placeholder:text-neutral-400"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -283,11 +299,11 @@ export default function Usuarios() {
             </div>
 
             {/* Selector de Píldoras de Filtro */}
-            <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
+            <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
               <button
                 type="button"
                 onClick={() => setRoleFilter('ALL')}
-                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   roleFilter === 'ALL'
                     ? 'bg-[#1B4820] text-white shadow-xs'
                     : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
@@ -299,7 +315,7 @@ export default function Usuarios() {
               <button
                 type="button"
                 onClick={() => setRoleFilter('operador')}
-                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                   roleFilter === 'operador'
                     ? 'bg-blue-600 text-white shadow-xs'
                     : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
@@ -312,7 +328,7 @@ export default function Usuarios() {
               <button
                 type="button"
                 onClick={() => setRoleFilter('obrero')}
-                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
                   roleFilter === 'obrero'
                     ? 'bg-amber-600 text-white shadow-xs'
                     : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
@@ -325,7 +341,7 @@ export default function Usuarios() {
               <button
                 type="button"
                 onClick={() => setRoleFilter('INACTIVOS')}
-                className={`px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                   roleFilter === 'INACTIVOS'
                     ? 'bg-neutral-800 text-white shadow-xs'
                     : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
@@ -339,28 +355,28 @@ export default function Usuarios() {
 
         {/* 3. Listado de Usuarios */}
         {filteredUsers.length === 0 ? (
-          <div className="bg-white rounded-3xl p-8 border border-neutral-200/80 text-center space-y-3">
-            <div className="w-12 h-12 rounded-2xl bg-neutral-100 text-neutral-400 flex items-center justify-center mx-auto">
-              <Users className="w-6 h-6" />
+          <div className="bg-white rounded-3xl p-10 border border-neutral-200/80 text-center space-y-3 shadow-xs max-w-lg mx-auto">
+            <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-[#1B4820] flex items-center justify-center mx-auto shadow-inner">
+              <Users className="w-7 h-7" />
             </div>
             <h3 className="text-base font-black text-neutral-900">No se encontraron usuarios</h3>
             <p className="text-xs text-neutral-500 font-medium max-w-sm mx-auto">
               {searchQuery
-                ? 'No hay usuarios que coincidan con el término de búsqueda ingresado.'
+                ? 'No hay usuarios que coincidan con la búsqueda actual.'
                 : 'No hay usuarios registrados bajo este filtro.'}
             </p>
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="text-xs font-bold text-[#1B4820] hover:underline cursor-pointer"
+                className="text-xs font-bold text-[#1B4820] hover:underline cursor-pointer pt-1 block mx-auto"
               >
                 Limpiar búsqueda
               </button>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
             {filteredUsers.map((user) => {
               const isSelf = user.id === currentUser?.id;
               const assignedFarms = userFarmsMap.get(user.id) || [];
@@ -369,7 +385,7 @@ export default function Usuarios() {
               return (
                 <div
                   key={user.id}
-                  className={`bg-white rounded-3xl p-5 border transition-all flex flex-col justify-between gap-4 ${
+                  className={`bg-white rounded-3xl p-5 sm:p-6 border transition-all flex flex-col justify-between gap-4.5 ${
                     !isActive
                       ? 'border-neutral-200/60 opacity-75 bg-neutral-50/50'
                       : user.role === 'admin'
@@ -378,51 +394,52 @@ export default function Usuarios() {
                   }`}
                 >
                   {/* Encabezado de la Tarjeta */}
-                  <div className="space-y-3">
+                  <div className="space-y-3.5">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-3 truncate">
                         {/* Avatar */}
-                        <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-black text-base shrink-0 ${
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-lg shrink-0 shadow-xs ${
                           user.role === 'admin'
-                            ? 'bg-[#1B4820] text-white shadow-xs'
+                            ? 'bg-[#1B4820] text-white shadow-emerald-900/10'
                             : user.role === 'operador'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-amber-100 text-amber-800'
+                              ? 'bg-blue-100 text-blue-800 ring-2 ring-blue-600/10'
+                              : 'bg-amber-100 text-amber-800 ring-2 ring-amber-600/10'
                         }`}>
                           {(user.name || user.email || 'U').charAt(0).toUpperCase()}
                         </div>
 
                         <div className="truncate">
                           <div className="flex items-center gap-1.5">
-                            <h4 className="font-black text-sm text-neutral-900 truncate">
+                            <h4 className="font-black text-base text-neutral-900 truncate leading-snug">
                               {user.name}
                             </h4>
                             {isSelf && (
-                              <span className="text-[10px] font-black uppercase text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded-md shrink-0">
+                              <span className="text-[9px] font-black uppercase text-emerald-800 bg-emerald-100 px-1.5 py-0.2 rounded-md shrink-0">
                                 Tú
                               </span>
                             )}
                           </div>
-                          <span className="text-xs text-neutral-400 font-medium truncate block">
-                            {user.email}
+                          <span className="text-xs text-neutral-400 font-medium truncate flex items-center gap-1 mt-0.5">
+                            <Mail className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{user.email}</span>
                           </span>
                         </div>
                       </div>
 
                       {/* Estado */}
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 ${
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shrink-0 ${
                         isActive
                           ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                           : 'bg-rose-50 text-rose-800 border border-rose-200'
                       }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
                         <span>{user.status || 'Activo'}</span>
                       </span>
                     </div>
 
                     {/* Insignia de Rol */}
                     <div className="flex items-center gap-2">
-                      <span className={`inline-flex items-center gap-1.5 text-xs font-black px-2.5 py-1 rounded-xl uppercase tracking-wider ${
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-xl uppercase tracking-wider ${
                         user.role === 'admin'
                           ? 'bg-emerald-100/80 text-emerald-900 border border-emerald-300/60'
                           : user.role === 'operador'
@@ -456,7 +473,7 @@ export default function Usuarios() {
                     )}
 
                     {user.role === 'obrero' && (
-                      <div className="bg-amber-50/40 p-3 rounded-2xl border border-amber-200/60 space-y-2">
+                      <div className="bg-amber-50/40 p-3.5 rounded-2xl border border-amber-200/60 space-y-2">
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 flex items-center gap-1">
                             <Building2 className="w-3.5 h-3.5 text-amber-700" />
@@ -486,23 +503,21 @@ export default function Usuarios() {
                   </div>
 
                   {/* Acciones de la Tarjeta */}
-                  <div className="pt-3 border-t border-neutral-100 flex items-center gap-2">
-                    {/* Botón Editar (Disponible para todos excepto no-admin editando admin) */}
+                  <div className="pt-3.5 border-t border-neutral-100 flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => handleOpenEdit(user)}
-                      className="flex-1 py-2 px-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 active:scale-98 text-neutral-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 active:scale-98 text-neutral-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                     >
                       <Pencil className="w-3.5 h-3.5" />
                       <span>Editar</span>
                     </button>
 
-                    {/* Botón Inactivar / Reactivar (Deshabilitado para la cuenta propia) */}
                     {!isSelf && (
                       <button
                         type="button"
                         onClick={() => setConfirmToggleUser(user)}
-                        className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        className={`py-2.5 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                           isActive
                             ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200/60'
                             : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/60'
@@ -520,6 +535,18 @@ export default function Usuarios() {
           </div>
         )}
       </main>
+
+      {/* ========================================================================= */}
+      {/* BOTÓN FLOTANTE (FAB) PARA REGISTRAR NUEVO USUARIO                         */}
+      {/* ========================================================================= */}
+      <button
+        type="button"
+        onClick={handleOpenCreate}
+        className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-40 bg-[#1B4820] hover:bg-[#123316] p-4 rounded-full text-white shadow-2xl transform transition-transform duration-300 hover:scale-105 active:scale-95 flex items-center justify-center cursor-pointer shadow-[#1B4820]/40"
+        title="Registrar nuevo usuario"
+      >
+        <Plus className="w-7 h-7" strokeWidth={2.5} />
+      </button>
 
       {/* Modal de Creación / Edición de Usuario */}
       <UserModal
@@ -602,9 +629,31 @@ export default function Usuarios() {
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         farmsCount={rawFarms.length}
-        onLogout={() => {
-          navigate('/login');
-        }}
+        onOpenFarms={() => setIsFarmModalOpen(true)}
+        potrerosCount={rawPotreros.length}
+        onOpenPotreros={() => setIsPotreroModalOpen(true)}
+        ownersCount={rawOwners.length}
+        onOpenOwners={() => setIsOwnerModalOpen(true)}
+        onForceResync={handleForceSync}
+        isResyncing={isResyncing}
+        resyncSuccess={resyncSuccess}
+        onLogout={handleLogoutFlow}
+      />
+
+      {/* Modales de Gestión del Menú */}
+      <FarmModal
+        isOpen={isFarmModalOpen}
+        onClose={() => setIsFarmModalOpen(false)}
+      />
+
+      <PotreroModal
+        isOpen={isPotreroModalOpen}
+        onClose={() => setIsPotreroModalOpen(false)}
+      />
+
+      <OwnerModal
+        isOpen={isOwnerModalOpen}
+        onClose={() => setIsOwnerModalOpen(false)}
       />
     </div>
   );

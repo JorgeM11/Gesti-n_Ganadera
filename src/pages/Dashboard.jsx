@@ -274,7 +274,7 @@ export default function DashboardPage() {
     try {
       let pendingCount = await db.sync_queue.count();
       if (pendingCount > 0 && navigator.onLine) {
-        await forceFullResync();
+        await handleForceSync();
         pendingCount = await db.sync_queue.count();
       }
       if (pendingCount > 0) {

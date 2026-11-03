@@ -46,11 +46,31 @@ async function healVaqueriaAnimalsSyncQueue() {
   }
 }
 
+// Saneamiento proactivo para usuario_farms que hayan fallado por 409 Conflict (duplicados de asignación)
+async function healUsuarioFarmsSyncQueue() {
+  try {
+    const ufItems = await db.sync_queue
+      .where('table_name')
+      .equals('usuario_farms')
+      .toArray();
+
+    for (const item of ufItems) {
+      const msg = String(item.error_message || '').toLowerCase();
+      if (msg.includes('409') || msg.includes('duplicate key') || msg.includes('23505') || msg.includes('conflict')) {
+        await db.sync_queue.delete(item.id);
+      }
+    }
+  } catch (err) {
+    console.warn('[Sync Engine] Error en healUsuarioFarmsSyncQueue:', err);
+  }
+}
+
 /**
  * 1. PUSH: De local a la Nube.
  */
 export async function processSyncQueue() {
   await healVaqueriaAnimalsSyncQueue();
+  await healUsuarioFarmsSyncQueue();
 
   const pendingItems = await db.sync_queue
     .where('status')
@@ -148,8 +168,9 @@ export async function processSyncQueue() {
           console.warn(`[Sync Engine] Operación PATCH/UPDATE en ${item.table_name} ignorada: no tiene id.`);
         }
       } else if (item.operation === 'INSERT') {
+        const upsertOptions = item.table_name === 'usuario_farms' ? { onConflict: 'user_id,farm_id' } : {};
         const { error: upsertError } = await withTimeout(
-          supabase.from(item.table_name).upsert(payloadToUpload),
+          supabase.from(item.table_name).upsert(payloadToUpload, upsertOptions),
           15000 // 15s de gracia
         );
         error = upsertError;
@@ -258,7 +279,17 @@ export async function processSyncQueue() {
         }
       }
 
-      if (error) throw error;
+      if (error) {
+        if (item.table_name === 'usuario_farms') {
+          const errMsg = String(error.message || '').toLowerCase();
+          if (error.code === '23505' || error.status === 409 || errMsg.includes('duplicate key') || errMsg.includes('409') || errMsg.includes('conflict')) {
+            console.warn('[Sync Engine] Asignación usuario_farms ya existe en Supabase (409 resuelto). Eliminando de cola local.');
+            await db.sync_queue.delete(item.id);
+            continue;
+          }
+        }
+        throw error;
+      }
 
       // Éxito: Eliminar de la cola local
       await db.sync_queue.delete(item.id);

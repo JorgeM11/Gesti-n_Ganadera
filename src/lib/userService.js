@@ -114,11 +114,17 @@ export async function createUser({ name, email, password, role, farmIds = [], st
   // Si es obrero, asignar fincas
   if (role === 'obrero' && Array.isArray(farmIds) && farmIds.length > 0) {
     for (const farmId of farmIds) {
+      const existingUf = await db.usuario_farms
+        .where('user_id')
+        .equals(userId)
+        .filter(u => u.farm_id === farmId)
+        .first();
+
       const newUf = {
-        id: crypto.randomUUID(),
+        id: existingUf?.id || crypto.randomUUID(),
         user_id: userId,
         farm_id: farmId,
-        created_at: now,
+        created_at: existingUf?.created_at || now,
         updated_at: now,
         deleted_at: null
       };
@@ -208,11 +214,17 @@ export async function updateUser(userId, { name, email, password, role, farmIds 
     // 1. Agregar nuevas
     for (const targetId of farmIds) {
       if (!currentFarmIds.has(targetId)) {
+        const existingUf = await db.usuario_farms
+          .where('user_id')
+          .equals(userId)
+          .filter(u => u.farm_id === targetId)
+          .first();
+
         const newUf = {
-          id: crypto.randomUUID(),
+          id: existingUf?.id || crypto.randomUUID(),
           user_id: userId,
           farm_id: targetId,
-          created_at: now,
+          created_at: existingUf?.created_at || now,
           updated_at: now,
           deleted_at: null
         };
