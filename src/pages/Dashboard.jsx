@@ -467,8 +467,13 @@ export default function DashboardPage() {
       }))
       .sort((a, b) => b.count - a.count);
 
-    // Animales recientes (últimos 10 registrados o modificados)
-    const recientes = filteredAnimals.slice(0, 10);
+    // Animales recientes (últimos 10 registrados o modificados, ordenados de forma descendente)
+    const sortedByRecent = [...filteredAnimals].sort((a, b) => {
+      const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
+      const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
+      return timeB - timeA;
+    });
+    const recientes = sortedByRecent.slice(0, 10);
 
     return {
       total,
@@ -494,11 +499,19 @@ export default function DashboardPage() {
   // Filtrado de auditoría de actividad reciente según rol
   // Si el usuario es 'operador', solo puede ver sus cambios y los del obrero (oculta los del admin)
   const filteredRecientes = useMemo(() => {
-    if (!metrics.recientes) return [];
+    if (!filteredAnimals) return [];
+
+    const sorted = [...filteredAnimals].sort((a, b) => {
+      const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
+      const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
+      return timeB - timeA;
+    });
+
     if (currentUser?.role !== 'operador') {
-      return metrics.recientes;
+      return sorted.slice(0, 10);
     }
-    return filteredAnimals
+
+    return sorted
       .filter((animal) => {
         const modifierUserId = animal.updated_by_user_id || animal.created_by_user_id || animal.user_id;
         const userInfo = getUserInfo(modifierUserId);
@@ -507,7 +520,7 @@ export default function DashboardPage() {
         return false;
       })
       .slice(0, 10);
-  }, [metrics.recientes, filteredAnimals, currentUser, usersMap]);
+  }, [filteredAnimals, currentUser, usersMap]);
 
   // Contar cuántos filtros activos secundarios existen
   const activeSecondaryFiltersCount =

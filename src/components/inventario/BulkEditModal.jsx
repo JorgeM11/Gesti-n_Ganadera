@@ -181,11 +181,17 @@ export default function BulkEditModal({
       const targetAnimals = await db.animals.where('id').anyOf(targetIds).toArray();
       const updatedAnimals = [];
       const syncPatches = [];
+      const currentUserId = localStorage.getItem('ganadera_user_id');
 
       for (const animal of targetAnimals) {
         if (!animal) continue;
         const updated = { ...animal };
         const patchPayload = { id: updated.id, updated_at: now };
+
+        if (currentUserId) {
+          updated.updated_by_user_id = currentUserId;
+          patchPayload.updated_by_user_id = currentUserId;
+        }
 
         // 1. Finca
         if (fieldsToEdit.farm) {

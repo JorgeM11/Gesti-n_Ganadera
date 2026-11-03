@@ -89,12 +89,10 @@ export async function processSyncQueue() {
       // --- SANEAMIENTO PROACTIVO PARA animals ---
       if (item.table_name === 'animals' && payloadToUpload) {
         delete payloadToUpload.inactivated_at;
-        delete payloadToUpload.updated_by_user_id;
 
-        if (item.payload && (item.payload.inactivated_at !== undefined || item.payload.updated_by_user_id !== undefined)) {
+        if (item.payload && item.payload.inactivated_at !== undefined) {
           const cleanedPayload = { ...item.payload };
           delete cleanedPayload.inactivated_at;
-          delete cleanedPayload.updated_by_user_id;
           try {
             await db.sync_queue.update(item.id, { payload: cleanedPayload });
           } catch (_) {}
@@ -468,6 +466,14 @@ export async function pullFromServer() {
               } catch (imgErr) {
                 // Silencioso
               }
+            }
+
+            // Preservación de autoría de cambios locales si el servidor no la retorna
+            if (!record.updated_by_user_id && localRecord?.updated_by_user_id) {
+              record.updated_by_user_id = localRecord.updated_by_user_id;
+            }
+            if (!record.created_by_user_id && localRecord?.created_by_user_id) {
+              record.created_by_user_id = localRecord.created_by_user_id;
             }
           })
         );

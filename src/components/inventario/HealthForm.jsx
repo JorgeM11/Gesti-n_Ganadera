@@ -116,7 +116,13 @@ export default function HealthForm({
         updated_at: now,
       };
 
-      await db.transaction('rw', [db.health_records, db.sync_queue], async () => {
+      const actualUserId = localStorage.getItem('ganadera_user_id') || userId;
+      const animalUpdate = {
+        updated_by_user_id: actualUserId,
+        updated_at: now
+      };
+
+      await db.transaction('rw', [db.health_records, db.animals, db.sync_queue], async () => {
         if (isEditing) {
           await db.health_records.put(recordData);
           await addToSyncQueue('health_records', 'UPDATE', recordData);
@@ -124,6 +130,8 @@ export default function HealthForm({
           await db.health_records.add(recordData);
           await addToSyncQueue('health_records', 'INSERT', recordData);
         }
+        await db.animals.update(animal.id, animalUpdate);
+        await addToSyncQueue('animals', 'PATCH', { id: animal.id, ...animalUpdate });
       });
 
       setShowToast(true);

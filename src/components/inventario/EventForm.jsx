@@ -229,26 +229,33 @@ export default function EventForm({
           syncOps.push({ table_name: 'growth_events', operation: 'INSERT', payload: eventData, created_at: now, status: 'PENDING' });
         }
 
-        // Sincronizar fecha y peso de nacimiento si es un evento de Nacimiento para actualizar la edad y peso en la ficha
+        // Actualizar el animal con autoría de modificación y datos del evento (peso, fecha nacimiento)
+        const actualUserId = localStorage.getItem('ganadera_user_id') || userId;
+        const animalUpdate = {
+          updated_by_user_id: actualUserId,
+          updated_at: now
+        };
+
         if (eventData.event_type === 'Nacimiento') {
-          const actualUserId = localStorage.getItem('ganadera_user_id') || userId;
-          const animalUpdate = {
-            birth_date: eventData.event_date,
-            updated_by_user_id: actualUserId,
-            updated_at: now
-          };
+          animalUpdate.birth_date = eventData.event_date;
           if (eventData.weight_kg) {
             animalUpdate.birth_weight_kg = eventData.weight_kg;
           }
-          await db.animals.update(animal.id, animalUpdate);
-          syncOps.push({
-            table_name: 'animals',
-            operation: 'PATCH',
-            payload: { id: animal.id, ...animalUpdate },
-            created_at: now,
-            status: 'PENDING'
-          });
         }
+
+        if (eventData.weight_kg) {
+          animalUpdate.last_weight_kg = eventData.weight_kg;
+          animalUpdate.last_weight_date = eventData.event_date;
+        }
+
+        await db.animals.update(animal.id, animalUpdate);
+        syncOps.push({
+          table_name: 'animals',
+          operation: 'PATCH',
+          payload: { id: animal.id, ...animalUpdate },
+          created_at: now,
+          status: 'PENDING'
+        });
 
         // Guardar operaciones de sincronización en bloque
         await db.sync_queue.bulkAdd(syncOps);
