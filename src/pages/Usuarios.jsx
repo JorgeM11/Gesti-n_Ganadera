@@ -5,7 +5,6 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { 
   Users, 
   UserPlus, 
-  Search, 
   ShieldCheck, 
   HardHat, 
   ShieldAlert, 
@@ -46,7 +45,6 @@ export default function Usuarios() {
 
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [selectedUserToEdit, setSelectedUserToEdit] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL'); // 'ALL' | 'operador' | 'obrero' | 'INACTIVOS'
 
   // Modal de confirmación para inactivar / activar
@@ -111,21 +109,12 @@ export default function Usuarios() {
 
   // Filtrado de usuarios
   const filteredUsers = useMemo(() => {
-    const cleanSearch = searchQuery.trim().toLowerCase();
-
     return rawUsers.filter(user => {
-      // 1. Filtro por estado / rol
+      // Filtro por estado / rol
       if (roleFilter === 'INACTIVOS') {
         if (user.status !== 'Inactivo') return false;
       } else if (roleFilter !== 'ALL') {
         if (user.role !== roleFilter) return false;
-      }
-
-      // 2. Filtro por búsqueda de texto
-      if (cleanSearch) {
-        const matchesName = (user.name || '').toLowerCase().includes(cleanSearch);
-        const matchesEmail = (user.email || '').toLowerCase().includes(cleanSearch);
-        return matchesName || matchesEmail;
       }
 
       return true;
@@ -136,7 +125,7 @@ export default function Usuarios() {
       if (b.status === 'Activo' && a.status === 'Inactivo') return 1;
       return (a.name || '').localeCompare(b.name || '');
     });
-  }, [rawUsers, roleFilter, searchQuery]);
+  }, [rawUsers, roleFilter]);
 
   const handleOpenCreate = () => {
     setSelectedUserToEdit(null);
@@ -235,125 +224,61 @@ export default function Usuarios() {
           )}
         </AnimatePresence>
 
-        {/* 1. Métrica Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
-          {/* Total */}
-          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-neutral-200/80 shadow-2xs flex flex-col justify-between">
-            <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400">Total Usuarios</span>
-            <div className="flex items-baseline justify-between mt-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-neutral-900">{stats.total}</span>
-              <Users className="w-5 h-5 text-neutral-400" />
-            </div>
-          </div>
+        {/* Selector de Filtros de Rol */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <button
+            type="button"
+            onClick={() => setRoleFilter('ALL')}
+            className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap shadow-xs ${
+              roleFilter === 'ALL'
+                ? 'bg-[#1B4820] text-white'
+                : 'bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200/80'
+            }`}
+          >
+            Todos ({stats.total})
+          </button>
 
-          {/* Operadores */}
-          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-blue-200/70 shadow-2xs flex flex-col justify-between bg-gradient-to-br from-white to-blue-50/20">
-            <span className="text-[10px] font-black uppercase tracking-wider text-blue-700">Operadores</span>
-            <div className="flex items-baseline justify-between mt-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-blue-800">{stats.operadores}</span>
-              <ShieldCheck className="w-5 h-5 text-blue-600" />
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => setRoleFilter('operador')}
+            className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shadow-xs ${
+              roleFilter === 'operador'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200/80'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>Operadores ({stats.operadores})</span>
+          </button>
 
-          {/* Obreros */}
-          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-amber-200/70 shadow-2xs flex flex-col justify-between bg-gradient-to-br from-white to-amber-50/20">
-            <span className="text-[10px] font-black uppercase tracking-wider text-amber-800">Obreros</span>
-            <div className="flex items-baseline justify-between mt-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-amber-900">{stats.obreros}</span>
-              <HardHat className="w-5 h-5 text-amber-600" />
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => setRoleFilter('obrero')}
+            className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shadow-xs ${
+              roleFilter === 'obrero'
+                ? 'bg-amber-600 text-white'
+                : 'bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200/80'
+            }`}
+          >
+            <HardHat className="w-4 h-4" />
+            <span>Obreros ({stats.obreros})</span>
+          </button>
 
-          {/* Inactivos */}
-          <div className="bg-white p-4 sm:p-5 rounded-3xl border border-neutral-200/80 shadow-2xs flex flex-col justify-between">
-            <span className="text-[10px] font-black uppercase tracking-wider text-neutral-400">Inactivos</span>
-            <div className="flex items-baseline justify-between mt-1.5">
-              <span className="text-2xl sm:text-3xl font-black text-neutral-600">{stats.inactivos}</span>
-              <UserX className="w-5 h-5 text-neutral-400" />
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => setRoleFilter('INACTIVOS')}
+            className={`px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 shadow-xs ${
+              roleFilter === 'INACTIVOS'
+                ? 'bg-neutral-800 text-white'
+                : 'bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200/80'
+            }`}
+          >
+            <UserX className="w-4 h-4" />
+            <span>Inactivos ({stats.inactivos})</span>
+          </button>
         </div>
 
-        {/* 2. Barra de Búsqueda y Filtros de Rol */}
-        <div className="bg-white rounded-3xl p-4 md:p-5 shadow-sm border border-neutral-200/80 space-y-3.5">
-          <div className="flex flex-col md:flex-row items-center gap-3">
-            {/* Buscador */}
-            <div className="relative flex-1 w-full">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar usuario por nombre o correo electrónico..."
-                className="w-full pl-10 pr-4 py-3 bg-neutral-50 border border-neutral-200 rounded-2xl text-xs sm:text-sm font-semibold text-neutral-900 outline-none focus:ring-2 focus:ring-[#1B4820]/20 transition-all placeholder:text-neutral-400"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Selector de Píldoras de Filtro */}
-            <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-              <button
-                type="button"
-                onClick={() => setRoleFilter('ALL')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                  roleFilter === 'ALL'
-                    ? 'bg-[#1B4820] text-white shadow-xs'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                }`}
-              >
-                Todos ({stats.total})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setRoleFilter('operador')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                  roleFilter === 'operador'
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Operadores ({stats.operadores})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setRoleFilter('obrero')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                  roleFilter === 'obrero'
-                    ? 'bg-amber-600 text-white shadow-xs'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                }`}
-              >
-                <HardHat className="w-3.5 h-3.5" />
-                <span>Obreros ({stats.obreros})</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setRoleFilter('INACTIVOS')}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                  roleFilter === 'INACTIVOS'
-                    ? 'bg-neutral-800 text-white shadow-xs'
-                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                }`}
-              >
-                Inactivos ({stats.inactivos})
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* 3. Listado de Usuarios */}
+        {/* Listado de Usuarios */}
         {filteredUsers.length === 0 ? (
           <div className="bg-white rounded-3xl p-10 border border-neutral-200/80 text-center space-y-3 shadow-xs max-w-lg mx-auto">
             <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-[#1B4820] flex items-center justify-center mx-auto shadow-inner">
@@ -361,19 +286,8 @@ export default function Usuarios() {
             </div>
             <h3 className="text-base font-black text-neutral-900">No se encontraron usuarios</h3>
             <p className="text-xs text-neutral-500 font-medium max-w-sm mx-auto">
-              {searchQuery
-                ? 'No hay usuarios que coincidan con la búsqueda actual.'
-                : 'No hay usuarios registrados bajo este filtro.'}
+              No hay usuarios registrados bajo este filtro.
             </p>
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery('')}
-                className="text-xs font-bold text-[#1B4820] hover:underline cursor-pointer pt-1 block mx-auto"
-              >
-                Limpiar búsqueda
-              </button>
-            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5">
