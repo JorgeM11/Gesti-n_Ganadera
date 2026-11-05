@@ -324,7 +324,7 @@ export default function ManualAddModal({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
-                  {activeTab === 'arete' && 'Número de Arete o Lomo'}
+                  {activeTab === 'arete' && 'Número de Arete'}
                   {activeTab === 'chip' && 'Código de Microchip'}
                   {activeTab === 'name' && 'Nombre del Animal'}
                 </label>
@@ -390,7 +390,7 @@ export default function ManualAddModal({
                       Arete #{selectedAnimal.number} {selectedAnimal.name ? `• ${selectedAnimal.name}` : ''}
                     </h4>
                     <p className="text-[11px] font-bold text-emerald-700">
-                      {selectedAnimal.chip_number ? `Chip: ${selectedAnimal.chip_number}` : 'Sin chip'} • {selectedAnimal.sex ? `${selectedAnimal.sex} • ` : ''}{selectedAnimal.breed || 'Mestizo'}
+                      {selectedAnimal.chip_number ? `Chip: ${selectedAnimal.chip_number}` : 'Sin chip'}
                     </p>
                   </div>
                 </div>
@@ -441,7 +441,7 @@ export default function ManualAddModal({
                               </span>
                             )}
                             <div className="text-[10px] font-medium text-neutral-400">
-                              {animal.chip_number ? `Chip: ${animal.chip_number}` : 'Sin chip'} • {animal.sex ? `${animal.sex} • ` : ''}{animal.breed || 'Mestizo'}
+                              {animal.chip_number ? `Chip: ${animal.chip_number}` : 'Sin chip'}
                             </div>
                           </div>
                         </div>
