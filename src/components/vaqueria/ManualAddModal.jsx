@@ -72,6 +72,12 @@ export default function ManualAddModal({
         if (aExact && !bExact) return -1;
         if (!aExact && bExact) return 1;
       }
+      if (activeTab === 'name') {
+        const aExact = normalizeText(a.name) === query;
+        const bExact = normalizeText(b.name) === query;
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+      }
       return 0;
     })
     .slice(0, 10); // Máximo 10 sugerencias priorizando coincidencias exactas
@@ -132,8 +138,43 @@ export default function ManualAddModal({
       }
     }
 
+    // Si estamos en la pestaña nombre y no se seleccionó previamente un animal de la lista:
+    if (activeTab === 'name' && !animalToRegister && clean) {
+      const query = normalizeText(clean);
+      const exactMatches = allAnimals.filter(a =>
+        a.status !== 'Inactivo' &&
+        (!farmId || a.farm_id === farmId) &&
+        normalizeText(a.name) === query
+      );
+
+      if (exactMatches.length === 1) {
+        // Si solo hay un animal con ese nombre, lo seleccionamos automáticamente
+        animalToRegister = exactMatches[0];
+      } else if (exactMatches.length >= 2) {
+        // Si son 2 o más con el mismo nombre, avisar que debe seleccionar 1 de ellos
+        playErrorBeep();
+        setError(`Hay ${exactMatches.length} animales con el nombre "${clean}". Debe seleccionar 1 de la lista.`);
+        return;
+      }
+    }
+
+    // Si estamos en la pestaña chip y no se seleccionó previamente un animal de la lista:
+    if (activeTab === 'chip' && !animalToRegister && clean) {
+      const match = allAnimals.find(a =>
+        a.status !== 'Inactivo' &&
+        (!farmId || a.farm_id === farmId) &&
+        a.chip_number && a.chip_number.trim() === clean
+      );
+      if (match) {
+        animalToRegister = match;
+      }
+    }
+
     if (animalToRegister && animalToRegister.status === 'Inactivo') {
-      setError(`El animal Arete #${animalToRegister.number} está inactivo y no puede registrar asistencia.`);
+      const desc = animalToRegister.number 
+        ? `Arete #${animalToRegister.number}` 
+        : (animalToRegister.name ? `"${animalToRegister.name}"` : 'El animal');
+      setError(`El animal ${desc} está inactivo y no puede registrar asistencia.`);
       return;
     }
 
@@ -148,7 +189,10 @@ export default function ManualAddModal({
     // Validación de duplicidad en la lista actual
     if (animalToRegister) {
       if (presentAnimalIds.has(animalToRegister.id)) {
-        setError(`El animal Arete #${animalToRegister.number} ya está registrado en este evento.`);
+        const desc = animalToRegister.number 
+          ? `Arete #${animalToRegister.number}` 
+          : (animalToRegister.name ? `"${animalToRegister.name}"` : 'El animal');
+        setError(`El animal ${desc} ya está registrado en este evento.`);
         return;
       }
     } else {
@@ -156,16 +200,8 @@ export default function ManualAddModal({
         setError(`El microchip ${clean} ya está registrado en este evento.`);
         return;
       }
-      if (activeTab === 'name') {
-        const presentNames = new Set(
-          existingPresent.map(r => (r.name || '').trim().toLowerCase()).filter(Boolean)
-        );
-        if (presentNames.has(clean.toLowerCase())) {
-          setError(`El animal con nombre "${clean}" ya está registrado en este evento.`);
-          return;
-        }
-      }
-      // NOTA: Para 'arete' NO validamos presentNumbers.has(clean) porque pueden existir animales con el mismo número
+      // NOTA: Para 'arete' y 'name' manual no registrado NO se bloquea duplicidad,
+      // permitiendo registrar animales con igual número o nombre.
     }
 
     // Validación de pertenencia a la finca si se ingresa un código que pertenece a otra finca

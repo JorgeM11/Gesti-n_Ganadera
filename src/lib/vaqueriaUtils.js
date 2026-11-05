@@ -483,36 +483,22 @@ export async function addAnimalToVaqueria({
   if (targetAnimal) {
     if (presentAnimalIds.has(targetAnimal.id)) {
       isDuplicate = true;
-      duplicateField = `Animal Arete #${targetAnimal.number}`;
+      duplicateField = targetAnimal.number ? `Animal Arete #${targetAnimal.number}` : (targetAnimal.name ? `Animal "${targetAnimal.name}"` : 'El animal');
     } else if (targetAnimal.chip_number && presentChips.has(targetAnimal.chip_number)) {
       isDuplicate = true;
       duplicateField = `Chip ${targetAnimal.chip_number}`;
-    } else if (identificationType !== 'arete' && targetAnimal.number && presentNumbers.has(targetAnimal.number)) {
-      // Solo validar número si no estamos en registro explícito por arete/lomo (pueden existir animales con igual número)
-      isDuplicate = true;
-      duplicateField = `Arete #${targetAnimal.number}`;
     }
+    // NOTA: No validamos targetAnimal.number contra presentNumbers porque en la finca pueden existir
+    // animales con el mismo número de arete/lomo (ej. vaca y toro con #104).
   } else {
-    // Si no está en BD, comprobar contra los no registrados ya escaneados/ingresados
-    if (identificationType === 'name') {
-      const presentNames = new Set(
-        existingPresent
-          .map(r => (r.name || '').trim().toLowerCase())
-          .filter(Boolean)
-      );
-      if (presentNames.has(cleanCode.toLowerCase())) {
-        isDuplicate = true;
-        duplicateField = `Nombre "${cleanCode}"`;
-      }
-    } else if (is15Digits || identificationType === 'chip') {
+    // Si no está en BD (unregistered): solo el microchip RFID es único e irrepetible
+    if (is15Digits || identificationType === 'chip') {
       if (presentChips.has(cleanCode)) {
         isDuplicate = true;
         duplicateField = `Chip ${cleanCode}`;
       }
-    } else if (identificationType !== 'arete' && presentNumbers.has(cleanCode)) {
-      isDuplicate = true;
-      duplicateField = `Arete #${cleanCode}`;
     }
+    // NOTA: Para 'name' y 'arete' manual no registrado se permite registrar aunque el nombre o número coincida con otro.
   }
 
   if (isDuplicate) {
