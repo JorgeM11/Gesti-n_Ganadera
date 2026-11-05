@@ -111,20 +111,6 @@ export default function CompleteAnimalModal({
       return;
     }
 
-    // Comprobar que el arete no esté duplicado en la misma finca (solo si se especificó arete)
-    if (cleanNumber) {
-      const existingSameNumber = await db.animals
-        .where('farm_id')
-        .equals(farmId)
-        .and(a => !a.deleted_at && a.number && a.number.trim().toLowerCase() === cleanNumber.toLowerCase())
-        .first();
-
-      if (existingSameNumber) {
-        setError(`Ya existe un animal con el arete #${cleanNumber} en esta finca.`);
-        return;
-      }
-    }
-
     // Comprobar que el chip no esté duplicado globalmente (solo si se especificó chip)
     if (cleanChip) {
       const existingSameChip = await db.animals
