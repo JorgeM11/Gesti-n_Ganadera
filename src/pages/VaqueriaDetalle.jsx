@@ -1214,16 +1214,6 @@ export default function VaqueriaDetallePage() {
 
                       {/* Acciones al Final */}
                       <div className="flex items-center gap-1.5 shrink-0">
-                        {!isFinalized && item.animal && (
-                          <button
-                            type="button"
-                            onClick={() => setEditingAnimal(item.animal)}
-                            className="p-1.5 text-neutral-400 hover:text-[#1B4820] hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
-                            title="Editar datos del animal"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </button>
-                        )}
                         {isInactive ? (
                           <span className="text-[10px] font-black uppercase tracking-wider text-neutral-500 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded-lg">
                             Inactivo

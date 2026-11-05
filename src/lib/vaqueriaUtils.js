@@ -265,12 +265,24 @@ export function calculateVaqueriaAnalysis({
   let missingActiveCount = 0;
   let missingInactiveCount = 0;
 
+  // Frecuencia de números en esperados para no dar por presente erróneamente si se repite el número
+  const numberFrequency = new Map();
+  expectedAnimals.forEach(a => {
+    if (a.number) {
+      const n = normalizeText(a.number);
+      numberFrequency.set(n, (numberFrequency.get(n) || 0) + 1);
+    }
+  });
+
   expectedAnimals.forEach(expAnimal => {
-    // Comprobar si estuvo presente por ID, chip o arete
+    // Comprobar si estuvo presente por ID, chip o arete (solo si el número es único en la finca)
+    const normalizedNum = expAnimal.number ? normalizeText(expAnimal.number) : '';
+    const isUniqueInFarm = normalizedNum ? (numberFrequency.get(normalizedNum) || 0) === 1 : false;
+
     const wasPresent = 
       presentAnimalIdsSet.has(expAnimal.id) ||
       (expAnimal.chip_number && presentChipsSet.has(expAnimal.chip_number)) ||
-      (expAnimal.number && presentNumbersSet.has(expAnimal.number));
+      (isUniqueInFarm && expAnimal.number && presentNumbersSet.has(expAnimal.number));
 
     if (!wasPresent) {
       const isAlreadyInactive = expAnimal.status === 'Inactivo';
@@ -475,7 +487,8 @@ export async function addAnimalToVaqueria({
     } else if (targetAnimal.chip_number && presentChips.has(targetAnimal.chip_number)) {
       isDuplicate = true;
       duplicateField = `Chip ${targetAnimal.chip_number}`;
-    } else if (targetAnimal.number && presentNumbers.has(targetAnimal.number)) {
+    } else if (identificationType !== 'arete' && targetAnimal.number && presentNumbers.has(targetAnimal.number)) {
+      // Solo validar número si no estamos en registro explícito por arete/lomo (pueden existir animales con igual número)
       isDuplicate = true;
       duplicateField = `Arete #${targetAnimal.number}`;
     }
@@ -496,7 +509,7 @@ export async function addAnimalToVaqueria({
         isDuplicate = true;
         duplicateField = `Chip ${cleanCode}`;
       }
-    } else if (presentNumbers.has(cleanCode)) {
+    } else if (identificationType !== 'arete' && presentNumbers.has(cleanCode)) {
       isDuplicate = true;
       duplicateField = `Arete #${cleanCode}`;
     }

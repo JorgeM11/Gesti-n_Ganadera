@@ -42,7 +42,7 @@ export default function ManualAddModal({
     }
   }, [isOpen, activeTab]);
 
-  // Sugerencias de animales según la pestaña y el input (exclusivas de esta finca y máximo 5)
+  // Sugerencias de animales según la pestaña y el input (exclusivas de esta finca y máximo 10)
   const suggestions = useMemo(() => {
     const query = normalizeText(inputValue);
     if (!query) return [];
@@ -64,7 +64,17 @@ export default function ManualAddModal({
         return normalizeText(animal.name).includes(query);
       }
       return false;
-    }).slice(0, 5); // Máximo 5 sugerencias
+    })
+    .sort((a, b) => {
+      if (activeTab === 'arete') {
+        const aExact = normalizeText(a.number) === query;
+        const bExact = normalizeText(b.number) === query;
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+      }
+      return 0;
+    })
+    .slice(0, 10); // Máximo 10 sugerencias priorizando coincidencias exactas
   }, [allAnimals, activeTab, inputValue, farmId]);
 
   if (!isOpen) return null;
@@ -100,8 +110,30 @@ export default function ManualAddModal({
       return;
     }
 
-    if (selectedAnimal && selectedAnimal.status === 'Inactivo') {
-      setError(`El animal Arete #${selectedAnimal.number} está inactivo y no puede registrar asistencia.`);
+    let animalToRegister = selectedAnimal;
+
+    // Si estamos en la pestaña arete y no se seleccionó previamente un animal de la lista:
+    if (activeTab === 'arete' && !animalToRegister && clean) {
+      const query = normalizeText(clean);
+      const exactMatches = allAnimals.filter(a =>
+        a.status !== 'Inactivo' &&
+        (!farmId || a.farm_id === farmId) &&
+        normalizeText(a.number) === query
+      );
+
+      if (exactMatches.length === 1) {
+        // Si solo hay un animal con ese número, lo seleccionamos automáticamente
+        animalToRegister = exactMatches[0];
+      } else if (exactMatches.length >= 2) {
+        // Si son 2 o más, no registrar a ciegas y exigir que el usuario seleccione 1
+        playErrorBeep();
+        setError(`Hay ${exactMatches.length} animales con el número #${clean}. Debe seleccionar 1 de la lista.`);
+        return;
+      }
+    }
+
+    if (animalToRegister && animalToRegister.status === 'Inactivo') {
+      setError(`El animal Arete #${animalToRegister.number} está inactivo y no puede registrar asistencia.`);
       return;
     }
 
@@ -114,9 +146,9 @@ export default function ManualAddModal({
     }
 
     // Validación de duplicidad en la lista actual
-    if (selectedAnimal) {
-      if (presentAnimalIds.has(selectedAnimal.id)) {
-        setError(`El animal Arete #${selectedAnimal.number} ya está registrado en este evento.`);
+    if (animalToRegister) {
+      if (presentAnimalIds.has(animalToRegister.id)) {
+        setError(`El animal Arete #${animalToRegister.number} ya está registrado en este evento.`);
         return;
       }
     } else {
@@ -124,14 +156,20 @@ export default function ManualAddModal({
         setError(`El microchip ${clean} ya está registrado en este evento.`);
         return;
       }
-      if (activeTab === 'arete' && presentNumbers.has(clean)) {
-        setError(`El arete #${clean} ya está registrado en este evento.`);
-        return;
+      if (activeTab === 'name') {
+        const presentNames = new Set(
+          existingPresent.map(r => (r.name || '').trim().toLowerCase()).filter(Boolean)
+        );
+        if (presentNames.has(clean.toLowerCase())) {
+          setError(`El animal con nombre "${clean}" ya está registrado en este evento.`);
+          return;
+        }
       }
+      // NOTA: Para 'arete' NO validamos presentNumbers.has(clean) porque pueden existir animales con el mismo número
     }
 
     // Validación de pertenencia a la finca si se ingresa un código que pertenece a otra finca
-    if (!selectedAnimal && farmId) {
+    if (!animalToRegister && farmId) {
       let otherFarmAnimal = null;
       if (activeTab === 'chip' || /^\d{15}$/.test(clean)) {
         otherFarmAnimal = allAnimals.find(a => a.chip_number && a.chip_number.trim() === clean && a.farm_id && a.farm_id !== farmId);
@@ -171,7 +209,7 @@ export default function ManualAddModal({
       const result = await onRegister({
         code: clean,
         identificationType: activeTab,
-        manualAnimal: selectedAnimal
+        manualAnimal: animalToRegister
       });
 
       if (result && !result.success) {
@@ -286,7 +324,7 @@ export default function ManualAddModal({
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider">
-                  {activeTab === 'arete' && 'Número de Arete'}
+                  {activeTab === 'arete' && 'Número de Arete o Lomo'}
                   {activeTab === 'chip' && 'Código de Microchip'}
                   {activeTab === 'name' && 'Nombre del Animal'}
                 </label>
@@ -352,7 +390,7 @@ export default function ManualAddModal({
                       Arete #{selectedAnimal.number} {selectedAnimal.name ? `• ${selectedAnimal.name}` : ''}
                     </h4>
                     <p className="text-[11px] font-bold text-emerald-700">
-                      {selectedAnimal.chip_number ? `Chip: ${selectedAnimal.chip_number}` : 'Sin chip'} • {selectedAnimal.sex}
+                      {selectedAnimal.chip_number ? `Chip: ${selectedAnimal.chip_number}` : 'Sin chip'} • {selectedAnimal.sex ? `${selectedAnimal.sex} • ` : ''}{selectedAnimal.breed || 'Mestizo'}
                     </p>
                   </div>
                 </div>
@@ -403,7 +441,7 @@ export default function ManualAddModal({
                               </span>
                             )}
                             <div className="text-[10px] font-medium text-neutral-400">
-                              {animal.chip_number ? `Chip: ${animal.chip_number}` : 'Sin chip'} • {animal.breed || 'Mestizo'}
+                              {animal.chip_number ? `Chip: ${animal.chip_number}` : 'Sin chip'} • {animal.sex ? `${animal.sex} • ` : ''}{animal.breed || 'Mestizo'}
                             </div>
                           </div>
                         </div>
