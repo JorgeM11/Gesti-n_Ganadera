@@ -276,7 +276,7 @@ flowchart TD
      - Campo en el formulario y ficha técnica para registrar de dónde proviene el animal (finca de origen, procedencia, compra, etc.).
    - [x] **18. Inactivación por venta con registro de destino**:
      - Al seleccionar motivo "Venta", el campo de detalles conmuta automáticamente a "Comprador o destino" formateando como `Venta: [comprador o destino]`.
-   - [ ] **19. Evento de muerte en módulo de Evolución**:
+   - [x] **19. Evento de muerte en módulo de Evolución**:
      - Incluir la opción "Muerte" dentro de los eventos del módulo de evolución (`growth_events`), conectándolo directamente con el apartado de información de baja/muerte en el perfil del animal.
 
 2. **Evolución del Módulo de Vaquería a Eventos**:
@@ -340,3 +340,4 @@ flowchart TD
 | **Fase 4 - Req 17: Origen y Procedencia del Animal** | 2026-11-02 | **Completado** | Antigravity AI & Usuario | Nuevo campo origin en formulario AnimalForm (ubicado bajo Raza), persistencia en Dexie v12, sincronización con Supabase y visualización en ficha técnica. |
 | **Fase 4 - Req 11: Módulo de Gestión de Usuarios y Fincas** | 2026-11-03 | **Completado** | Antigravity AI & Usuario | Vista exclusiva para Administrador (/usuarios) para crear, editar, inactivar y asignar fincas a obreros con persistencia local y sincronización. |
 | **Fase 4 - Req 12: Rol de Usuario Operador** | 2026-11-03 | **Completado** | Antigravity AI & Usuario | Rol operador con acceso total a inventario, eventos, fincas y dashboard; restringido de gestión de usuarios y con historial de cambios filtrado a sus modificaciones y las de obreros. |
+| **Fase 4 - Req 19: Inactivación por Muerte en Evolución** | 2026-11-07 | **Completado** | Antigravity AI & Usuario | Evento Muerte en Evolución con formulario especial (solo foto y descripción, sin fecha), siempre primero en timeline, sincronización bidireccional con Detalles e integridad de BDD. |
