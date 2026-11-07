@@ -634,6 +634,36 @@ export async function inactivateAnimalDirectly({ animalId, reason }) {
     updated_at: now
   });
 
+  if (reason && reason.trim().toLowerCase().startsWith('muerte')) {
+    const existingDeath = await db.growth_events
+      .where('animal_id')
+      .equals(animalId)
+      .and(e => !e.deleted_at && (e.event_type || '').toLowerCase() === 'muerte')
+      .first();
+
+    if (!existingDeath) {
+      const deathEvt = {
+        id: crypto.randomUUID(),
+        user_id: animal.user_id,
+        animal_id: animalId,
+        event_type: 'Muerte',
+        event_date: now.split('T')[0],
+        weight_kg: null,
+        mother_weight_kg: null,
+        scrotal_circumference_cm: null,
+        navel_length: null,
+        observations: reason.includes(':') ? reason.split(':').slice(1).join(':').trim() : (reason.trim().toLowerCase() === 'muerte' ? null : reason),
+        photo_path: null,
+        photo_blob: null,
+        created_at: now,
+        updated_at: now,
+        deleted_at: null
+      };
+      await db.growth_events.add(deathEvt);
+      await addToSyncQueue('growth_events', 'INSERT', deathEvt);
+    }
+  }
+
   return updatedAnimal;
 }
 

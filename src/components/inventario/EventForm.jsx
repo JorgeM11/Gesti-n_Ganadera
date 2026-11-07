@@ -13,7 +13,8 @@ import {
   Loader2,
   Info,
   Trash2,
-  Scale
+  Scale,
+  Skull
 } from "lucide-react";
 
 // Importaciones Core
@@ -37,8 +38,8 @@ export default function EventForm({
   const isEditing = !!initialValues?.id;
 
   // --- OPCIONES ---
-  const tipoOpciones = ["Nacimiento", "Destete", "Peso a los 12 meses", "Peso a los 18 meses", "Otro"];
-  const knownTypes = ["Nacimiento", "Destete", "Peso a los 12 meses", "Peso a los 18 meses"];
+  const tipoOpciones = ["Nacimiento", "Destete", "Peso a los 12 meses", "Peso a los 18 meses", "Muerte", "Otro"];
+  const knownTypes = ["Nacimiento", "Destete", "Peso a los 12 meses", "Peso a los 18 meses", "Muerte"];
 
   // --- ESTADOS REACT ---
   const [tipoEvento, setTipoEvento] = useState(() => {
@@ -64,9 +65,17 @@ export default function EventForm({
     // FASE 2: Prioridad absoluta al binario local para modo Offline
     if (initialValues?.photo_blob) return URL.createObjectURL(initialValues.photo_blob);
     if (initialValues?.photo_path) return initialValues.photo_path;
+    if (initialValues?.event_type === 'Muerte') {
+      if (animal?.death_photo_blob) return URL.createObjectURL(animal.death_photo_blob);
+      if (animal?.death_photo_path) return animal.death_photo_path;
+    }
     return null;
   });
-  const [photoBlob, setPhotoBlob] = useState(null);
+  const [photoBlob, setPhotoBlob] = useState(() => {
+    if (initialValues?.photo_blob) return initialValues.photo_blob;
+    if (initialValues?.event_type === 'Muerte' && animal?.death_photo_blob) return animal.death_photo_blob;
+    return null;
+  });
   const [isPhotoModified, setIsPhotoModified] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -78,16 +87,23 @@ export default function EventForm({
       pesoCria: initialValues?.weight_kg || "",
       circunferencia: initialValues?.scrotal_circumference_cm || "",
       largoViril: initialValues?.navel_length || "",
-      observaciones: initialValues?.observations || "",
+      observaciones: initialValues?.observations || (
+        initialValues?.event_type === 'Muerte' && animal?.inactivity_reason
+          ? (animal.inactivity_reason.includes(':') 
+              ? animal.inactivity_reason.split(':').slice(1).join(':').trim() 
+              : (animal.inactivity_reason.toLowerCase() === 'muerte' ? '' : animal.inactivity_reason))
+          : ""
+      ),
     },
   });
 
   // --- REGLAS CONDICIONALES DE VISIBILIDAD ---
   const currentEventType = tipoEvento === "Otro" && eventoPersonalizado ? eventoPersonalizado : tipoEvento;
+  const isMuerte = currentEventType?.trim().toLowerCase() === 'muerte';
   const isNacimiento = currentEventType?.trim().toLowerCase() === 'nacimiento';
   const isFemale = animal?.sex === 'Hembra';
-  // Ocultar Circunferencia Escrotal si está seleccionado Nacimiento o si es hembra
-  const showScrotal = !isNacimiento && !isFemale;
+  // Ocultar Circunferencia Escrotal si está seleccionado Nacimiento, si es hembra o si es Muerte
+  const showScrotal = !isNacimiento && !isFemale && !isMuerte;
 
   // --- SINCRONIZACIÓN DE FOTO (MODO EDICIÓN) ---
   useEffect(() => {
@@ -96,13 +112,16 @@ export default function EventForm({
         setPhotoPreview(URL.createObjectURL(initialValues.photo_blob));
       } else if (initialValues.photo_path) {
         setPhotoPreview(initialValues.photo_path);
+      } else if (initialValues.event_type === 'Muerte') {
+        if (animal?.death_photo_blob) setPhotoPreview(URL.createObjectURL(animal.death_photo_blob));
+        else if (animal?.death_photo_path) setPhotoPreview(animal.death_photo_path);
       }
     }
-  }, [initialValues, isEditing]);
+  }, [initialValues, isEditing, animal]);
 
   // --- LÓGICA DE DUPLICADOS ---
   const isDuplicateBlocked = useMemo(() => {
-    const uniqueEvents = ['Nacimiento', 'Destete'];
+    const uniqueEvents = ['Nacimiento', 'Destete', 'Muerte'];
     if (!uniqueEvents.includes(tipoEvento)) return false;
     return existingEvents?.some(e => e.event_type === tipoEvento && e.id !== initialValues?.id);
   }, [tipoEvento, existingEvents, initialValues]);
@@ -144,6 +163,26 @@ export default function EventForm({
       setTipoEvento(opcion);
       setEventoPersonalizado("");
       setIsTipoOpen(false);
+
+      if (opcion === "Muerte") {
+        if (!photoPreview && !photoBlob) {
+          if (animal?.death_photo_blob) {
+            setPhotoBlob(animal.death_photo_blob);
+            setPhotoPreview(URL.createObjectURL(animal.death_photo_blob));
+          } else if (animal?.death_photo_path) {
+            setPhotoPreview(animal.death_photo_path);
+          }
+        }
+        const currentObs = watch("observaciones");
+        if (!currentObs && animal?.inactivity_reason) {
+          const notes = animal.inactivity_reason.includes(':') 
+            ? animal.inactivity_reason.split(':').slice(1).join(':').trim() 
+            : (animal.inactivity_reason.toLowerCase() === 'muerte' ? '' : animal.inactivity_reason);
+          if (notes) {
+            setValue("observaciones", notes);
+          }
+        }
+      }
     }
   };
 
@@ -200,28 +239,36 @@ export default function EventForm({
 
       const now = new Date().toISOString();
 
+      const isVirtual = initialValues?.id && String(initialValues.id).startsWith('virtual-death-');
+      const isRealEditing = isEditing && !isVirtual;
+
+      const eventDate = isMuerte
+        ? (initialValues?.event_date || now.split('T')[0])
+        : (data.fechaEvento || now.split('T')[0]);
+
       // --- MAGIA OFFLINE: SOLO GUARDAMOS EL BLOB EN DEXIE ---
       const eventData = {
-        id: isEditing ? initialValues.id : crypto.randomUUID(),
+        id: isRealEditing ? initialValues.id : crypto.randomUUID(),
         user_id: userId,
         animal_id: animal.id,
         event_type: getDisplayTitleExternal(),
-        event_date: data.fechaEvento,
-        weight_kg: data.pesoCria ? parseFloat(data.pesoCria) : null,
-        mother_weight_kg: data.pesoVaca ? parseFloat(data.pesoVaca) : null,
-        scrotal_circumference_cm: showScrotal && data.circunferencia ? parseFloat(data.circunferencia) : null,
-        navel_length: data.largoViril ? data.largoViril.trim() : null,
-        observations: data.observaciones || null,
-        photo_path: isPhotoModified ? null : (isEditing ? initialValues.photo_path : null),
-        photo_blob: photoBlob || (isEditing && !isPhotoModified ? initialValues.photo_blob : null),
-        created_at: isEditing ? initialValues.created_at : now,
+        event_date: eventDate,
+        weight_kg: isMuerte ? null : (data.pesoCria ? parseFloat(data.pesoCria) : null),
+        mother_weight_kg: isMuerte ? null : (data.pesoVaca ? parseFloat(data.pesoVaca) : null),
+        scrotal_circumference_cm: (!isMuerte && showScrotal && data.circunferencia) ? parseFloat(data.circunferencia) : null,
+        navel_length: (!isMuerte && data.largoViril) ? data.largoViril.trim() : null,
+        observations: data.observaciones?.trim() || null,
+        photo_path: isPhotoModified ? null : (isEditing ? initialValues.photo_path : (isMuerte ? (animal?.death_photo_path || null) : null)),
+        photo_blob: photoBlob || (isEditing && !isPhotoModified ? initialValues.photo_blob : (isMuerte && !isPhotoModified ? (animal?.death_photo_blob || null) : null)),
+        created_at: (isRealEditing && initialValues?.created_at) ? initialValues.created_at : now,
         updated_at: now,
+        deleted_at: null
       };
 
       await db.transaction('rw', [db.growth_events, db.animals, db.sync_queue], async () => {
         const syncOps = [];
 
-        if (isEditing) {
+        if (isRealEditing) {
           await db.growth_events.put(eventData);
           syncOps.push({ table_name: 'growth_events', operation: 'UPDATE', payload: eventData, created_at: now, status: 'PENDING' });
         } else {
@@ -229,12 +276,20 @@ export default function EventForm({
           syncOps.push({ table_name: 'growth_events', operation: 'INSERT', payload: eventData, created_at: now, status: 'PENDING' });
         }
 
-        // Actualizar el animal con autoría de modificación y datos del evento (peso, fecha nacimiento)
+        // Actualizar el animal con autoría de modificación y datos del evento (peso, fecha nacimiento o inactivación por muerte)
         const actualUserId = localStorage.getItem('ganadera_user_id') || userId;
         const animalUpdate = {
           updated_by_user_id: actualUserId,
           updated_at: now
         };
+
+        if (isMuerte) {
+          const desc = data.observaciones?.trim();
+          animalUpdate.status = 'Inactivo';
+          animalUpdate.inactivity_reason = desc ? `Muerte: ${desc}` : 'Muerte';
+          animalUpdate.death_photo_blob = eventData.photo_blob || null;
+          animalUpdate.death_photo_path = eventData.photo_path || null;
+        }
 
         if (eventData.event_type === 'Nacimiento') {
           animalUpdate.birth_date = eventData.event_date;
@@ -361,126 +416,138 @@ export default function EventForm({
       </div>
 
       {/* Datos Pesaje */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-        <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-2xs border border-neutral-200/80 flex flex-col focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-1.5 bg-emerald-50 text-[#1B4820] rounded-lg">
-              <Scale className="w-4 h-4" />
+      {!isMuerte && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+          <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-2xs border border-neutral-200/80 flex flex-col focus-within:border-emerald-600 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 bg-emerald-50 text-[#1B4820] rounded-lg">
+                <Scale className="w-4 h-4" />
+              </div>
+              <label className="text-[10px] font-black uppercase tracking-wider text-neutral-500">
+                Peso Animal (KG)
+              </label>
             </div>
-            <label className="text-[10px] font-black uppercase tracking-wider text-neutral-500">
-              Peso Animal (KG)
-            </label>
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder="0.00"
+              onKeyDown={preventInvalidNumberKeys}
+              className="text-2xl font-black text-[#1B4820] outline-none w-full bg-transparent placeholder-neutral-200"
+              {...register("pesoCria", { onChange: handleNumericInput })}
+            />
           </div>
-          <input
-            type="text"
-            inputMode="decimal"
-            placeholder="0.00"
-            onKeyDown={preventInvalidNumberKeys}
-            className="text-2xl font-black text-[#1B4820] outline-none w-full bg-transparent placeholder-neutral-200"
-            {...register("pesoCria", { onChange: handleNumericInput })}
-          />
-        </div>
 
-        <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-2xs border border-neutral-200/80 flex flex-col focus-within:border-amber-600 focus-within:ring-2 focus-within:ring-amber-500/20 transition-all">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="p-1.5 bg-amber-50 text-amber-800 rounded-lg">
-              <Scale className="w-4 h-4" />
+          <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-2xs border border-neutral-200/80 flex flex-col focus-within:border-amber-600 focus-within:ring-2 focus-within:ring-amber-500/20 transition-all">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="p-1.5 bg-amber-50 text-amber-800 rounded-lg">
+                <Scale className="w-4 h-4" />
+              </div>
+              <label className="text-[10px] font-black uppercase tracking-wider text-neutral-500">
+                Peso Madre (KG)
+              </label>
             </div>
-            <label className="text-[10px] font-black uppercase tracking-wider text-neutral-500">
-              Peso Madre (KG)
-            </label>
+            <input
+              type="text"
+              inputMode="decimal"
+              placeholder="0.00"
+              onKeyDown={preventInvalidNumberKeys}
+              className="text-2xl font-black text-amber-900 outline-none w-full bg-transparent placeholder-neutral-200"
+              {...register("pesoVaca", { onChange: handleNumericInput })}
+            />
           </div>
-          <input
-            type="text"
-            inputMode="decimal"
-            placeholder="0.00"
-            onKeyDown={preventInvalidNumberKeys}
-            className="text-2xl font-black text-amber-900 outline-none w-full bg-transparent placeholder-neutral-200"
-            {...register("pesoVaca", { onChange: handleNumericInput })}
-          />
         </div>
-      </div>
+      )}
 
       {/* FECHA Y MEDIDAS */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-neutral-200/80 space-y-5">
-        {/* Fecha del Evento */}
-        <div className="flex flex-col">
-          <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-2 px-1">
-            Fecha del Evento
-          </label>
-          <div className="flex items-center gap-3 bg-neutral-50 hover:bg-neutral-100/80 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-600/30 focus-within:border-emerald-600 rounded-2xl px-4 py-3.5 border border-neutral-200/80 transition-all">
-            <Calendar className="w-5 h-5 text-[#1B4820]/70 flex-shrink-0" />
-            <DateInput className="font-bold text-neutral-900 text-base outline-none w-full bg-transparent" {...register("fechaEvento")} />
+      {!isMuerte && (
+        <div className="bg-white rounded-3xl p-5 sm:p-6 shadow-2xs border border-neutral-200/80 space-y-5">
+          {/* Fecha del Evento */}
+          <div className="flex flex-col">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 mb-2 px-1">
+              Fecha del Evento
+            </label>
+            <div className="flex items-center gap-3 bg-neutral-50 hover:bg-neutral-100/80 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-600/30 focus-within:border-emerald-600 rounded-2xl px-4 py-3.5 border border-neutral-200/80 transition-all">
+              <Calendar className="w-5 h-5 text-[#1B4820]/70 flex-shrink-0" />
+              <DateInput className="font-bold text-neutral-900 text-base outline-none w-full bg-transparent" {...register("fechaEvento")} />
+            </div>
           </div>
-        </div>
 
-        <div className="h-[1px] bg-neutral-100 w-full" />
+          <div className="h-[1px] bg-neutral-100 w-full" />
 
-        {/* Medidas Biológicas: Circunferencia Escrotal y Longitud del Ombligo */}
-        <div className={`grid ${showScrotal ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'} gap-4`}>
-          {showScrotal && (
+          {/* Medidas Biológicas: Circunferencia Escrotal y Longitud del Ombligo */}
+          <div className={`grid ${showScrotal ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'} gap-4`}>
+            {showScrotal && (
+              <div>
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
+                    Circ. Escrotal (CM)
+                  </label>
+                  <span className="text-[10px] text-neutral-400 font-medium">Opcional</span>
+                </div>
+                <div className="flex items-center gap-3 bg-neutral-50 hover:bg-neutral-100/80 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-600/30 focus-within:border-emerald-600 rounded-2xl px-4 py-3.5 border border-neutral-200/80 transition-all">
+                  <Ruler className="w-5 h-5 text-[#1B4820]/70 flex-shrink-0" />
+                  <input 
+                    type="text" 
+                    inputMode="decimal" 
+                    placeholder="0.0" 
+                    onKeyDown={preventInvalidNumberKeys} 
+                    className="font-black text-neutral-900 text-base outline-none w-full bg-transparent placeholder-neutral-300" 
+                    {...register("circunferencia", { onChange: handleNumericInput })} 
+                  />
+                </div>
+              </div>
+            )}
+
             <div>
               <div className="flex items-center justify-between mb-2 px-1">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-                  Circ. Escrotal (CM)
+                  Longitud del Ombligo 
                 </label>
-                <span className="text-[10px] text-neutral-400 font-medium">Opcional</span>
+                
               </div>
               <div className="flex items-center gap-3 bg-neutral-50 hover:bg-neutral-100/80 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-600/30 focus-within:border-emerald-600 rounded-2xl px-4 py-3.5 border border-neutral-200/80 transition-all">
                 <Ruler className="w-5 h-5 text-[#1B4820]/70 flex-shrink-0" />
-                <input 
-                  type="text" 
-                  inputMode="decimal" 
-                  placeholder="0.0" 
-                  onKeyDown={preventInvalidNumberKeys} 
-                  className="font-black text-neutral-900 text-base outline-none w-full bg-transparent placeholder-neutral-300" 
-                  {...register("circunferencia", { onChange: handleNumericInput })} 
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[1-9]"
+                  maxLength={1}
+                  placeholder="1 - 9"
+                  onKeyDown={handleNavelKeyDown}
+                  className="font-black text-neutral-900 text-base outline-none w-full bg-transparent placeholder-neutral-300"
+                  {...register("largoViril", {
+                    onChange: (e) => {
+                      const clean = e.target.value.replace(/[^1-9]/g, '').slice(0, 1);
+                      setValue('largoViril', clean);
+                    }
+                  })}
                 />
               </div>
             </div>
-          )}
-
-          <div>
-            <div className="flex items-center justify-between mb-2 px-1">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-                Longitud del Ombligo 
-              </label>
-              
-            </div>
-            <div className="flex items-center gap-3 bg-neutral-50 hover:bg-neutral-100/80 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-600/30 focus-within:border-emerald-600 rounded-2xl px-4 py-3.5 border border-neutral-200/80 transition-all">
-              <Ruler className="w-5 h-5 text-[#1B4820]/70 flex-shrink-0" />
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[1-9]"
-                maxLength={1}
-                placeholder="1 - 9"
-                onKeyDown={handleNavelKeyDown}
-                className="font-black text-neutral-900 text-base outline-none w-full bg-transparent placeholder-neutral-300"
-                {...register("largoViril", {
-                  onChange: (e) => {
-                    const clean = e.target.value.replace(/[^1-9]/g, '').slice(0, 1);
-                    setValue('largoViril', clean);
-                  }
-                })}
-              />
-            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Observaciones */}
       <div className="bg-white rounded-3xl p-5 shadow-2xs border border-neutral-200/80 space-y-2">
         <div className="flex items-center gap-2 ml-1">
-          <MessageSquare className="w-4 h-4 text-[#1B4820]" />
+          {isMuerte ? (
+            <Skull className="w-4 h-4 text-rose-600" />
+          ) : (
+            <MessageSquare className="w-4 h-4 text-[#1B4820]" />
+          )}
           <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">
-            Observaciones (Opcional)
+            {isMuerte ? "Descripción del Motivo de Muerte (Opcional)" : "Observaciones (Opcional)"}
           </label>
         </div>
         <textarea
-          placeholder="Añade detalles"
+          placeholder={isMuerte ? "Detalla la causa o circunstancias de la muerte..." : "Añade detalles"}
           rows={3}
-          className="font-medium text-neutral-800 text-sm outline-none w-full bg-neutral-50 hover:bg-neutral-100/70 focus:bg-white focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 rounded-2xl p-4 border border-neutral-200/80 transition-all resize-none placeholder-neutral-300 min-h-[90px]"
+          className={`font-medium text-neutral-800 text-sm outline-none w-full bg-neutral-50 hover:bg-neutral-100/70 rounded-2xl p-4 border transition-all resize-none min-h-[90px] ${
+            isMuerte 
+              ? "focus:bg-white focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 border-neutral-200/80 placeholder-neutral-400"
+              : "focus:bg-white focus:ring-2 focus:ring-emerald-600/30 focus:border-emerald-600 border-neutral-200/80 placeholder-neutral-300"
+          }`}
           {...register("observaciones")}
         />
       </div>
@@ -488,11 +555,15 @@ export default function EventForm({
       {/* Fotografía del Evento */}
       <div className="bg-white rounded-3xl p-5 shadow-2xs border border-neutral-200/80 space-y-3">
         <label className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block ml-1">
-          Fotografía del Evento
+          {isMuerte ? "Fotografía de Evidencia (Opcional)" : "Fotografía del Evento"}
         </label>
         <div
           onClick={() => fileInputRef.current?.click()}
-          className="relative h-44 border-2 border-dashed border-neutral-200 hover:border-emerald-600 rounded-2xl flex flex-col items-center justify-center bg-neutral-50/50 hover:bg-emerald-50/20 cursor-pointer active:scale-[0.99] transition-all overflow-hidden group"
+          className={`relative h-44 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center cursor-pointer active:scale-[0.99] transition-all overflow-hidden group ${
+            isMuerte
+              ? "border-neutral-200 hover:border-rose-500 bg-neutral-50/50 hover:bg-rose-50/20"
+              : "border-neutral-200 hover:border-emerald-600 bg-neutral-50/50 hover:bg-emerald-50/20"
+          }`}
         >
           {photoPreview ? (
             <>
@@ -508,12 +579,20 @@ export default function EventForm({
             </>
           ) : (
             <div className="flex flex-col items-center gap-2 text-center p-4">
-              <div className="bg-emerald-50 text-[#1B4820] p-3 rounded-2xl group-hover:bg-emerald-100 group-hover:scale-105 transition-all">
+              <div className={`p-3 rounded-2xl transition-all ${
+                isMuerte
+                  ? "bg-rose-50 text-rose-700 group-hover:bg-rose-100 group-hover:scale-105"
+                  : "bg-emerald-50 text-[#1B4820] group-hover:bg-emerald-100 group-hover:scale-105"
+              }`}>
                 <Camera className="w-6 h-6" />
               </div>
               <div>
-                <span className="text-xs font-black text-neutral-700 block">Tomar o subir foto</span>
-                <span className="text-[10px] text-neutral-400 font-medium">Opcional para documentar el evento</span>
+                <span className="text-xs font-black text-neutral-700 block">
+                  {isMuerte ? "Tomar o subir foto de evidencia" : "Tomar o subir foto"}
+                </span>
+                <span className="text-[10px] text-neutral-400 font-medium">
+                  {isMuerte ? "Opcional para documentar la causa de muerte" : "Opcional para documentar el evento"}
+                </span>
               </div>
             </div>
           )}
@@ -541,7 +620,9 @@ export default function EventForm({
             className={`flex items-center justify-center gap-2 rounded-full py-3.5 font-bold text-xs uppercase tracking-wider transition-all active:scale-95 shadow-md disabled:opacity-50 disabled:cursor-not-allowed ${
               isDuplicateBlocked 
                 ? "bg-neutral-300 text-neutral-500 cursor-not-allowed" 
-                : "bg-[#1B4820] hover:bg-[#123316] text-white cursor-pointer shadow-emerald-900/20"
+                : (isMuerte
+                    ? "bg-rose-700 hover:bg-rose-800 text-white cursor-pointer shadow-rose-900/20"
+                    : "bg-[#1B4820] hover:bg-[#123316] text-white cursor-pointer shadow-emerald-900/20")
             }`}
           >
             {isSaving ? (
@@ -552,7 +633,7 @@ export default function EventForm({
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                <span>{isEditing ? 'Guardar' : 'Registrar'}</span>
+                <span>{isEditing ? 'Guardar' : (isMuerte ? 'Inactivar por Muerte' : 'Registrar')}</span>
               </>
             )}
           </button>

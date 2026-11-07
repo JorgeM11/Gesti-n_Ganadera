@@ -9,7 +9,8 @@ import {
   Calendar,
   Sparkles,
   MessageSquare,
-  Pencil
+  Pencil,
+  Skull
 } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { motion } from 'framer-motion';
@@ -24,6 +25,13 @@ import EventForm from '@/components/inventario/EventForm';
  */
 function getEventTypeBadge(type) {
   const t = (type || '').toLowerCase();
+  if (t.includes('muerte')) {
+    return {
+      bg: 'bg-rose-50 text-rose-800 border-rose-200/80',
+      icon: Skull,
+      dot: 'bg-rose-500'
+    };
+  }
   if (t.includes('nacimiento')) {
     return {
       bg: 'bg-emerald-50 text-emerald-800 border-emerald-200/80',
@@ -57,14 +65,47 @@ export default function EvolutionTab({ animal }) {
   const [editingEvent, setEditingEvent] = useState(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   
-  // Consulta reactiva a los eventos de crecimiento (orden descendente por fecha)
+  // Consulta reactiva a los eventos de crecimiento (Muerte siempre de primero, luego orden descendente por fecha)
   const events = useLiveQuery(
-    () => db.growth_events
-      .where('animal_id').equals(animalId)
-      .and(e => !e.deleted_at)
-      .toArray()
-      .then(res => res.sort((a, b) => b.event_date.localeCompare(a.event_date))),
-    [animalId]
+    async () => {
+      const evts = await db.growth_events
+        .where('animal_id').equals(animalId)
+        .and(e => !e.deleted_at)
+        .toArray();
+
+      // Si el animal está inactivo por muerte y no existe un evento en growth_events,
+      // creamos un evento virtual para que siempre se visualice inmediatamente
+      const hasDeathEvent = evts.some(e => (e.event_type || '').toLowerCase() === 'muerte');
+      const isAnimalDead = animal?.status === 'Inactivo' && (animal?.inactivity_reason || '').toLowerCase().startsWith('muerte');
+
+      if (isAnimalDead && !hasDeathEvent) {
+        const rawReason = animal.inactivity_reason || '';
+        const notes = rawReason.includes(':') ? rawReason.split(':').slice(1).join(':').trim() : '';
+        evts.push({
+          id: `virtual-death-${animal.id}`,
+          animal_id: animal.id,
+          user_id: animal.user_id,
+          event_type: 'Muerte',
+          event_date: (animal.updated_at || animal.created_at || new Date().toISOString()).split('T')[0],
+          observations: notes || null,
+          photo_path: animal.death_photo_path || null,
+          photo_blob: animal.death_photo_blob || null,
+          is_virtual: true
+        });
+      }
+
+      // Ordenar: "Muerte" SIEMPRE de primero de arriba hacia abajo, y luego los demás por fecha descendente
+      evts.sort((a, b) => {
+        const isDeathA = (a.event_type || '').toLowerCase() === 'muerte';
+        const isDeathB = (b.event_type || '').toLowerCase() === 'muerte';
+        if (isDeathA && !isDeathB) return -1;
+        if (!isDeathA && isDeathB) return 1;
+        return (b.event_date || '').localeCompare(a.event_date || '');
+      });
+
+      return evts;
+    },
+    [animalId, animal?.status, animal?.inactivity_reason, animal?.death_photo_path, animal?.death_photo_blob]
   );
 
   if (!animal) return null;
@@ -93,6 +134,7 @@ export default function EvolutionTab({ animal }) {
         {events && events.length > 0 ? (
           events.map((event, i) => {
             const badge = getEventTypeBadge(event.event_type);
+            const isDeath = (event.event_type || '').toLowerCase() === 'muerte';
             // Buscar el evento cronológicamente anterior que tenga peso registrado
             const hasWeight = event.weight_kg !== null && event.weight_kg !== undefined && event.weight_kg !== '';
             const prevWeightEvent = hasWeight
@@ -126,12 +168,16 @@ export default function EvolutionTab({ animal }) {
               <div key={event.id} className="relative">
                 {/* Nodo en la línea de tiempo */}
                 <div className={`absolute -left-[31px] sm:-left-[39px] top-4 w-4 h-4 rounded-full border-[3px] border-[#F7F7F2] shadow-sm z-10 transition-colors ${
-                  i === 0 ? 'bg-[#1B4820] ring-4 ring-emerald-100 animate-pulse' : 'bg-neutral-300'
+                  isDeath 
+                    ? 'bg-rose-600 ring-4 ring-rose-100 animate-pulse' 
+                    : (i === 0 ? 'bg-[#1B4820] ring-4 ring-emerald-100 animate-pulse' : 'bg-neutral-300')
                 }`} />
 
                 {/* Tarjeta de Evento */}
                 <article 
-                  className="flex flex-col bg-white rounded-3xl overflow-hidden shadow-xs hover:shadow-md border border-neutral-100 hover:border-emerald-200/80 transition-all duration-300 group cursor-pointer active:scale-[0.99]"
+                  className={`flex flex-col bg-white rounded-3xl overflow-hidden shadow-xs hover:shadow-md border ${
+                    isDeath ? 'border-rose-200/90 hover:border-rose-300' : 'border-neutral-100 hover:border-emerald-200/80'
+                  } transition-all duration-300 group cursor-pointer active:scale-[0.99]`}
                   onClick={() => setEditingEvent(event)}
                 >
                   {/* Imagen del Evento (solo si existe) */}
@@ -143,9 +189,11 @@ export default function EvolutionTab({ animal }) {
                         alt={event.event_type}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                      <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-md text-white border border-white/20 px-3 py-1 rounded-full text-[10px] font-bold">
-                        {formatDateLocal(event.event_date)}
-                      </div>
+                      {!isDeath && (
+                        <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-md text-white border border-white/20 px-3 py-1 rounded-full text-[10px] font-bold">
+                          {formatDateLocal(event.event_date)}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -157,7 +205,7 @@ export default function EvolutionTab({ animal }) {
                           <badge.icon className="w-3.5 h-3.5" />
                           <span>{event.event_type}</span>
                         </span>
-                        {!(event.photo_blob || event.photo_path) && (
+                        {!(event.photo_blob || event.photo_path) && !isDeath && (
                           <span className="text-xs font-bold text-neutral-400 flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5 text-neutral-400" />
                             {formatDateLocal(event.event_date)}
@@ -165,71 +213,84 @@ export default function EvolutionTab({ animal }) {
                         )}
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
-                        
-                        <div className="text-[#1B4820] bg-emerald-50 md:text-neutral-400 md:bg-transparent md:group-hover:text-[#1B4820] md:group-hover:bg-emerald-50 p-2 rounded-xl transition-all">
+                        <div className={`${
+                          isDeath
+                            ? "text-rose-700 bg-rose-50 md:text-neutral-400 md:bg-transparent md:group-hover:text-rose-700 md:group-hover:bg-rose-50"
+                            : "text-[#1B4820] bg-emerald-50 md:text-neutral-400 md:bg-transparent md:group-hover:text-[#1B4820] md:group-hover:bg-emerald-50"
+                        } p-2 rounded-xl transition-all`}>
                           <Pencil className="w-4 h-4" />
                         </div>
                       </div>
                     </div>
 
                     {/* Métricas Principales */}
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 items-start">
-                      {event.weight_kg !== null && event.weight_kg !== undefined && (
-                        <div className="flex flex-col gap-1.5 min-w-0">
-                          <DataBox 
-                            icon={Scale} 
-                            label="Peso" 
-                            value={formatWeight(event.weight_kg)}
-                          />
-                          {weightDiff !== null && (
-                            <div className="flex items-center gap-1.5 flex-wrap px-0.5">
-                              {/* Ganancia o pérdida total acumulada */}
-                              <span 
-                                title="Variación total de peso respecto al pesaje anterior"
-                                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black border leading-none shrink-0 ${
-                                  Number(weightDiff) >= 0 
-                                    ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80' 
-                                    : 'bg-rose-50 text-rose-800 border-rose-200/80'
-                                }`}
-                              >
-                                {Number(weightDiff) >= 0 ? <TrendingUp className="w-2.5 h-2.5 text-emerald-600 shrink-0" /> : <TrendingDown className="w-2.5 h-2.5 text-rose-600 shrink-0" />}
-                                <span>{Number(weightDiff) >= 0 ? `+${weightDiff} kg` : `${weightDiff} kg`}</span>
-                              </span>
-
-                              {/* Ganancia o pérdida de peso por día (GDP) */}
-                              {dailyGain !== null && (
+                    {(hasWeight || event.mother_weight_kg || event.scrotal_circumference_cm || event.navel_length) && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 items-start">
+                        {event.weight_kg !== null && event.weight_kg !== undefined && (
+                          <div className="flex flex-col gap-1.5 min-w-0">
+                            <DataBox 
+                              icon={Scale} 
+                              label="Peso" 
+                              value={formatWeight(event.weight_kg)}
+                            />
+                            {weightDiff !== null && (
+                              <div className="flex items-center gap-1.5 flex-wrap px-0.5">
+                                {/* Ganancia o pérdida total acumulada */}
                                 <span 
-                                  title={Number(dailyGain) >= 0 
-                                    ? `Ganancia diaria de peso: +${dailyGain} kg/día (${daysBetween} días)` 
-                                    : `Pérdida diaria de peso: ${dailyGain} kg/día (${daysBetween} días)`}
+                                  title="Variación total de peso respecto al pesaje anterior"
                                   className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black border leading-none shrink-0 ${
-                                    Number(dailyGain) >= 0 
+                                    Number(weightDiff) >= 0 
                                       ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80' 
                                       : 'bg-rose-50 text-rose-800 border-rose-200/80'
                                   }`}
                                 >
-                                  <span>{Number(dailyGain) > 0 ? `+${dailyGain} kg/día` : `${dailyGain} kg/día`}</span>
+                                  {Number(weightDiff) >= 0 ? <TrendingUp className="w-2.5 h-2.5 text-emerald-600 shrink-0" /> : <TrendingDown className="w-2.5 h-2.5 text-rose-600 shrink-0" />}
+                                  <span>{Number(weightDiff) >= 0 ? `+${weightDiff} kg` : `${weightDiff} kg`}</span>
                                 </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                      {event.mother_weight_kg && (
-                        <DataBox icon={Scale} label="Peso Madre" value={formatWeight(event.mother_weight_kg)} />
-                      )}
-                      {event.scrotal_circumference_cm && (
-                        <DataBox icon={Ruler} label="Circ. Escrotal" value={`${event.scrotal_circumference_cm} cm`} />
-                      )}
-                      {event.navel_length && (
-                        <DataBox icon={Ruler} label="Largo Ombligo" value={`${event.navel_length}`} />
-                      )}
-                    </div>
+
+                                {/* Ganancia o pérdida de peso por día (GDP) */}
+                                {dailyGain !== null && (
+                                  <span 
+                                    title={Number(dailyGain) >= 0 
+                                      ? `Ganancia diaria de peso: +${dailyGain} kg/día (${daysBetween} días)` 
+                                      : `Pérdida diaria de peso: ${dailyGain} kg/día (${daysBetween} días)`}
+                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black border leading-none shrink-0 ${
+                                      Number(dailyGain) >= 0 
+                                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200/80' 
+                                        : 'bg-rose-50 text-rose-800 border-rose-200/80'
+                                    }`}
+                                  >
+                                    <span>{Number(dailyGain) > 0 ? `+${dailyGain} kg/día` : `${dailyGain} kg/día`}</span>
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {event.mother_weight_kg && (
+                          <DataBox icon={Scale} label="Peso Madre" value={formatWeight(event.mother_weight_kg)} />
+                        )}
+                        {event.scrotal_circumference_cm && (
+                          <DataBox icon={Ruler} label="Circ. Escrotal" value={`${event.scrotal_circumference_cm} cm`} />
+                        )}
+                        {event.navel_length && (
+                          <DataBox icon={Ruler} label="Largo Ombligo" value={`${event.navel_length}`} />
+                        )}
+                      </div>
+                    )}
 
                     {/* Observaciones */}
                     {event.observations && (
-                      <div className="bg-[#F8F9F5] p-3.5 rounded-2xl border border-neutral-100/80 flex items-start gap-2.5">
-                        <MessageSquare className="w-4 h-4 text-[#1B4820] flex-shrink-0 mt-0.5" />
+                      <div className={`${
+                        isDeath 
+                          ? "bg-rose-50/40 border-rose-100" 
+                          : "bg-[#F8F9F5] border-neutral-100/80"
+                      } p-3.5 rounded-2xl border flex items-start gap-2.5`}>
+                        {isDeath ? (
+                          <Skull className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+                        ) : (
+                          <MessageSquare className="w-4 h-4 text-[#1B4820] flex-shrink-0 mt-0.5" />
+                        )}
                         <p className="text-xs text-neutral-700 font-medium leading-relaxed">
                           {event.observations}
                         </p>
@@ -325,8 +386,8 @@ export default function EvolutionTab({ animal }) {
       <BottomSheet
         isOpen={!!editingEvent}
         onClose={() => setEditingEvent(null)}
-        title="Editar Evento"
-        description={`Modifica los detalles del registro de ${editingEvent?.event_type}`}
+        title={editingEvent?.event_type === 'Muerte' ? "Editar Registro de Muerte" : "Editar Evento"}
+        description={editingEvent?.event_type === 'Muerte' ? `Modifica la foto o descripción de la muerte de #${animal.number}` : `Modifica los detalles del registro de ${editingEvent?.event_type}`}
       >
         <EventForm 
           animal={animal}

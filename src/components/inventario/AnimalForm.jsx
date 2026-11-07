@@ -758,6 +758,66 @@ export default function AnimalForm({ initialValues, onSubmitSuccess, onCancel, o
             await addToSyncQueue('growth_events', 'INSERT', newBirthEvent);
           }
         }
+
+        // Sincronización bidireccional de evento 'Muerte' en growth_events
+        const existingDeathEvents = await db.growth_events
+          .where('animal_id')
+          .equals(animalId)
+          .and(e => !e.deleted_at && (e.event_type || '').toLowerCase() === 'muerte')
+          .toArray();
+
+        if (data.status === 'Inactivo' && inactivityReasonType === 'Muerte') {
+          if (existingDeathEvents.length > 0) {
+            const deathEvt = {
+              ...existingDeathEvents[0],
+              event_type: 'Muerte',
+              observations: inactivityNotes.trim() || null,
+              photo_blob: deathPhotoBlobToSave,
+              photo_path: deathPhotoPathToSave,
+              updated_at: now
+            };
+            await db.growth_events.put(deathEvt);
+            await addToSyncQueue('growth_events', 'UPDATE', deathEvt);
+
+            for (let i = 1; i < existingDeathEvents.length; i++) {
+              const dup = { ...existingDeathEvents[i], deleted_at: now, updated_at: now };
+              await db.growth_events.put(dup);
+              await addToSyncQueue('growth_events', 'UPDATE', dup);
+            }
+          } else {
+            const newDeathEvent = {
+              id: crypto.randomUUID(),
+              user_id: effectiveUserId,
+              animal_id: animalId,
+              event_type: 'Muerte',
+              event_date: now.split('T')[0],
+              weight_kg: null,
+              mother_weight_kg: null,
+              scrotal_circumference_cm: null,
+              navel_length: null,
+              observations: inactivityNotes.trim() || null,
+              photo_path: deathPhotoPathToSave,
+              photo_blob: deathPhotoBlobToSave,
+              created_at: now,
+              updated_at: now,
+              deleted_at: null
+            };
+            await db.growth_events.add(newDeathEvent);
+            await addToSyncQueue('growth_events', 'INSERT', newDeathEvent);
+          }
+        } else {
+          // Requerimiento 6: Si en detalles de animal la inactivación se quita o se cambia de motivo,
+          // en evolución el evento desaparece
+          for (const deathEvt of existingDeathEvents) {
+            const softDeleted = {
+              ...deathEvt,
+              deleted_at: now,
+              updated_at: now
+            };
+            await db.growth_events.put(softDeleted);
+            await addToSyncQueue('growth_events', 'UPDATE', softDeleted);
+          }
+        }
       });
 
       setIsSaved(true);

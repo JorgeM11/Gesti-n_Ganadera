@@ -267,6 +267,57 @@ export default function BulkEditModal({
         await addToSyncQueue('animals', 'PATCH', patch);
       }
 
+      // Sincronización con eventos de evolución si se editó el estado (status)
+      if (fieldsToEdit.status) {
+        for (const a of updatedAnimals) {
+          const existingDeathEvents = await db.growth_events
+            .where('animal_id')
+            .equals(a.id)
+            .and(e => !e.deleted_at && (e.event_type || '').toLowerCase() === 'muerte')
+            .toArray();
+
+          if (selectedStatus === 'Inactivo' && inactivityReason === 'Muerte') {
+            const notes = customInactivityNotes.trim() || null;
+            if (existingDeathEvents.length > 0) {
+              const deathEvt = {
+                ...existingDeathEvents[0],
+                observations: notes,
+                updated_at: now
+              };
+              await db.growth_events.put(deathEvt);
+              await addToSyncQueue('growth_events', 'UPDATE', deathEvt);
+            } else {
+              const newDeathEvent = {
+                id: crypto.randomUUID(),
+                user_id: a.user_id,
+                animal_id: a.id,
+                event_type: 'Muerte',
+                event_date: now.split('T')[0],
+                weight_kg: null,
+                mother_weight_kg: null,
+                scrotal_circumference_cm: null,
+                navel_length: null,
+                observations: notes,
+                photo_path: null,
+                photo_blob: null,
+                created_at: now,
+                updated_at: now,
+                deleted_at: null
+              };
+              await db.growth_events.add(newDeathEvent);
+              await addToSyncQueue('growth_events', 'INSERT', newDeathEvent);
+            }
+          } else {
+            // Si el estado pasó a Activo u otro motivo de inactivación, desaparece de evolución
+            for (const deathEvt of existingDeathEvents) {
+              const softDeleted = { ...deathEvt, deleted_at: now, updated_at: now };
+              await db.growth_events.put(softDeleted);
+              await addToSyncQueue('growth_events', 'UPDATE', softDeleted);
+            }
+          }
+        }
+      }
+
       resetForm();
       if (onSuccess) {
         onSuccess(updatedAnimals.length);
