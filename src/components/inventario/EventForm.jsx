@@ -633,7 +633,7 @@ export default function EventForm({
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                <span>{isEditing ? 'Guardar' : (isMuerte ? 'Inactivar por Muerte' : 'Registrar')}</span>
+                <span>{isEditing ? 'Guardar' : (isMuerte ? 'Inactivar' : 'Registrar')}</span>
               </>
             )}
           </button>
