@@ -62,12 +62,6 @@ export default function ManualAddModal({
     const query = normalizeText(inputValue);
     if (!query) return [];
 
-    // Si está en la pestaña chip y solo está el prefijo predeterminado de 11 dígitos,
-    // no saturar la vista con sugerencias masivas hasta que se escriban los dígitos restantes o se busque algo específico
-    if (activeTab === 'chip' && query === DEFAULT_CHIP_PREFIX) {
-      return [];
-    }
-
     return allAnimals.filter(animal => {
       // Regla: No sugerir animales inactivos
       if (animal.status === 'Inactivo') return false;
