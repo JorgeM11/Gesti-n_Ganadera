@@ -380,16 +380,8 @@ export async function addAnimalToVaqueria({
   const presentChips = new Set(existingPresent.map(r => r.chip_number).filter(Boolean));
   const presentNumbers = new Set(existingPresent.map(r => r.number).filter(Boolean));
 
-  // 2. Si es tipo chip o ráfaga de 15 dígitos numéricos, validar longitud ISO
+  // 2. Si es tipo chip o ráfaga de 15 dígitos numéricos
   const is15Digits = /^\d{15}$/.test(cleanCode);
-  if (identificationType === 'chip' && !is15Digits) {
-    playErrorBeep();
-    return {
-      success: false,
-      reason: 'INVALID_CHIP_FORMAT',
-      message: 'El microchip RFID debe tener exactamente 15 dígitos numéricos.'
-    };
-  }
 
   // 3. Buscar si el animal ya existe en la base de datos
   let targetAnimal = manualAnimal;

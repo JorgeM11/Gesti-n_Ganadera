@@ -2,10 +2,13 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Tag, Cpu, User, Search, CheckCircle2, AlertTriangle, Plus } from 'lucide-react';
+import { FaMars, FaVenus } from 'react-icons/fa6';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
-import { normalizeText, isValidChipNumber } from '@/lib/vaqueriaUtils';
+import { normalizeText } from '@/lib/vaqueriaUtils';
 import { playErrorBeep } from '@/lib/audioUtils';
+
+const DEFAULT_CHIP_PREFIX = '90023300833';
 
 export default function ManualAddModal({
   isOpen,
@@ -23,6 +26,14 @@ export default function ManualAddModal({
 
   // Consultar todos los animales activos de la finca y globales
   const allAnimals = useLiveQuery(() => db.animals.filter(a => !a.deleted_at).toArray()) || [];
+
+  // Consultar dueños para resolver el nombre de propietario en recomendaciones
+  const allOwners = useLiveQuery(() => db.owners.filter(o => !o.deleted_at).toArray()) || [];
+  const ownersById = useMemo(() => {
+    const map = new Map();
+    allOwners.forEach(o => map.set(o.id, o.name));
+    return map;
+  }, [allOwners]);
   
   // Animales ya registrados en esta vaquería
   const existingPresent = useLiveQuery(
@@ -36,7 +47,11 @@ export default function ManualAddModal({
 
   useEffect(() => {
     if (isOpen) {
-      setInputValue('');
+      if (activeTab === 'chip') {
+        setInputValue(DEFAULT_CHIP_PREFIX);
+      } else {
+        setInputValue('');
+      }
       setSelectedAnimal(null);
       setError('');
     }
@@ -46,6 +61,12 @@ export default function ManualAddModal({
   const suggestions = useMemo(() => {
     const query = normalizeText(inputValue);
     if (!query) return [];
+
+    // Si está en la pestaña chip y solo está el prefijo predeterminado de 11 dígitos,
+    // no saturar la vista con sugerencias masivas hasta que se escriban los dígitos restantes o se busque algo específico
+    if (activeTab === 'chip' && query === DEFAULT_CHIP_PREFIX) {
+      return [];
+    }
 
     return allAnimals.filter(animal => {
       // Regla: No sugerir animales inactivos
@@ -72,6 +93,12 @@ export default function ManualAddModal({
         if (aExact && !bExact) return -1;
         if (!aExact && bExact) return 1;
       }
+      if (activeTab === 'chip') {
+        const aExact = animal.chip_number === query;
+        const bExact = animal.chip_number === query;
+        if (aExact && !bExact) return -1;
+        if (!aExact && bExact) return 1;
+      }
       if (activeTab === 'name') {
         const aExact = normalizeText(a.name) === query;
         const bExact = normalizeText(b.name) === query;
@@ -87,7 +114,11 @@ export default function ManualAddModal({
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setInputValue('');
+    if (tab === 'chip') {
+      setInputValue(DEFAULT_CHIP_PREFIX);
+    } else {
+      setInputValue('');
+    }
     setSelectedAnimal(null);
     setError('');
   };
@@ -99,7 +130,7 @@ export default function ManualAddModal({
     }
     setSelectedAnimal(animal);
     if (activeTab === 'arete') setInputValue(animal.number || '');
-    if (activeTab === 'chip') setInputValue(animal.chip_number || '');
+    if (activeTab === 'chip') setInputValue(animal.chip_number || DEFAULT_CHIP_PREFIX);
     if (activeTab === 'name') setInputValue(animal.name || '');
     setError('');
   };
@@ -113,6 +144,11 @@ export default function ManualAddModal({
     const clean = inputValue.trim();
     if (!clean && !selectedAnimal) {
       setError('Por favor ingrese o seleccione un código.');
+      return;
+    }
+
+    if (activeTab === 'chip' && clean === DEFAULT_CHIP_PREFIX && !selectedAnimal) {
+      setError('Por favor complete los últimos 4 dígitos del microchip.');
       return;
     }
 
@@ -160,11 +196,20 @@ export default function ManualAddModal({
 
     // Si estamos en la pestaña chip y no se seleccionó previamente un animal de la lista:
     if (activeTab === 'chip' && !animalToRegister && clean) {
-      const match = allAnimals.find(a =>
+      let match = allAnimals.find(a =>
         a.status !== 'Inactivo' &&
         (!farmId || a.farm_id === farmId) &&
         a.chip_number && a.chip_number.trim() === clean
       );
+      // Si el usuario ingresó solo 4 dígitos y no coincide exactamente, probar con el prefijo por defecto
+      if (!match && clean.length === 4) {
+        const fullCandidate = `${DEFAULT_CHIP_PREFIX}${clean}`;
+        match = allAnimals.find(a =>
+          a.status !== 'Inactivo' &&
+          (!farmId || a.farm_id === farmId) &&
+          a.chip_number && a.chip_number.trim() === fullCandidate
+        );
+      }
       if (match) {
         animalToRegister = match;
       }
@@ -176,14 +221,6 @@ export default function ManualAddModal({
         : (animalToRegister.name ? `"${animalToRegister.name}"` : 'El animal');
       setError(`El animal ${desc} está inactivo y no puede registrar asistencia.`);
       return;
-    }
-
-    // Validación de Chip (15 dígitos ISO)
-    if (activeTab === 'chip') {
-      if (!isValidChipNumber(clean)) {
-        setError('El microchip RFID debe tener exactamente 15 dígitos numéricos.');
-        return;
-      }
     }
 
     // Validación de duplicidad en la lista actual
@@ -261,7 +298,6 @@ export default function ManualAddModal({
   };
 
   const isChipTab = activeTab === 'chip';
-  const isChipValidLength = isChipTab ? isValidChipNumber(inputValue.trim()) : true;
 
   const modalContent = (
     <AnimatePresence>
@@ -367,9 +403,9 @@ export default function ManualAddModal({
 
                 {isChipTab && inputValue.trim().length > 0 && (
                   <span className={`text-[11px] font-black px-2 py-0.5 rounded-full ${
-                    isChipValidLength 
+                    inputValue.trim().length === 15 
                       ? 'bg-emerald-100 text-emerald-800' 
-                      : 'bg-amber-100 text-amber-800'
+                      : 'bg-neutral-100 text-neutral-700'
                   }`}>
                     {inputValue.trim().length}/15 dígitos
                   </span>
@@ -381,6 +417,12 @@ export default function ManualAddModal({
                   ref={inputRef}
                   type={isChipTab ? 'tel' : 'text'}
                   value={inputValue}
+                  onFocus={(e) => {
+                    if (isChipTab && e.target.value === DEFAULT_CHIP_PREFIX) {
+                      const len = e.target.value.length;
+                      e.target.setSelectionRange(len, len);
+                    }
+                  }}
                   onChange={(e) => {
                     const val = isChipTab ? e.target.value.replace(/\D/g, '').slice(0, 15) : e.target.value;
                     setInputValue(val);
@@ -395,23 +437,13 @@ export default function ManualAddModal({
                   }}
                   placeholder={
                     activeTab === 'arete' ? 'Ej. 104 o A-25' :
-                    activeTab === 'chip' ? 'Ej. 982000361284915' :
+                    activeTab === 'chip' ? `Ej. ${DEFAULT_CHIP_PREFIX}5230` :
                     'Ej. Mariposa, Relámpago...'
                   }
                   autoComplete="off"
-                  className={`w-full px-4 py-3 bg-neutral-50 border rounded-2xl text-sm font-bold text-neutral-800 placeholder-neutral-400 focus:bg-white focus:ring-2 outline-none transition-all ${
-                    isChipTab && inputValue.trim().length > 0 && !isChipValidLength
-                      ? 'border-amber-300 focus:border-amber-500 focus:ring-amber-500/15'
-                      : 'border-neutral-200 focus:border-[#1B4820] focus:ring-[#1B4820]/15'
-                  }`}
+                  className="w-full px-4 py-3 bg-neutral-50 border rounded-2xl text-sm font-bold text-neutral-800 placeholder-neutral-400 focus:bg-white focus:ring-2 border-neutral-200 focus:border-[#1B4820] focus:ring-[#1B4820]/15 outline-none transition-all"
                 />
               </div>
-
-              {isChipTab && !isChipValidLength && inputValue.trim().length > 0 && (
-                <p className="text-[11px] font-bold text-amber-700 mt-1">
-                  El estándar ganadero ISO exige exactamente 15 dígitos numéricos.
-                </p>
-              )}
             </div>
 
             {/* Animal Seleccionado o Coincidencia en Sistema */}
@@ -422,12 +454,28 @@ export default function ManualAddModal({
                     ✓
                   </div>
                   <div>
-                    <h4 className="text-xs font-black text-emerald-950">
-                      Arete #{selectedAnimal.number} {selectedAnimal.name ? `• ${selectedAnimal.name}` : ''}
-                    </h4>
-                    <p className="text-[11px] font-bold text-emerald-700">
-                      {selectedAnimal.chip_number ? `Chip: ${selectedAnimal.chip_number}` : 'Sin chip'}
-                    </p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h4 className="text-xs font-black text-emerald-950">
+                        Arete #{selectedAnimal.number} {selectedAnimal.name ? `• ${selectedAnimal.name}` : ''}
+                      </h4>
+                      {selectedAnimal.sex === 'Hembra' ? (
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-pink-100 text-pink-700 shrink-0" title="Hembra">
+                          <FaVenus className="w-2.5 h-2.5" />
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 text-blue-700 shrink-0" title="Macho">
+                          <FaMars className="w-2.5 h-2.5" />
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] font-bold text-emerald-700 mt-0.5 flex-wrap">
+                      <span>{selectedAnimal.chip_number ? `Chip: ${selectedAnimal.chip_number}` : 'Sin chip'}</span>
+                      <span className="text-emerald-300">•</span>
+                      <span className="flex items-center gap-1">
+                        <User className="w-3 h-3 text-emerald-600 shrink-0" />
+                        <span>Dueño: {ownersById.get(selectedAnimal.owner_id) || 'Sin dueño'}</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -435,7 +483,7 @@ export default function ManualAddModal({
                   type="button"
                   onClick={() => {
                     setSelectedAnimal(null);
-                    setInputValue('');
+                    setInputValue(activeTab === 'chip' ? DEFAULT_CHIP_PREFIX : '');
                   }}
                   className="p-1.5 text-emerald-700 hover:text-emerald-900 rounded-lg cursor-pointer"
                 >
@@ -453,6 +501,9 @@ export default function ManualAddModal({
                 <div className="max-h-48 overflow-y-auto space-y-1.5 pr-1">
                   {suggestions.map(animal => {
                     const isAlreadyInVaq = presentAnimalIds.has(animal.id);
+                    const ownerName = animal.owner_id ? ownersById.get(animal.owner_id) : null;
+                    const isFemale = animal.sex === 'Hembra';
+
                     return (
                       <button
                         key={animal.id}
@@ -465,32 +516,65 @@ export default function ManualAddModal({
                             : 'bg-white border-neutral-200 hover:border-[#1B4820] hover:bg-neutral-50'
                         }`}
                       >
-                        <div className="flex items-center gap-2.5">
-                          <Tag className="w-4 h-4 text-[#1B4820]" />
-                          <div>
-                            <span className="text-xs font-black text-neutral-900">
-                              #{animal.number}
-                            </span>
-                            {animal.name && (
-                              <span className="text-xs font-bold text-neutral-600 ml-1.5">
-                                ({animal.name})
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          {activeTab === 'chip' ? (
+                            <Cpu className="w-4 h-4 text-[#1B4820] shrink-0" />
+                          ) : activeTab === 'name' ? (
+                            <User className="w-4 h-4 text-[#1B4820] shrink-0" />
+                          ) : (
+                            <Tag className="w-4 h-4 text-[#1B4820] shrink-0" />
+                          )}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs font-black text-neutral-900">
+                                #{animal.number}
                               </span>
-                            )}
-                            <div className="text-[10px] font-medium text-neutral-400">
-                              {animal.chip_number ? `Chip: ${animal.chip_number}` : 'Sin chip'}
+                              {animal.name && (
+                                <span className="text-xs font-bold text-neutral-600 truncate max-w-[120px]">
+                                  ({animal.name})
+                                </span>
+                              )}
+                              {/* Icono del Sexo */}
+                              {isFemale ? (
+                                <span 
+                                  className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-pink-100 text-pink-700 shrink-0" 
+                                  title="Hembra"
+                                >
+                                  <FaVenus className="w-2.5 h-2.5" />
+                                </span>
+                              ) : (
+                                <span 
+                                  className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-100 text-blue-700 shrink-0" 
+                                  title="Macho"
+                                >
+                                  <FaMars className="w-2.5 h-2.5" />
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Información secundaria: Chip y Dueño */}
+                            <div className="flex items-center gap-2 text-[10px] font-medium text-neutral-500 mt-0.5 flex-wrap">
+                              <span>{animal.chip_number ? `Chip: ${animal.chip_number}` : 'Sin chip'}</span>
+                              <span className="text-neutral-300">•</span>
+                              <span className="text-neutral-700 font-bold flex items-center gap-1 truncate max-w-[160px]">
+                                <User className="w-3 h-3 text-neutral-400 shrink-0" />
+                                <span>{ownerName || 'Sin dueño'}</span>
+                              </span>
                             </div>
                           </div>
                         </div>
 
-                        {isAlreadyInVaq ? (
-                          <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md">
-                            Ya en Evento
-                          </span>
-                        ) : (
-                          <span className="text-xs font-bold text-[#1B4820]">
-                            Seleccionar
-                          </span>
-                        )}
+                        <div className="shrink-0 ml-2">
+                          {isAlreadyInVaq ? (
+                            <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-md">
+                              Ya en Evento
+                            </span>
+                          ) : (
+                            <span className="text-xs font-bold text-[#1B4820]">
+                              Seleccionar
+                            </span>
+                          )}
+                        </div>
                       </button>
                     );
                   })}
@@ -524,7 +608,7 @@ export default function ManualAddModal({
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={isSubmitting || (isChipTab && !isChipValidLength)}
+              disabled={isSubmitting || !inputValue.trim() || (isChipTab && inputValue.trim() === DEFAULT_CHIP_PREFIX && !selectedAnimal)}
               className="flex-1 py-3 px-4 bg-[#1B4820] text-white rounded-2xl text-sm font-black shadow-lg shadow-[#1B4820]/25 hover:bg-[#143618] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
             >
               {isSubmitting ? 'Registrando...' : 'Registrar'}
