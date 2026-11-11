@@ -94,8 +94,8 @@ export default function ManualAddModal({
         if (!aExact && bExact) return 1;
       }
       if (activeTab === 'chip') {
-        const aExact = animal.chip_number === query;
-        const bExact = animal.chip_number === query;
+        const aExact = a.chip_number === query;
+        const bExact = b.chip_number === query;
         if (aExact && !bExact) return -1;
         if (!aExact && bExact) return 1;
       }
