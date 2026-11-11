@@ -5,7 +5,7 @@ import { X, Tag, Cpu, Building2, Fence, UserCheck, AlertTriangle } from 'lucide-
 import { FaMars, FaVenus } from 'react-icons/fa6';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
-import { completeUnregisteredAnimal, isValidChipNumber } from '@/lib/vaqueriaUtils';
+import { completeUnregisteredAnimal } from '@/lib/vaqueriaUtils';
 import CustomSelect from '@/components/ui/CustomSelect';
 
 const COMMON_BREEDS = [
@@ -102,12 +102,6 @@ export default function CompleteAnimalModal({
     // Validar que se suministre al menos uno: Arete o Microchip
     if (!cleanNumber && !cleanChip) {
       setError('Debes ingresar al menos el número de arete o el microchip.');
-      return;
-    }
-
-    // Si se proporciona microchip, validar formato de 15 dígitos
-    if (cleanChip && !isValidChipNumber(cleanChip)) {
-      setError('El microchip RFID debe tener exactamente 15 dígitos numéricos.');
       return;
     }
 
@@ -228,7 +222,7 @@ export default function CompleteAnimalModal({
                   type="tel"
                   value={chipNumber}
                   onChange={(e) => setChipNumber(e.target.value.replace(/\D/g, '').slice(0, 15))}
-                  placeholder="Ej. 982000361284915"
+                  placeholder="Ej. 900233008335230"
                   className="w-full px-4 py-2.5 bg-neutral-50 border border-neutral-200 rounded-2xl text-sm font-bold text-neutral-900 focus:bg-white focus:border-[#1B4820] focus:ring-2 focus:ring-[#1B4820]/15 outline-none transition-all font-mono"
                 />
               </div>
