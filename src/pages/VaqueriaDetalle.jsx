@@ -1392,7 +1392,7 @@ export default function VaqueriaDetallePage() {
                         )}
 
                         {canOpenProfile && (
-                          <ChevronRight className="w-4 h-4 text-neutral-300 group-hover:text-[#1B4820] group-hover:translate-x-0.5 transition-all ml-1 shrink-0" />
+                          <ChevronRight className="hidden sm:block w-4 h-4 text-neutral-300 group-hover:text-[#1B4820] group-hover:translate-x-0.5 transition-all ml-1 shrink-0" />
                         )}
                       </div>
                     </div>
@@ -1494,7 +1494,7 @@ export default function VaqueriaDetallePage() {
                           )
                         )}
                         {canOpenMissingProfile && (
-                          <ChevronRight className="w-4 h-4 text-neutral-300 group-hover:text-[#1B4820] group-hover:translate-x-0.5 transition-all ml-1 shrink-0" />
+                          <ChevronRight className="hidden sm:block w-4 h-4 text-neutral-300 group-hover:text-[#1B4820] group-hover:translate-x-0.5 transition-all ml-1 shrink-0" />
                         )}
                       </div>
                     </div>
