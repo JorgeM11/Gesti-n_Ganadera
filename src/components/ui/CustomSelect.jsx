@@ -23,7 +23,8 @@ export default function CustomSelect({
   bgClass = 'bg-white',
   searchable = false,
   searchPlaceholder = 'Buscar opción...',
-  disabled = false
+  disabled = false,
+  compact = false
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -74,10 +75,20 @@ export default function CustomSelect({
 
       {/* Trigger */}
       <div
+        role="button"
+        tabIndex={disabled ? -1 : 0}
         onClick={() => {
           if (!disabled) setIsOpen(!isOpen);
         }}
-        className={`w-full rounded-2xl px-4 py-3.5 flex items-center justify-between border shadow-2xs transition-all select-none ${
+        onKeyDown={(e) => {
+          if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault();
+            setIsOpen(!isOpen);
+          }
+        }}
+        className={`w-full rounded-2xl ${
+          compact ? 'px-3 py-2 text-xs' : 'px-4 py-3.5'
+        } flex items-center justify-between border shadow-2xs transition-all select-none ${
           disabled
             ? 'bg-neutral-100/80 border-neutral-200 text-neutral-400 cursor-not-allowed opacity-80'
             : `${bgClass} cursor-pointer ${
@@ -85,7 +96,7 @@ export default function CustomSelect({
               }`
         }`}
       >
-        <span className={`text-sm truncate pr-2 ${
+        <span className={`${compact ? 'text-xs' : 'text-sm'} truncate pr-2 ${
           disabled 
             ? 'text-neutral-500 font-semibold' 
             : (selectedOption ? 'text-neutral-900 font-semibold' : 'text-neutral-400 font-medium')
@@ -151,7 +162,9 @@ export default function CustomSelect({
                       onChange(option.value);
                       setIsOpen(false);
                     }}
-                    className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl cursor-pointer transition-colors ${
+                    className={`flex items-center justify-between ${
+                      compact ? 'px-3 py-2 text-xs' : 'px-3.5 py-2.5 text-xs'
+                    } rounded-xl cursor-pointer transition-colors ${
                       value === option.value
                         ? 'bg-emerald-50/90 text-[#1B4820] font-bold'
                         : 'text-neutral-700 hover:bg-neutral-100 font-medium'

@@ -24,16 +24,28 @@ function ProfileContent() {
   const animalId = searchParams.get("id");
   const fromSource = searchParams.get("from");
   const farmIdParam = searchParams.get("farmId") || searchParams.get("farm_id");
-  const backUrl = fromSource === 'inactivos' 
-    ? '/inactivos' 
-    : fromSource === 'finca' && farmIdParam
-      ? `/inventario/finca/${farmIdParam}`
-      : '/inventario';
-  const backLabel = fromSource === 'inactivos' 
-    ? 'VOLVER A INACTIVOS' 
-    : fromSource === 'finca'
-      ? 'VOLVER A LA FINCA'
-      : 'VOLVER AL INVENTARIO';
+  const vaqueriaIdParam = searchParams.get("vaqueriaId") || searchParams.get("vaqueria_id") || searchParams.get("eventoId");
+  const returnUrlParam = searchParams.get("returnUrl");
+
+  let backUrl = '/inventario';
+  let backLabel = 'VOLVER AL INVENTARIO';
+
+  if (returnUrlParam) {
+    backUrl = decodeURIComponent(returnUrlParam);
+    backLabel = (fromSource === 'vaqueria' || fromSource === 'evento' || backUrl.includes('evento') || backUrl.includes('vaqueria'))
+      ? 'VOLVER AL EVENTO'
+      : 'VOLVER';
+  } else if (fromSource === 'vaqueria' || fromSource === 'evento') {
+    backUrl = vaqueriaIdParam ? `/eventos/${vaqueriaIdParam}` : '/eventos';
+    backLabel = 'VOLVER AL EVENTO';
+  } else if (fromSource === 'inactivos') {
+    backUrl = '/inactivos';
+    backLabel = 'VOLVER A INACTIVOS';
+  } else if (fromSource === 'finca' && farmIdParam) {
+    backUrl = `/inventario/finca/${farmIdParam}`;
+    backLabel = 'VOLVER A LA FINCA';
+  }
+
   const initialTab = searchParams.get("tab") || 'details';
   
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -154,7 +166,19 @@ function ProfileContent() {
     <main className="min-h-screen bg-[#F7F7F2] font-sans pb-24 md:pb-8 relative">
       {/* HEADER FIJO */}
       <header className="bg-[#F7F7F2] px-4 py-4 sticky top-0 z-30 flex items-center gap-4 border-b border-neutral-100 md:border-none">
-        <Link to={backUrl} className="p-2 -ml-2 hover:bg-neutral-200 rounded-full transition-colors cursor-pointer shrink-0" title={fromSource === 'inactivos' ? 'Volver a Inactivos' : fromSource === 'finca' ? 'Volver a la Finca' : 'Volver al Inventario'}>
+        <Link 
+          to={backUrl} 
+          className="p-2 -ml-2 hover:bg-neutral-200 rounded-full transition-colors cursor-pointer shrink-0" 
+          title={
+            fromSource === 'inactivos' 
+              ? 'Volver a Inactivos' 
+              : fromSource === 'finca' 
+                ? 'Volver a la Finca' 
+                : (fromSource === 'vaqueria' || fromSource === 'evento' || backUrl.includes('evento') || backUrl.includes('vaqueria'))
+                  ? 'Volver al Evento'
+                  : 'Volver al Inventario'
+          }
+        >
           <ArrowLeft className="w-6 h-6 text-[#1B4820]" />
         </Link>
         <div className="overflow-hidden">

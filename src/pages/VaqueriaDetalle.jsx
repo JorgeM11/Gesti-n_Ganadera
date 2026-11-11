@@ -26,9 +26,12 @@ import {
   ClipboardPlus,
   Info,
   Lock,
-  Clock
+  Clock,
+  ChevronRight
 } from 'lucide-react';
-import { formatDateTimeLocal } from '@/lib/dateUtils';
+import { formatDateTimeLocal, calculateAge } from '@/lib/dateUtils';
+import { AGE_CATEGORIES, getAnimalAgeCategory } from '@/pages/Inventario';
+import CustomSelect from '@/components/ui/CustomSelect';
 import { db } from '@/lib/db';
 import { 
   addAnimalToVaqueria, 
@@ -74,6 +77,8 @@ export default function VaqueriaDetallePage() {
   // Estados de interfaz y pestañas
   const [activeTab, setActiveTab] = useState('presentes'); // 'presentes' | 'faltantes' | 'por_completar'
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedOwnerFilter, setSelectedOwnerFilter] = useState('ALL');
+  const [selectedAgeFilter, setSelectedAgeFilter] = useState('ALL');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(25);
   const [isBarcodeOpen, setIsBarcodeOpen] = useState(false);
@@ -134,10 +139,10 @@ export default function VaqueriaDetallePage() {
     );
   };
 
-  // Resetear paginación cuando cambia la pestaña o el término de búsqueda
+  // Resetear paginación cuando cambia la pestaña o los filtros
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, searchTerm]);
+  }, [activeTab, searchTerm, selectedOwnerFilter, selectedAgeFilter]);
 
   // Estado para Banner de Feedback Instantáneo (Audio + Visual)
   const [scanFeedback, setScanFeedback] = useState(null); // { type: 'success'|'duplicate'|'error', message, icon }
@@ -221,6 +226,47 @@ export default function VaqueriaDetallePage() {
     () => db.animals.filter(a => !a.deleted_at).toArray(),
     []
   ) || [];
+
+  const rawOwners = useLiveQuery(
+    () => db.owners.filter(o => !o.deleted_at).toArray(),
+    []
+  ) || [];
+
+  const sortedOwners = useMemo(() => {
+    return [...rawOwners].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  }, [rawOwners]);
+
+  const ownerMap = useMemo(() => {
+    const map = {};
+    rawOwners.forEach(o => { map[o.id] = o.name; });
+    return map;
+  }, [rawOwners]);
+
+  const animalsById = useMemo(() => {
+    const map = new Map();
+    allAnimals.forEach(a => {
+      if (a && a.id) map.set(a.id, a);
+    });
+    return map;
+  }, [allAnimals]);
+
+  const ownerSelectOptions = useMemo(() => {
+    const list = [
+      { value: 'ALL', label: 'Todos los dueños' },
+      { value: 'NONE', label: 'Sin dueño asignado' }
+    ];
+    sortedOwners.forEach(o => {
+      list.push({ value: o.id, label: o.name });
+    });
+    return list;
+  }, [sortedOwners]);
+
+  const ageSelectOptions = useMemo(() => {
+    return [
+      { value: 'ALL', label: 'Todas las edades' },
+      ...AGE_CATEGORIES.map(c => ({ value: c.id, label: c.label }))
+    ];
+  }, []);
 
   const farmAnimals = useMemo(() => {
     if (!effectiveVaqueria?.farm_id) return [];
@@ -548,7 +594,9 @@ export default function VaqueriaDetallePage() {
               name: p.animal.name,
               sex: p.animal.sex,
               breed: p.animal.breed,
-              status: p.animal.status
+              status: p.animal.status,
+              owner_id: p.animal.owner_id || null,
+              birth_date: p.animal.birth_date || null
             } : null,
             classification: p.classification,
             badgeLabel: p.badgeLabel,
@@ -568,7 +616,9 @@ export default function VaqueriaDetallePage() {
               sex: m.animal.sex,
               breed: m.animal.breed,
               status: m.animal.status,
-              inactivity_reason: m.animal.inactivity_reason || null
+              inactivity_reason: m.animal.inactivity_reason || null,
+              owner_id: m.animal.owner_id || null,
+              birth_date: m.animal.birth_date || null
             } : null,
             isAlreadyInactive: Boolean(m.isAlreadyInactive),
             status: m.status,
@@ -625,16 +675,54 @@ export default function VaqueriaDetallePage() {
   const isFinalized = effectiveVaqueria?.status === 'Finalizada';
   const { classifiedPresent = [], missingAnimals = [], kpis = {} } = activeAnalysis || {};
 
-  // Filtrar presentes por término de búsqueda (siempre de primero los nuevos no registrados)
+  const isPresentFiltered = Boolean(
+    searchTerm.trim() || 
+    selectedOwnerFilter !== 'ALL' || 
+    selectedAgeFilter !== 'ALL'
+  );
+
+  // Navegar al perfil del animal desde la lista con retorno asegurado
+  const handleOpenAnimalProfile = useCallback((item) => {
+    const animalObj = animalsById.get(item.animal?.id || item.record?.animal_id) || item.animal;
+    if (animalObj?.id) {
+      const returnPath = location.pathname + location.search;
+      navigate(`/inventario/perfil?id=${animalObj.id}&from=vaqueria&vaqueriaId=${vaqueriaId}&returnUrl=${encodeURIComponent(returnPath)}`);
+    } else if (item.classification === 'UNREGISTERED_IN_SYSTEM' && !isFinalized) {
+      setCompletingAnimalRecord(item.record);
+    }
+  }, [animalsById, location.pathname, location.search, navigate, vaqueriaId, isFinalized]);
+
+  // Filtrar presentes por término de búsqueda, dueño y edad (siempre de primero los nuevos no registrados)
   const filteredPresent = useMemo(() => {
     return classifiedPresent
       .filter(item => {
-        if (!searchTerm.trim()) return true;
-        const q = searchTerm.trim().toLowerCase();
-        const matchNumber = (item.displayNumber || '').toLowerCase().includes(q);
-        const matchChip = (item.displayChip || '').toLowerCase().includes(q);
-        const matchName = (item.displayName || '').toLowerCase().includes(q);
-        return matchNumber || matchChip || matchName;
+        const animalObj = animalsById.get(item.animal?.id || item.record?.animal_id) || item.animal;
+
+        // 1. Filtrar por término de búsqueda
+        if (searchTerm.trim()) {
+          const q = searchTerm.trim().toLowerCase();
+          const matchNumber = (item.displayNumber || '').toLowerCase().includes(q);
+          const matchChip = (item.displayChip || '').toLowerCase().includes(q);
+          const matchName = (item.displayName || '').toLowerCase().includes(q);
+          if (!matchNumber && !matchChip && !matchName) return false;
+        }
+
+        // 2. Filtrar por Dueño
+        if (selectedOwnerFilter !== 'ALL') {
+          if (selectedOwnerFilter === 'NONE') {
+            if (animalObj?.owner_id) return false;
+          } else {
+            if (!animalObj || animalObj.owner_id !== selectedOwnerFilter) return false;
+          }
+        }
+
+        // 3. Filtrar por Edad
+        if (selectedAgeFilter !== 'ALL') {
+          const cat = animalObj ? getAnimalAgeCategory(animalObj) : 'Desconocida';
+          if (cat !== selectedAgeFilter) return false;
+        }
+
+        return true;
       })
       .sort((a, b) => {
         const aIsUnreg = a.classification === 'UNREGISTERED_IN_SYSTEM' ? 1 : 0;
@@ -646,7 +734,7 @@ export default function VaqueriaDetallePage() {
         const timeB = new Date(b.record?.created_at || 0).getTime();
         return timeB - timeA;
       });
-  }, [classifiedPresent, searchTerm]);
+  }, [classifiedPresent, searchTerm, selectedOwnerFilter, selectedAgeFilter, animalsById]);
 
   // Filtrar faltantes por término de búsqueda
   const filteredMissing = useMemo(() => {
@@ -1006,7 +1094,7 @@ export default function VaqueriaDetallePage() {
                 : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
             }`}
           >
-            <span>Presentes ({classifiedPresent.length})</span>
+            <span>Presentes ({isPresentFiltered ? `${filteredPresent.length}/${classifiedPresent.length}` : classifiedPresent.length})</span>
           </button>
 
           <button
@@ -1036,16 +1124,109 @@ export default function VaqueriaDetallePage() {
           )}
         </div>
 
-        {/* Barra de Búsqueda de la Lista */}
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder={`Buscar en ${activeTab === 'presentes' ? 'presentes' : activeTab === 'faltantes' ? 'faltantes' : 'nuevos'} por arete, chip o nombre...`}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-neutral-200/80 rounded-2xl text-xs font-bold text-neutral-800 placeholder-neutral-400 focus:border-[#1B4820] focus:ring-2 focus:ring-[#1B4820]/15 outline-none transition-all shadow-xs"
-          />
+        {/* Barra de Búsqueda y Filtros de la Lista */}
+        <div className="space-y-2">
+          <div className="flex flex-col md:flex-row gap-2 items-stretch md:items-center">
+            {/* Barra de Búsqueda */}
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder={`Buscar en ${activeTab === 'presentes' ? 'presentes' : activeTab === 'faltantes' ? 'faltantes' : 'nuevos'} por arete, chip o nombre...`}
+                className="w-full pl-10 pr-8 py-2.5 bg-white border border-neutral-200/80 rounded-2xl text-xs font-bold text-neutral-800 placeholder-neutral-400 focus:border-[#1B4820] focus:ring-2 focus:ring-[#1B4820]/15 outline-none transition-all shadow-xs"
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 font-black text-xs cursor-pointer p-0.5"
+                  title="Borrar búsqueda"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Filtros específicos de Presentes: Dueño y Edad (junto a la barra de búsqueda) */}
+            {activeTab === 'presentes' && (
+              <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
+                {/* Selector de Dueño */}
+                <div className="w-full sm:w-44 md:w-48">
+                  <CustomSelect
+                    compact
+                    searchable
+                    searchPlaceholder="Buscar dueño..."
+                    value={selectedOwnerFilter}
+                    onChange={(val) => setSelectedOwnerFilter(val)}
+                    options={ownerSelectOptions}
+                    placeholder="Filtrar por dueño"
+                  />
+                </div>
+
+                {/* Selector de Edad */}
+                <div className="w-full sm:w-44 md:w-48">
+                  <CustomSelect
+                    compact
+                    value={selectedAgeFilter}
+                    onChange={(val) => setSelectedAgeFilter(val)}
+                    options={ageSelectOptions}
+                    placeholder="Filtrar por edad"
+                  />
+                </div>
+
+                {/* Contador de animales totales cuando se filtra */}
+                <div className="shrink-0 flex items-center">
+                  <span
+                    className={`px-3 py-2 rounded-2xl text-xs font-black shadow-2xs whitespace-nowrap border flex items-center gap-1.5 transition-all ${
+                      isPresentFiltered
+                        ? 'bg-emerald-100 text-[#1B4820] border-emerald-300'
+                        : 'bg-white text-neutral-600 border-neutral-200/80'
+                    }`}
+                    title={isPresentFiltered ? `Filtros activos: ${filteredPresent.length} de ${classifiedPresent.length} animales totales` : 'Total animales presentes'}
+                  >
+                    {isPresentFiltered && <span className="w-2 h-2 rounded-full bg-[#1B4820] animate-pulse" />}
+                    <span>Total: <strong>{filteredPresent.length}</strong>{isPresentFiltered && ` de ${classifiedPresent.length}`}</span>
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Banner Informativo y Botón de Limpiar si hay filtros activos */}
+          {activeTab === 'presentes' && isPresentFiltered && (
+            <div className="flex flex-wrap items-center justify-between gap-2 bg-emerald-50/90 border border-emerald-200/80 px-3.5 py-2 rounded-2xl text-xs">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-bold text-[#1B4820]">
+                  Animales filtrados: <strong className="font-black text-sm">{filteredPresent.length}</strong> {filteredPresent.length === 1 ? 'animal' : 'animales'} de {classifiedPresent.length} totales
+                </span>
+                {selectedOwnerFilter !== 'ALL' && (
+                  <span className="inline-flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg text-[11px] font-bold text-neutral-700 border border-neutral-200 shadow-2xs">
+                    Dueño: {selectedOwnerFilter === 'NONE' ? 'Sin dueño' : (ownerMap[selectedOwnerFilter] || 'Seleccionado')}
+                    <button type="button" onClick={() => setSelectedOwnerFilter('ALL')} className="text-neutral-400 hover:text-black ml-0.5 font-bold cursor-pointer">✕</button>
+                  </span>
+                )}
+                {selectedAgeFilter !== 'ALL' && (
+                  <span className="inline-flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg text-[11px] font-bold text-neutral-700 border border-neutral-200 shadow-2xs">
+                    Edad: {ageSelectOptions.find(o => o.value === selectedAgeFilter)?.label || selectedAgeFilter}
+                    <button type="button" onClick={() => setSelectedAgeFilter('ALL')} className="text-neutral-400 hover:text-black ml-0.5 font-bold cursor-pointer">✕</button>
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchTerm('');
+                  setSelectedOwnerFilter('ALL');
+                  setSelectedAgeFilter('ALL');
+                }}
+                className="text-xs font-bold text-neutral-600 hover:text-rose-600 underline cursor-pointer transition-colors ml-auto"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          )}
         </div>
 
         {/* ======================================================== */}
@@ -1056,21 +1237,54 @@ export default function VaqueriaDetallePage() {
             {filteredPresent.length === 0 ? (
               <div className="p-8 text-center">
                 <CheckCircle2 className="w-10 h-10 text-neutral-300 mx-auto mb-2" />
-                <h4 className="text-sm font-black text-neutral-800">No hay animales registrados aún</h4>
+                <h4 className="text-sm font-black text-neutral-800">
+                  {isPresentFiltered ? 'No se encontraron animales con los filtros seleccionados' : 'No hay animales registrados aún'}
+                </h4>
                 <p className="text-xs text-neutral-400 max-w-sm mx-auto mt-1">
-                  Usa el lector RFID, la cámara o el botón manual para pasar la asistencia.
+                  {isPresentFiltered
+                    ? 'Prueba modificando el término de búsqueda, el dueño o la edad seleccionada.'
+                    : 'Usa el lector RFID, la cámara o el botón manual para pasar la asistencia.'}
                 </p>
+                {isPresentFiltered && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchTerm('');
+                      setSelectedOwnerFilter('ALL');
+                      setSelectedAgeFilter('ALL');
+                    }}
+                    className="mt-3 px-4 py-2 bg-[#1B4820] text-white rounded-xl text-xs font-bold hover:bg-[#143618] transition-colors cursor-pointer"
+                  >
+                    Restablecer filtros
+                  </button>
+                )}
               </div>
             ) : (
               <div className="divide-y divide-neutral-100">
                 {paginatedPresent.map(item => {
                   const isUnregistered = item.classification === 'UNREGISTERED_IN_SYSTEM';
+                  const animalObj = animalsById.get(item.animal?.id || item.record?.animal_id) || item.animal;
+                  const canOpenProfile = Boolean(animalObj?.id);
+                  const ownerName = animalObj?.owner_id ? ownerMap[animalObj.owner_id] : null;
+
                   return (
                     <div
                       key={item.record.id}
-                      className={`px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2 transition-colors ${
-                        isUnregistered ? 'border-l-4 border-rose-500 bg-rose-50/25 hover:bg-rose-50/40' : 'hover:bg-neutral-50'
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleOpenAnimalProfile(item)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleOpenAnimalProfile(item);
+                        }
+                      }}
+                      className={`px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2 transition-all group select-none ${
+                        canOpenProfile ? 'cursor-pointer hover:bg-emerald-50/40 active:bg-emerald-50/70' : ''
+                      } ${
+                        isUnregistered ? 'border-l-4 border-rose-500 bg-rose-50/25 hover:bg-rose-50/40 cursor-pointer' : 'hover:bg-neutral-50'
                       }`}
+                      title={canOpenProfile ? 'Tocar para ver perfil del animal' : (isUnregistered ? 'Tocar para completar registro' : '')}
                     >
                       {/* Datos Distribuidos Horizontalmente */}
                       <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
@@ -1083,6 +1297,11 @@ export default function VaqueriaDetallePage() {
                                 ? `#${item.displayNumber}`
                                 : (item.displayName && item.displayName !== 'Sin nombre' ? item.displayName : 'Sin arete')}
                             </span>
+                            {animalObj?.sex && (
+                              <span className={`text-[11px] font-bold ${animalObj.sex === 'Hembra' ? 'text-pink-600' : 'text-blue-600'}`}>
+                                {animalObj.sex === 'Hembra' ? '♀' : '♂'}
+                              </span>
+                            )}
                           </div>
                           {item.displayNumber && item.displayNumber !== '---' && item.displayName && item.displayName !== 'Sin nombre' && (
                             <span className="text-[10px] sm:text-[11px] font-bold text-neutral-500 block truncate">
@@ -1096,6 +1315,22 @@ export default function VaqueriaDetallePage() {
                           <div className="flex items-center gap-1 text-[10px] sm:text-xs font-mono font-bold text-neutral-600 bg-neutral-100 px-1.5 sm:px-2 py-0.5 rounded-lg shrink-0">
                             <Cpu className="w-3 h-3 text-neutral-400 shrink-0" />
                             <span>{item.displayChip}</span>
+                          </div>
+                        )}
+
+                        {/* Dueño si existe */}
+                        {ownerName && (
+                          <div className="hidden md:flex items-center gap-1 text-[11px] font-semibold text-neutral-600 bg-neutral-100/80 px-2 py-0.5 rounded-lg shrink-0">
+                            <User className="w-3 h-3 text-neutral-400" />
+                            <span className="truncate max-w-[120px]">{ownerName}</span>
+                          </div>
+                        )}
+
+                        {/* Edad si existe */}
+                        {animalObj?.birth_date && (
+                          <div className="hidden lg:flex items-center gap-1 text-[11px] font-semibold text-neutral-600 bg-neutral-100/80 px-2 py-0.5 rounded-lg shrink-0">
+                            <Calendar className="w-3 h-3 text-neutral-400" />
+                            <span>{calculateAge(animalObj.birth_date)}</span>
                           </div>
                         )}
 
@@ -1119,11 +1354,14 @@ export default function VaqueriaDetallePage() {
                       </div>
 
                       {/* Acciones al Final */}
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                         {isUnregistered && !isFinalized && (
                           <button
                             type="button"
-                            onClick={() => setCompletingAnimalRecord(item.record)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCompletingAnimalRecord(item.record);
+                            }}
                             className="py-1 px-2.5 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-[11px] font-black shadow-xs transition-colors cursor-pointer flex items-center gap-1"
                             title="Completar y registrar animal"
                           >
@@ -1132,10 +1370,13 @@ export default function VaqueriaDetallePage() {
                           </button>
                         )}
 
-                        {!isFinalized && item.animal && (
+                        {!isFinalized && animalObj && (
                           <button
                             type="button"
-                            onClick={() => setEditingAnimal(item.animal)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingAnimal(animalObj);
+                            }}
                             className="p-1.5 text-neutral-400 hover:text-[#1B4820] hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"
                             title="Editar datos del animal"
                           >
@@ -1146,12 +1387,19 @@ export default function VaqueriaDetallePage() {
                         {!isFinalized && (
                           <button
                             type="button"
-                            onClick={() => setDeletingRecord(item.record)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletingRecord(item.record);
+                            }}
                             className="p-1.5 text-neutral-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                             title="Quitar de este evento"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
+                        )}
+
+                        {canOpenProfile && (
+                          <ChevronRight className="w-4 h-4 text-neutral-300 group-hover:text-[#1B4820] group-hover:translate-x-0.5 transition-all ml-1 shrink-0" />
                         )}
                       </div>
                     </div>
@@ -1179,12 +1427,31 @@ export default function VaqueriaDetallePage() {
               <div className="divide-y divide-neutral-100">
                 {paginatedMissing.map(item => {
                   const isInactive = item.isAlreadyInactive;
+                  const canOpenMissingProfile = Boolean(item.animal?.id);
                   return (
                     <div
                       key={item.animal.id}
-                      className={`px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2 transition-colors ${
-                        isInactive ? 'bg-neutral-50/50 opacity-75' : 'hover:bg-amber-50/20'
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => {
+                        if (canOpenMissingProfile) {
+                          const returnPath = location.pathname + location.search;
+                          navigate(`/inventario/perfil?id=${item.animal.id}&from=vaqueria&vaqueriaId=${vaqueriaId}&returnUrl=${encodeURIComponent(returnPath)}`);
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (canOpenMissingProfile && (e.key === 'Enter' || e.key === ' ')) {
+                          e.preventDefault();
+                          const returnPath = location.pathname + location.search;
+                          navigate(`/inventario/perfil?id=${item.animal.id}&from=vaqueria&vaqueriaId=${vaqueriaId}&returnUrl=${encodeURIComponent(returnPath)}`);
+                        }
+                      }}
+                      className={`px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2 transition-colors group select-none ${
+                        canOpenMissingProfile ? 'cursor-pointer hover:bg-amber-50/20' : ''
+                      } ${
+                        isInactive ? 'bg-neutral-50/50 opacity-75' : ''
                       }`}
+                      title={canOpenMissingProfile ? 'Tocar para ver perfil del animal' : ''}
                     >
                       {/* Datos Distribuidos Horizontalmente */}
                       <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
@@ -1213,7 +1480,7 @@ export default function VaqueriaDetallePage() {
                       </div>
 
                       {/* Acciones al Final */}
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
                         {isInactive ? (
                           <span className="text-[10px] font-black uppercase tracking-wider text-neutral-500 bg-neutral-100 border border-neutral-200 px-2 py-0.5 rounded-lg">
                             Inactivo
@@ -1222,13 +1489,19 @@ export default function VaqueriaDetallePage() {
                           !isFinalized && (
                             <button
                               type="button"
-                              onClick={() => setInactivatingAnimal(item.animal)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setInactivatingAnimal(item.animal);
+                              }}
                               className="py-1 px-3 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-[11px] font-black shadow-xs transition-colors cursor-pointer flex items-center gap-1.5"
                             >
                               <UserX className="w-3.5 h-3.5" />
                               <span>Inactivar</span>
                             </button>
                           )
+                        )}
+                        {canOpenMissingProfile && (
+                          <ChevronRight className="w-4 h-4 text-neutral-300 group-hover:text-[#1B4820] group-hover:translate-x-0.5 transition-all ml-1 shrink-0" />
                         )}
                       </div>
                     </div>
@@ -1260,7 +1533,19 @@ export default function VaqueriaDetallePage() {
                 {paginatedUncompleted.map(item => (
                   <div
                     key={item.record.id}
-                    className="px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2 border-l-4 border-rose-500 bg-rose-50/20 hover:bg-rose-50/40 transition-colors"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      if (!isFinalized) setCompletingAnimalRecord(item.record);
+                    }}
+                    onKeyDown={(e) => {
+                      if (!isFinalized && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault();
+                        setCompletingAnimalRecord(item.record);
+                      }
+                    }}
+                    className="px-3 py-2.5 sm:px-4 sm:py-3 flex items-center justify-between gap-2 border-l-4 border-rose-500 bg-rose-50/20 hover:bg-rose-50/40 transition-colors cursor-pointer select-none"
+                    title="Tocar para completar registro"
                   >
                     <div className="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
                       <span className="text-xs sm:text-sm font-black text-neutral-900 min-w-[80px] sm:min-w-[120px] shrink-0 truncate">
@@ -1279,7 +1564,10 @@ export default function VaqueriaDetallePage() {
                     {!isFinalized && (
                       <button
                         type="button"
-                        onClick={() => setCompletingAnimalRecord(item.record)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCompletingAnimalRecord(item.record);
+                        }}
                         className="py-1 px-3 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-black shadow-xs transition-colors cursor-pointer flex items-center gap-1.5 shrink-0"
                       >
                         <ClipboardPlus className="w-3.5 h-3.5" />
