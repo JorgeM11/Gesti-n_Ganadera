@@ -1156,8 +1156,6 @@ export default function VaqueriaDetallePage() {
                 <div className="w-full sm:w-44 md:w-48">
                   <CustomSelect
                     compact
-                    searchable
-                    searchPlaceholder="Buscar dueño..."
                     value={selectedOwnerFilter}
                     onChange={(val) => setSelectedOwnerFilter(val)}
                     options={ownerSelectOptions}
@@ -1297,11 +1295,6 @@ export default function VaqueriaDetallePage() {
                                 ? `#${item.displayNumber}`
                                 : (item.displayName && item.displayName !== 'Sin nombre' ? item.displayName : 'Sin arete')}
                             </span>
-                            {animalObj?.sex && (
-                              <span className={`text-[11px] font-bold ${animalObj.sex === 'Hembra' ? 'text-pink-600' : 'text-blue-600'}`}>
-                                {animalObj.sex === 'Hembra' ? '♀' : '♂'}
-                              </span>
-                            )}
                           </div>
                           {item.displayNumber && item.displayNumber !== '---' && item.displayName && item.displayName !== 'Sin nombre' && (
                             <span className="text-[10px] sm:text-[11px] font-bold text-neutral-500 block truncate">
